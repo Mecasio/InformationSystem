@@ -142,42 +142,40 @@ const AnnouncementPanel = () => {
     };
 
 
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+        const formData = new FormData();
+        formData.append("title", form.title);
+        formData.append("content", form.content);
+        formData.append("valid_days", form.valid_days);
+        formData.append("target_role", form.target_role);
+        formData.append("creator_role", userRole);
+        formData.append("creator_id", employeeID);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const formData = new FormData();
-            formData.append("title", form.title);
-            formData.append("content", form.content);
-            formData.append("valid_days", form.valid_days);
-            formData.append("target_role", form.target_role);
-            formData.append("creator_role", userRole);
-            formData.append("creator_id", employeeID);
+        if (image) formData.append("image", image);
 
-            // FIX HERE (use "image", not "file")
-            if (image) formData.append("image", image);
-
-            if (editingId) {
-                await axios.put(`${API_BASE_URL}/api/announcements/${editingId}`, formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
-                setSnackbar({ open: true, message: "Announcement updated!", severity: "success" });
-            } else {
-                await axios.post(`${API_BASE_URL}/api/announcements/upload`, formData, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
-                setSnackbar({ open: true, message: "Announcement created!", severity: "success" });
-            }
-
-            setForm({ title: "", content: "", valid_days: "7", target_role: "" });
-            setEditingId(null);
-            setImage(null);
-            fetchAnnouncements();
-        } catch (err) {
-            console.error(err);
-            setSnackbar({ open: true, message: "Error saving announcement!", severity: "error" });
+        if (editingId) {
+            await axios.put(`${API_BASE_URL}/api/announcements/${editingId}`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            setSnackbar({ open: true, message: "Announcement updated!", severity: "success" });
+        } else {
+            await axios.post(`${API_BASE_URL}/api/announcements`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            setSnackbar({ open: true, message: "Announcement created!", severity: "success" });
         }
-    };
+
+        setForm({ title: "", content: "", valid_days: "7", target_role: "" });
+        setEditingId(null);
+        setImage(null);
+        fetchAnnouncements();
+    } catch (err) {
+        console.error(err);
+        setSnackbar({ open: true, message: "Error saving announcement!", severity: "error" });
+    }
+};
 
 
     const handleEdit = (announcement) => {
@@ -244,9 +242,7 @@ const AnnouncementPanel = () => {
             </Typography>
 
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
-            <br />
-
-
+            <div style={{ height: "30px" }}></div>
             <Box
                 sx={{
                     display: "flex",

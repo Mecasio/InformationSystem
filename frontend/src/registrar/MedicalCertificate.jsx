@@ -593,7 +593,7 @@ const MedicalCertificate = () => {
                                         fontSize: "16px",
                                         fontWeight: "bold",
                                         fontFamily: "Times, New Roman",
-                                        marginLeft: "-10px",
+                                        marginLeft: "-95px",
                                         marginTop: "-20px"
                                     }}>
                                         HEALTH SERVICE DIVISION
@@ -605,7 +605,7 @@ const MedicalCertificate = () => {
                                         fontSize: "16px",
                                         fontWeight: "bold",
                                         fontFamily: "Times, New Roman",
-                                        marginLeft: "-18px",
+                                        marginLeft: "-100px",
 
                                         marginTop: "30px"
                                     }}>
@@ -1016,7 +1016,7 @@ const MedicalCertificate = () => {
                                         fontSize: "16px",
                                         fontWeight: "bold",
                                         fontFamily: "Times, New Roman",
-                                        marginLeft: "-10px",
+                                        marginLeft: "-85px",
                                         marginTop: "-20px"
                                     }}>
                                         HEALTH SERVICE DIVISION
@@ -1028,7 +1028,7 @@ const MedicalCertificate = () => {
                                         fontSize: "16px",
                                         fontWeight: "bold",
                                         fontFamily: "Times, New Roman",
-                                        marginLeft: "-18px",
+                                      marginLeft: "-100px",
 
                                         marginTop: "30px"
                                     }}>

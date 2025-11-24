@@ -102,7 +102,7 @@ const ApplicantScoring = () => {
     };
 
     const tabs = [
-  
+
         { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
         { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
         { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
@@ -525,26 +525,41 @@ const ApplicantScoring = () => {
 
 
 
-    const handleStatusChange = async (person, newStatus) => {
-        try {
-            await axios.post(`${API_BASE_URL}/exam/save`, {
-                applicant_number: person.applicant_number,
-                english: person.english,
-                science: person.science,
-                filipino: person.filipino,
-                math: person.math,
-                abstract: person.abstract,
-                final_rating: person.final_rating,
+    const handleStatusChange = (person, newStatus) => {
+        const payload = {
+            applicant_number: person.applicant_number,
+            english: person.english,
+            science: person.science,
+            filipino: person.filipino,
+            math: person.math,
+            abstract: person.abstract,
+            final_rating: person.final_rating,
+            status: newStatus,
+            user_person_id: localStorage.getItem("person_id"),
+        };
+
+        // 🔥 Update applicants instantly (single source of truth)
+        setApplicants((prev) =>
+            prev.map((p) =>
+                p.person_id === person.person_id
+                    ? { ...p, status: newStatus }
+                    : p
+            )
+        );
+
+        // 🔥 IMPORTANT — Fix Select not showing new value:
+        // Force React to re-render by updating editScores as well
+        setEditScores((prev) => ({
+            ...prev,
+            [person.person_id]: {
+                ...(prev[person.person_id] || {}),
                 status: newStatus,
-                user_person_id: localStorage.getItem("person_id")
-            });
+            },
+        }));
 
-            fetchApplicants();
-        } catch (err) {
-            console.error("Status update failed:", err);
-        }
+        // 🔥 Save to backend
+        autoSaveScore(payload);
     };
-
 
     const [applicants, setApplicants] = useState([]);
     const divToPrintRef = useRef();
@@ -792,6 +807,29 @@ th, td {
         }, 1000)
     ).current;
 
+    useEffect(() => {
+        const beforeUnloadHandler = () => {
+            const pending = JSON.parse(localStorage.getItem("pendingScores") || "[]");
+            if (pending.length > 0) navigator.sendBeacon(`${API_BASE_URL}/exam/save`, JSON.stringify(pending[pending.length - 1]));
+        };
+
+        window.addEventListener("beforeunload", beforeUnloadHandler);
+        return () => window.removeEventListener("beforeunload", beforeUnloadHandler);
+    }, []);
+
+
+    const autoSaveScore = async (payload) => {
+        try {
+            await axios.post(`${API_BASE_URL}/exam/save`, payload);
+            console.log("💾 Auto-saved:", payload);
+        } catch (error) {
+            console.error("❌ Auto-save failed:", error);
+
+            const pending = JSON.parse(localStorage.getItem("pendingScores") || "[]");
+            localStorage.setItem("pendingScores", JSON.stringify([...pending, payload]));
+        }
+    };
+
     // run on mount + when online again (to sync pending scores)
     useEffect(() => {
         const syncPendingScores = async () => {
@@ -816,6 +854,40 @@ th, td {
     }, []);
 
     const handleScoreChange = (person, field, value) => {
+        const updatedScores = {
+            ...person,
+            [field]: Number(value),
+        };
+
+        const final_rating =
+            (Number(updatedScores.english || 0) +
+                Number(updatedScores.science || 0) +
+                Number(updatedScores.filipino || 0) +
+                Number(updatedScores.math || 0) +
+                Number(updatedScores.abstract || 0)) / 5;
+
+        const payload = {
+            applicant_number: person.applicant_number,
+            english: updatedScores.english,
+            science: updatedScores.science,
+            filipino: updatedScores.filipino,
+            math: updatedScores.math,
+            abstract: updatedScores.abstract,
+            final_rating,
+            status: person.status ?? "",
+            user_person_id: localStorage.getItem("person_id"),
+        };
+
+        // 🔥 UPDATE UI INSTANTLY
+        setApplicants((prev) =>
+            prev.map((p) =>
+                p.person_id === person.person_id
+                    ? { ...p, ...updatedScores, final_rating }
+                    : p
+            )
+        );
+
+        // update temporary editing state
         setEditScores((prev) => ({
             ...prev,
             [person.person_id]: {
@@ -823,36 +895,33 @@ th, td {
                 [field]: value,
             },
         }));
+
+        // Save with debounce
+        debouncedSave(payload);
     };
 
     // Save only after user leaves the input (onBlur)
     const handleScoreBlur = async (person) => {
-        const updatedScores = {
-            english: editScores[person.person_id]?.english ?? person.english ?? 0,
-            science: editScores[person.person_id]?.science ?? person.science ?? 0,
-            filipino: editScores[person.person_id]?.filipino ?? person.filipino ?? 0,
-            math: editScores[person.person_id]?.math ?? person.math ?? 0,
-            abstract: editScores[person.person_id]?.abstract ?? person.abstract ?? 0,
-        };
+        const updated = editScores[person.person_id] || person;
 
         const payload = {
             applicant_number: person.applicant_number,
-            ...updatedScores,
+            english: Number(updated.english || 0),
+            science: Number(updated.science || 0),
+            filipino: Number(updated.filipino || 0),
+            math: Number(updated.math || 0),
+            abstract: Number(updated.abstract || 0),
             final_rating:
-                (Number(updatedScores.english) +
-                    Number(updatedScores.science) +
-                    Number(updatedScores.filipino) +
-                    Number(updatedScores.math) +
-                    Number(updatedScores.abstract)) / 5,
+                (Number(updated.english || 0) +
+                    Number(updated.science || 0) +
+                    Number(updated.filipino || 0) +
+                    Number(updated.math || 0) +
+                    Number(updated.abstract || 0)) / 5,
+            status: person.status ?? "",
             user_person_id: localStorage.getItem("person_id"),
         };
 
-        try {
-            await axios.post(`${API_BASE_URL}/exam/save`, payload);
-            console.log("✅ Saved final scores for applicant:", payload.applicant_number);
-        } catch (err) {
-            console.error("❌ Save failed:", err);
-        }
+        await autoSaveScore(payload);
     };
 
     // 🔒 Disable right-click
@@ -971,7 +1040,7 @@ th, td {
                     </Card>
                 ))}
             </Box>
-       <div style={{ height: "40px" }}></div>
+            <div style={{ height: "40px" }}></div>
 
 
 
@@ -1658,7 +1727,7 @@ th, td {
                                     >
                                         <FormControl fullWidth size="small">
                                             <Select
-                                                value={person.status === null ? "" : person.status}
+                                                value={editScores[person.person_id]?.status ?? person.status ?? ""}
                                                 displayEmpty
                                                 onChange={(e) => handleStatusChange(person, e.target.value)}
                                                 sx={{ fontSize: "15px" }}

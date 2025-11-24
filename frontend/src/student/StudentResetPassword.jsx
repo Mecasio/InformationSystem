@@ -13,6 +13,9 @@ import {
   IconButton,
   InputAdornment,
   Snackbar,
+  InputLabel,
+  FormControlLabel,
+  Switch,
   Alert,
   Divider,
   Paper,
@@ -22,7 +25,7 @@ import {
   VisibilityOff,
   CheckCircle,
   Cancel,
-  LockReset,
+  Settings,
 } from "@mui/icons-material";
 import API_BASE_URL from "../apiConfig";
 const passwordRules = [
@@ -104,6 +107,51 @@ const StudentResetPassword = () => {
     const results = passwordRules.map((rule) => rule.test(newPassword));
     setValidations(results);
   }, [newPassword]);
+
+  const [otpRequired, setOtpRequired] = useState(true);
+
+
+  // Fetch OTP setting
+  useEffect(() => {
+    const fetchOtpSetting = async () => {
+      try {
+        const person_id = localStorage.getItem("person_id");
+        const res = await axios.get(`${API_BASE_URL}/get-otp-setting/user/${person_id}`);
+        setOtpRequired(res.data.require_otp === 1);
+      } catch (err) {
+        console.error("Failed to load OTP setting for user", err);
+      }
+    };
+    fetchOtpSetting();
+  }, []);
+
+  // Update OTP setting
+  const handleOtpToggle = async (event) => {
+    const newValue = event.target.checked;
+    setOtpRequired(newValue);
+
+    try {
+      const person_id = localStorage.getItem("person_id");
+      const res = await axios.post(`${API_BASE_URL}/update-otp-setting`, {
+        type: "user",
+        person_id,
+        require_otp: newValue ? 1 : 0,
+      });
+
+      setSnack({
+        open: true,
+        message: res.data.message,
+        severity: "success",
+      });
+    } catch (err) {
+      setSnack({
+        open: true,
+        message: err.response?.data?.message || "Failed to update OTP setting",
+        severity: "error",
+      });
+    }
+  };
+
 
   const isValid = validations.every(Boolean) && newPassword === confirmPassword;
 
@@ -208,7 +256,7 @@ const StudentResetPassword = () => {
         >
           {/* Lock Icon and Title */}
           <Box textAlign="center" mb={2}>
-            <LockReset
+            <Settings
               sx={{
                 fontSize: 80,
                 color: "#000000",
@@ -218,13 +266,32 @@ const StudentResetPassword = () => {
               }}
             />
             <Typography variant="h5" fontWeight="bold" sx={{ mt: 1, color: subtitleColor, }}>
-              Reset Your Password
+              SETTINGS
             </Typography>
             <Typography fontSize={13} color="text.secondary">
-              Enter a new password for your student account.
+              Update your password to keep your account secure.
             </Typography>
           </Box>
 
+          <Divider sx={{ mb: 2 }} />
+          <Box mt={3}>
+            <InputLabel style={{ color: "red" }}>
+              Turning this off may compromise your account, especially if
+              <br /> your login is saved on another device.
+            </InputLabel>
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={otpRequired}
+                  onChange={handleOtpToggle}
+                  color="primary"
+                />
+              }
+              label="Require OTP during login"
+            />
+
+          </Box>
           <Divider sx={{ mb: 2 }} />
 
           <form onSubmit={handleUpdate}>

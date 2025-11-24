@@ -17,14 +17,14 @@ const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:5173", "http://192.168.1.3:5173"],
+    origin: ["http://localhost:5173", "http://192.168.85.7:5173"],
     methods: ["GET", "POST"]
   }
 });
 
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.1.3:5173"],  // ✅ Explicitly allow Vite dev server
+  origin: ["http://localhost:5173", "http://192.168.85.7:5173"],  // ✅ Explicitly allow Vite dev server
   credentials: true                  // ✅ Allow credentials (cookies, auth)
 }));
 
@@ -604,7 +604,7 @@ const ROLE_PAGE_ACCESS = {
   admission: [92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98],
   enrollment: [92, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60,],
   clinic: [92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
-  registrar: [92, 96, 73, 15, 80, 38, 39, 40, 41, 42, 56, 59, 50, 62, 100],
+  registrar: [92, 96, 13, 73, 15, 80, 38, 39, 40, 41, 42, 56, 59, 50, 62, 100],
   superadmin: "ALL"
 };
 
@@ -4055,52 +4055,51 @@ app.post("/login", async (req, res) => {
   }
 
   try {
-    // --- FIX: added ua.require_otp ---
-    const query = `(
-  SELECT 
-    ua.id AS account_id,
-    ua.person_id,
-    ua.email,
-    ua.password,
-    ua.employee_id,
-    ua.role,
-    ua.require_otp,
-    NULL AS profile_image,
-    NULL AS fname,
-    NULL AS mname,
-    NULL AS lname,
-    ua.status AS status,
-    'user' AS source,
-    ua.dprtmnt_id,
-    dt.dprtmnt_name
-  FROM user_accounts AS ua
-  LEFT JOIN dprtmnt_table AS dt ON ua.dprtmnt_id = dt.dprtmnt_id
-  LEFT JOIN student_numbering_table AS snt ON snt.person_id = ua.person_id
-  WHERE (ua.email = ? OR snt.student_number = ?)
-)
-UNION ALL
-(
-  SELECT 
-    ua.prof_id AS account_id,
-    ua.person_id,
-    ua.email,
-    ua.password,
-    ua.employee_id,
-    ua.role,
-    NULL AS require_otp,    -- FIXED
-    ua.profile_image,
-    ua.fname,
-    ua.mname,
-    ua.lname,
-    ua.status,
-    'prof' AS source,
-    NULL AS dprtmnt_id,
-    NULL AS dprtmnt_name
-  FROM prof_table AS ua
-  LEFT JOIN person_prof_table AS pt ON pt.person_id = ua.person_id
-  WHERE ua.email = ?
-);`;
-
+    const query = `
+      (
+        SELECT 
+          ua.id AS account_id,
+          ua.person_id,
+          ua.email,
+          ua.password,
+          ua.employee_id,
+          ua.role,
+          ua.require_otp,
+          NULL AS profile_image,
+          NULL AS fname,
+          NULL AS mname,
+          NULL AS lname,
+          ua.status AS status,
+          'user' AS source,
+          ua.dprtmnt_id,
+          dt.dprtmnt_name
+        FROM user_accounts AS ua
+        LEFT JOIN dprtmnt_table AS dt ON ua.dprtmnt_id = dt.dprtmnt_id
+        LEFT JOIN student_numbering_table AS snt ON snt.person_id = ua.person_id
+        WHERE (ua.email = ? OR snt.student_number = ?)
+      )
+      UNION ALL
+      (
+        SELECT 
+          ua.prof_id AS account_id,
+          ua.person_id,
+          ua.email,
+          ua.password,
+          ua.employee_id,
+          ua.role,
+          ua.require_otp,
+          ua.profile_image,
+          ua.fname,
+          ua.mname,
+          ua.lname,
+          ua.status,
+          'prof' AS source,
+          NULL AS dprtmnt_id,
+          NULL AS dprtmnt_name
+        FROM prof_table AS ua
+        WHERE ua.email = ?
+      );
+    `;
 
     const [results] = await db3.query(query, [
       loginCredentials,
@@ -4121,7 +4120,12 @@ UNION ALL
 
     const user = results[0];
 
-    // --- password check ---
+    // ======================================
+    // 🔥 FIX: normalize require_otp properly
+    // ======================================
+    user.require_otp = Number(user.require_otp) === 1;
+
+    // password check
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       record.count++;
@@ -4140,12 +4144,12 @@ UNION ALL
       });
     }
 
-    // --- status check ---
-    if ((user.source === "prof" || user.source === "user") && user.status === 0) {
+    // status check
+    if (user.status === 0) {
       return res.json({ success: false, message: "The user didn’t exist or account is inactive" });
     }
 
-    // --- FIX: generate JWT BEFORE OTP handling ---
+    // JWT
     const token = webtoken.sign(
       {
         person_id: user.person_id,
@@ -4158,8 +4162,10 @@ UNION ALL
       { expiresIn: "24h" }
     );
 
-    // --- OPTIONAL OTP LOGIC ---
-    if (user.require_otp === 1) {
+    // ======================================
+    // 🔥 FINAL FIX: correct OTP condition
+    // ======================================
+    if (user.require_otp === true) {
       const otp = generateOTP();
 
       otpStore[user.email] = {
@@ -4205,9 +4211,7 @@ UNION ALL
       });
     }
 
-    // -----------------------
     // NO OTP REQUIRED
-    // -----------------------
     return res.json({
       success: true,
       requireOtp: false,
@@ -4223,6 +4227,84 @@ UNION ALL
   } catch (error) {
     console.error("Login error:", error);
     return res.status(500).json({ message: "Server error during login" });
+  }
+});
+
+
+app.get("/get-otp-setting/:person_id", async (req, res) => {
+  const { person_id } = req.params;
+
+  try {
+    const [rows] = await db3.query(
+      "SELECT require_otp FROM user_accounts WHERE person_id = ?",
+      [person_id]
+    );
+
+    if (rows.length === 0) {
+      return res.json({ require_otp: 0 });
+    }
+
+    res.json({ require_otp: rows[0].require_otp });
+  } catch (err) {
+    console.error("OTP fetch error:", err);
+    res.status(500).json({ message: "Server error loading OTP setting" });
+  }
+});
+
+
+app.get("/get-otp-setting/:type/:person_id", async (req, res) => {
+  const { type, person_id } = req.params;
+
+  if (!person_id || !type) return res.status(400).json({ message: "Missing parameters" });
+
+  let table;
+  if (type === "user") table = "user_accounts";
+  else if (type === "prof") table = "prof_table";
+  else return res.status(400).json({ message: "Invalid type" });
+
+  try {
+    const [rows] = await db3.query(
+      `SELECT require_otp FROM ${table} WHERE person_id = ? LIMIT 1`,
+      [person_id]
+    );
+
+    if (rows.length === 0) return res.json({ require_otp: 0 });
+
+    res.json({ require_otp: Number(rows[0].require_otp) === 1 ? 1 : 0 });
+  } catch (err) {
+    console.error("OTP fetch error:", err);
+    res.status(500).json({ message: "Server error loading OTP setting" });
+  }
+});
+
+
+app.post("/update-otp-setting", async (req, res) => {
+  const { type, person_id, require_otp } = req.body;
+
+  if (!person_id || !type) return res.status(400).json({ message: "Missing parameters" });
+
+  let table;
+  if (type === "user") table = "user_accounts";
+  else if (type === "prof") table = "prof_table";
+  else return res.status(400).json({ message: "Invalid type" });
+
+  try {
+    const [result] = await db3.query(
+      `UPDATE ${table} SET require_otp = ? WHERE person_id = ?`,
+      [require_otp, person_id]
+    );
+
+    if (result.affectedRows === 0) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      success: true,
+      message: require_otp == 1
+        ? "OTP has been enabled for your account."
+        : "OTP has been disabled for your account."
+    });
+  } catch (err) {
+    console.error("Failed to update OTP:", err);
+    res.status(500).json({ message: "Server error updating OTP setting" });
   }
 });
 
@@ -5337,6 +5419,8 @@ io.on("connection", (socket) => {
 
 
   // Get applicants assigned to a proctor
+
+  // Get applicants assigned to a proctor
   app.get("/api/proctor-applicants/:proctor_name", async (req, res) => {
     const { proctor_name } = req.params;
     try {
@@ -5417,38 +5501,6 @@ WHERE proctor LIKE ?
     }
   });
 
-
-  // Search proctor by name or email
-  app.get("/api/search-proctor", async (req, res) => {
-    const { query } = req.query;
-
-    if (!query) {
-      return res.status(400).json({ message: "Query is required" });
-    }
-
-    try {
-      const [rows] = await db.query(`
-      SELECT id, person_id, email, first_name, middle_name, last_name, role
-      FROM user_accounts
-      WHERE role = 'proctor'
-        AND (email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)
-      LIMIT 1
-    `, [`%${query}%`, `%${query}%`, `%${query}%`]);
-
-      if (rows.length === 0) {
-        return res.status(404).json({ message: "Proctor not found" });
-      }
-
-      res.json({
-        id: rows[0].id,
-        email: rows[0].email,
-        name: `${rows[0].last_name}, ${rows[0].first_name} ${rows[0].middle_name || ""}`
-      });
-    } catch (err) {
-      console.error("❌ Error searching proctor:", err);
-      res.status(500).json({ error: "Failed to search proctor" });
-    }
-  });
 
   // ✅ Unified Save or Update for Qualifying / Interview Scores (with duplicate-safe notifications)
   app.post("/api/interview/save", async (req, res) => {
@@ -5741,7 +5793,6 @@ WHERE proctor LIKE ?
 
   // 🔹 Bulk Excel Import Exam Scores
   // 🔹 Bulk Excel Import Exam Scores
-
   app.post("/api/exam/import", upload.single("file"), async (req, res) => {
     try {
       if (!req.file) {
@@ -5753,8 +5804,7 @@ WHERE proctor LIKE ?
       const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
-
-      const loggedInUserId = req.body.userID; // 🔑 Should come from session or token (frontend/localStorage)
+      const loggedInUserId = req.body.userID;
 
       // 1️⃣ Collect applicant numbers
       const applicantNumbers = rows
@@ -5795,6 +5845,10 @@ WHERE proctor LIKE ?
 
         const finalRating = (english + science + filipino + math + abstract) / 5;
 
+        // ✅ Read status from Excel (optional)
+        let status = row["Status"]?.toUpperCase();
+        if (status !== "PASSED" && status !== "FAILED") status = null;
+
         values.push([
           personId,
           english,
@@ -5803,6 +5857,7 @@ WHERE proctor LIKE ?
           math,
           abstract,
           finalRating,
+          status,           // ⬅️ NEW
           loggedInUserId,
           now,
         ]);
@@ -5815,21 +5870,22 @@ WHERE proctor LIKE ?
       // 4️⃣ Bulk insert or update
       await db.query(
         `INSERT INTO admission_exam 
-      (person_id, English, Science, Filipino, Math, Abstract, final_rating, user, date_created)
-      VALUES ?
-      ON DUPLICATE KEY UPDATE
-        English = VALUES(English),
-        Science = VALUES(Science),
-        Filipino = VALUES(Filipino),
-        Math = VALUES(Math),
-        Abstract = VALUES(Abstract),
-        final_rating = VALUES(final_rating),
-        user = VALUES(user),
-        date_created = VALUES(date_created)`,
+        (person_id, English, Science, Filipino, Math, Abstract, final_rating, status, user, date_created)
+       VALUES ?
+       ON DUPLICATE KEY UPDATE
+         English = VALUES(English),
+         Science = VALUES(Science),
+         Filipino = VALUES(Filipino),
+         Math = VALUES(Math),
+         Abstract = VALUES(Abstract),
+         final_rating = VALUES(final_rating),
+         status = VALUES(status),
+         user = VALUES(user),
+         date_created = VALUES(date_created)`,
         [values]
       );
 
-      // 5️⃣ Get uploader (actor) info from user_accounts
+      // 5️⃣ Actor info & notifications
       let actorEmail = "earistmis@gmail.com";
       let actorName = "SYSTEM";
 
@@ -5853,7 +5909,6 @@ WHERE proctor LIKE ?
         }
       }
 
-      // 6️⃣ Save notification
       const message = `📊 Bulk Entrance Exam Scores uploaded`;
 
       await db.query(
@@ -5861,7 +5916,6 @@ WHERE proctor LIKE ?
         ["upload", message, null, actorEmail, actorName]
       );
 
-      // 7️⃣ Emit socket event
       io.emit("notification", {
         type: "upload",
         message,
@@ -5877,6 +5931,7 @@ WHERE proctor LIKE ?
       res.status(500).json({ error: "Failed to import Excel" });
     }
   });
+
 
 
 
@@ -7330,6 +7385,7 @@ app.get("/api/exam-schedule-count/:schedule_id", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
 
 // GET schedules with current occupancy
 app.get("/exam_schedules_with_count", async (req, res) => {
@@ -12575,10 +12631,10 @@ app.put("/api/update_profile_image/:person_id", profileUpload.single("profileIma
 });
 
 // Create announcement
-// Use multer for parsing FormData
+// Create announcement (UNIFIED – NO MORE /upload version)
 app.post(
   "/api/announcements",
-  announcementUpload.single("image"), // field name must match frontend
+  announcementUpload.single("image"),
   async (req, res) => {
     const { title, content, valid_days, target_role, creator_role, creator_id } = req.body;
 
@@ -12595,12 +12651,10 @@ app.post(
       return res.status(400).json({ error: "Invalid creator_role" });
     }
 
-
     try {
-      // Step 1: Insert announcement
       const [result] = await db.execute(
         `INSERT INTO announcements 
-         (title, content, valid_days, target_role, creator_role, creator_id, expires_at) 
+         (title, content, valid_days, target_role, creator_role, creator_id, expires_at)
          VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY))`,
         [title, content, valid_days, target_role, creator_role, creator_id, valid_days]
       );
@@ -12608,7 +12662,6 @@ app.post(
       const announcementId = result.insertId;
       let filename = null;
 
-      // Step 2: If file uploaded, rename + save
       if (req.file) {
         const ext = path.extname(req.file.originalname).toLowerCase();
         filename = `${announcementId}_announcement${ext}`;
@@ -12617,10 +12670,10 @@ app.post(
 
         fs.renameSync(oldPath, newPath);
 
-        await db.execute("UPDATE announcements SET file_path = ? WHERE id = ?", [
-          filename,
-          announcementId,
-        ]);
+        await db.execute(
+          "UPDATE announcements SET file_path = ? WHERE id = ?",
+          [filename, announcementId]
+        );
       }
 
       res.json({
@@ -12635,10 +12688,11 @@ app.post(
   }
 );
 
+
 // Update announcement by ID with optional image
 app.put(
   "/api/announcements/:id",
-  announcementUpload.single("image"), // multer handles uploaded file
+  announcementUpload.single("image"),
   async (req, res) => {
     const { id } = req.params;
     const { title, content, valid_days, target_role } = req.body;
@@ -12653,7 +12707,7 @@ app.put(
     }
 
     try {
-      // Step 1: Update basic fields
+      // Update data
       const [result] = await db.execute(
         `UPDATE announcements
          SET title = ?, content = ?, valid_days = ?, target_role = ?,
@@ -12666,7 +12720,7 @@ app.put(
         return res.status(404).json({ error: "Announcement not found" });
       }
 
-      // Step 2: Handle uploaded image if exists
+      // Handle updated image
       if (req.file) {
         const ext = path.extname(req.file.originalname).toLowerCase();
         const filename = `${id}_announcement${ext}`;
@@ -12688,6 +12742,7 @@ app.put(
     }
   }
 );
+
 
 
 // Fetch valid announcements
@@ -12736,44 +12791,6 @@ app.delete("/api/announcements/:id", async (req, res) => {
   }
 });
 
-app.post("/api/announcements/upload", announcementUpload.single("file"), async (req, res) => {
-  const { title, content, valid_days, target_role, creator_role, creator_id } = req.body;
-
-  try {
-    // Step 1: Insert announcement without file_path
-    const [result] = await db.execute(
-      `INSERT INTO announcements (title, content, valid_days, target_role, creator_role, creator_id, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY))`,
-      [title, content, valid_days, target_role, creator_role, creator_id, valid_days]
-    );
-
-    const announcementId = result.insertId;
-
-    let filename = null;
-
-    if (req.file) {
-      // Step 2: Build new filename using ID
-      const ext = path.extname(req.file.originalname).toLowerCase();
-      filename = `${announcementId}_announcement_2025${ext}`;
-      const oldPath = path.join(__dirname, "uploads", req.file.filename);
-      const newPath = path.join(__dirname, "uploads", filename);
-
-      // Step 3: Rename file
-      fs.renameSync(oldPath, newPath);
-
-      // Step 4: Update announcement with file_path
-      await db.execute(
-        "UPDATE announcements SET file_path = ? WHERE id = ?",
-        [filename, announcementId]
-      );
-    }
-
-    res.json({ message: "Announcement created with image", id: announcementId, file: filename });
-  } catch (err) {
-    console.error("Error uploading announcement:", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
 // Only announcements for students
 app.get("/api/announcements/student", async (req, res) => {
@@ -15320,55 +15337,7 @@ app.get("/api/person/:id", (req, res) => {
   });
 });
 
-app.get("/get-otp-setting/:person_id", async (req, res) => {
-  const { person_id } = req.params;
 
-  try {
-    const [rows] = await db3.query(
-      "SELECT require_otp FROM user_accounts WHERE person_id = ?",
-      [person_id]
-    );
-
-    if (rows.length === 0) {
-      return res.json({ require_otp: 0 });
-    }
-
-    res.json({ require_otp: rows[0].require_otp });
-  } catch (err) {
-    console.error("OTP fetch error:", err);
-    res.status(500).json({ message: "Server error loading OTP setting" });
-  }
-});
-
-app.post("/update-otp-setting", async (req, res) => {
-  const { person_id, require_otp } = req.body;
-
-  if (!person_id) {
-    return res.status(400).json({ message: "Missing person_id" });
-  }
-
-  try {
-    const [result] = await db3.query(
-      "UPDATE user_accounts SET require_otp = ? WHERE person_id = ?",
-      [require_otp, person_id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({
-      success: true,
-      message: require_otp == 1
-        ? "OTP has been enabled for your account."
-        : "OTP has been disabled for your account."
-    });
-
-  } catch (err) {
-    console.error("Failed to update OTP:", err);
-    res.status(500).json({ message: "Server error updating OTP setting" });
-  }
-});
 
 app.get("/api/:employeeID", async (req, res) => {
   const { employeeID } = req.params;

@@ -22,8 +22,8 @@ import {
     TableCell,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import API_BASE_URL from "../apiConfig";
 import { useNavigate } from "react-router-dom";
+import API_BASE_URL from "../apiConfig";
 
 const ScheduleHoverTile = () => {
     const navigate = useNavigate();
@@ -163,6 +163,7 @@ const ScheduleHoverTile = () => {
         if (ratio >= 0.7) return "#f57c00";
         return "#388e3c";
     };
+
     return (
         <Box
             sx={{
@@ -365,7 +366,7 @@ const ScheduleHoverTile = () => {
                         <Card
                             onClick={() =>
                                 navigate(
-                                    `${API_BASE_URL}/proctor_applicant_list?proctor=${encodeURIComponent(
+                                    `/proctor_applicant_list?proctor=${encodeURIComponent(
                                         schedule.proctor
                                     )}&schedule=${schedule.schedule_id}`
                                 )
