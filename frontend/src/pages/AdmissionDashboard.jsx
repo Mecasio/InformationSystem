@@ -35,6 +35,7 @@ import {
   ContactEmergency,
 } from "@mui/icons-material";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
+import CampaignIcon from '@mui/icons-material/Campaign';
 import API_BASE_URL from "../apiConfig";
 
 const AdmissionDashboardPanel = () => {
@@ -140,7 +141,7 @@ const AdmissionDashboardPanel = () => {
         { title: "EXAMINATION PERMIT", link: "/registrar_examination_profile", icon: Badge, page_id: 48 },
         { title: "PROCTOR'S APPLICANT LIST", link: "/admission_schedule_room_list", icon: People, page_id: 33 },
         { title: "ENTRANCE EXAMINATION SCORES", link: "/applicant_scoring", icon: Score, page_id: 8 },
-        { title: "ANNOUNCEMENT FOR ADMISSION", link: "/announcement_for_admission", icon: Score, page_id: 98 },
+        { title: "ANNOUNCEMENT FOR ADMISSION", link: "/announcement_for_admission", icon: CampaignIcon, page_id: 98 },
 
       ],
     },
