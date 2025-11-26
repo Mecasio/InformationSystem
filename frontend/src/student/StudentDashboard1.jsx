@@ -1079,7 +1079,7 @@ const StudentDashboard1 = () => {
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
-
+                                    readOnly
                                     value={person.campus == null ? "" : String(person.campus)}
                                     label="Campus (Manila/Cavite)"
                                     onChange={(e) => {
@@ -1114,7 +1114,7 @@ const StudentDashboard1 = () => {
                                     labelId="academic-program-label"
                                     id="academic-program-select"
                                     name="academicProgram"
-
+                                    readOnly
                                     value={person.academicProgram || ""}
                                     label="Academic Program"
                                     onChange={handleChange}
@@ -1139,7 +1139,7 @@ const StudentDashboard1 = () => {
                                     labelId="classified-as-label"
                                     id="classified-as-select"
                                     name="classifiedAs"
-
+                                    readOnly
                                     value={person.classifiedAs || ""}
                                     label="Classified As"
                                     onChange={handleChange}
@@ -1167,7 +1167,7 @@ const StudentDashboard1 = () => {
                                     labelId="applying-as-label"
                                     id="applying-as-select"
                                     name="applyingAs"
-
+                                    readOnly
                                     value={person.applyingAs || ""}
                                     label="Applying As"
                                     onChange={handleChange}
@@ -1207,7 +1207,7 @@ const StudentDashboard1 = () => {
                                         <FormControl fullWidth size="small" required error={!!errors.program}>
                                             <InputLabel>Program</InputLabel>
                                             <Select
-
+                                                readOnly
                                                 name="program"
                                                 value={person.program || ""}
                                                 onBlur={handleBlur}

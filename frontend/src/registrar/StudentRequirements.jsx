@@ -44,16 +44,7 @@ const tabs = [
   { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
   { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
   { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
-  { label: "Room Registration", to: "/room_registration", icon: <KeyIcon fontSize="large" /> },
-  { label: "Entrance Exam Room Assignment", to: "/assign_entrance_exam", icon: <MeetingRoomIcon fontSize="large" /> },
-  { label: "Entrance Exam Schedule Management", to: "/assign_schedule_applicant", icon: <ScheduleIcon fontSize="large" /> },
   { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
-  { label: "Proctor's Applicant List", to: "/proctor_applicant_list", icon: <PeopleIcon fontSize="large" /> },
-  { label: "Entrance Examination Scores", to: "/applicant_scoring", icon: <FactCheckIcon fontSize="large" /> },
-  { label: "Announcement", to: "/announcement_for_admission", icon: <CampaignIcon fontSize="large" /> },
-
-
-
 ];
 
 
@@ -108,14 +99,16 @@ const StudentRequirements = () => {
 
   const handleStepClick = (index, to) => {
     setActiveStep(index);
-
     const pid = sessionStorage.getItem("admin_edit_person_id");
-    if (pid) {
+
+    if (pid && to !== "/applicant_list_admin") {
       navigate(`${to}?person_id=${pid}`);
     } else {
       navigate(to);
     }
   };
+
+
 
   const location = useLocation();
   const [uploads, setUploads] = useState([]);
@@ -139,6 +132,36 @@ const StudentRequirements = () => {
     extension: "",
     applicant_number: "",
   });
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const personIdFromUrl = queryParams.get("person_id");
+
+    if (!personIdFromUrl) return;
+
+    // fetch info of that person
+    axios
+      .get(`http://localhost:5000/api/person_with_applicant/${personIdFromUrl}`)
+      .then((res) => {
+        if (res.data?.applicant_number) {
+
+          // AUTO-INSERT applicant_number into search bar
+          setSearchQuery(res.data.applicant_number);
+
+          // If you have a fetchUploads() or fetchExamScore() — call it
+          if (typeof fetchUploadsByApplicantNumber === "function") {
+            fetchUploadsByApplicantNumber(res.data.applicant_number);
+          }
+
+          if (typeof fetchApplicants === "function") {
+            fetchApplicants();
+          }
+        }
+      })
+      .catch((err) => console.error("Auto search failed:", err));
+  }, [location.search]);
+
+
   const [editingRemarkId, setEditingRemarkId] = useState(null);
   const [newRemarkMode, setNewRemarkMode] = useState({}); // { [upload_id]: true|false }
   const [documentStatus, setDocumentStatus] = useState("");

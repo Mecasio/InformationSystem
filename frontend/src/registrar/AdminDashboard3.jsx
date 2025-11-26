@@ -72,18 +72,11 @@ const AdminDashboard3 = () => {
 
 
   const stepsData = [
-     { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
-        { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
-        { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
-        { label: "Room Registration", to: "/room_registration", icon: <KeyIcon fontSize="large" /> },
-        { label: "Entrance Exam Room Assignment", to: "/assign_entrance_exam", icon: <MeetingRoomIcon fontSize="large" /> },
-        { label: "Entrance Exam Schedule Management", to: "/assign_schedule_applicant", icon: <ScheduleIcon fontSize="large" /> },
-        { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
-        { label: "Proctor's Applicant List", to: "/proctor_applicant_list", icon: <PeopleIcon fontSize="large" /> },
-        { label: "Entrance Examination Scores", to: "/applicant_scoring", icon: <FactCheckIcon fontSize="large" /> },
-        { label: "Announcement", to: "/announcement_for_admission", icon: <CampaignIcon fontSize="large" /> },
-
-
+ { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
+    { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
+    { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
+   
+  { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
 
   ];
   const [currentStep, setCurrentStep] = useState(1);
@@ -139,48 +132,48 @@ const AdminDashboard3 = () => {
   });
   const location = useLocation();
 
-   const queryParams = new URLSearchParams(location.search);
-   const queryPersonId = queryParams.get("person_id")?.trim() || "";
- 
-   useEffect(() => {
-     const storedUser = localStorage.getItem("email");
-     const storedRole = localStorage.getItem("role");
-     const loggedInPersonId = localStorage.getItem("person_id");
- 
-     if (!storedUser || !storedRole || !loggedInPersonId) {
-       window.location.href = "/login";
-       return;
-     }
- 
-     setUser(storedUser);
-     setUserRole(storedRole);
- 
-     const allowedRoles = ["registrar", "applicant", "superadmin"];
-     if (!allowedRoles.includes(storedRole)) {
-       window.location.href = "/login";
-       return;
-     }
- 
-     const lastSelected = sessionStorage.getItem("admin_edit_person_id");
- 
-     // ⭐ CASE 1: URL HAS ?person_id=
-     if (queryPersonId !== "") {
-       sessionStorage.setItem("admin_edit_person_id", queryPersonId);
-       setUserID(queryPersonId);
-       return;
-     }
- 
-     // ⭐ CASE 2: URL has NO ID but we have a last selected student
-     if (lastSelected) {
-       setUserID(lastSelected);
-       return;
-     }
- 
-     // ⭐ CASE 3: No URL ID and no last selected → start blank
-     setUserID("");
-   }, [queryPersonId]);
- 
- 
+  const queryParams = new URLSearchParams(location.search);
+  const queryPersonId = queryParams.get("person_id")?.trim() || "";
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const loggedInPersonId = localStorage.getItem("person_id");
+
+    if (!storedUser || !storedRole || !loggedInPersonId) {
+      window.location.href = "/login";
+      return;
+    }
+
+    setUser(storedUser);
+    setUserRole(storedRole);
+
+    const allowedRoles = ["registrar", "applicant", "superadmin"];
+    if (!allowedRoles.includes(storedRole)) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const lastSelected = sessionStorage.getItem("admin_edit_person_id");
+
+    // ⭐ CASE 1: URL HAS ?person_id=
+    if (queryPersonId !== "") {
+      sessionStorage.setItem("admin_edit_person_id", queryPersonId);
+      setUserID(queryPersonId);
+      return;
+    }
+
+    // ⭐ CASE 2: URL has NO ID but we have a last selected student
+    if (lastSelected) {
+      setUserID(lastSelected);
+      return;
+    }
+
+    // ⭐ CASE 3: No URL ID and no last selected → start blank
+    setUserID("");
+  }, [queryPersonId]);
+
+
 
 
 
@@ -198,55 +191,55 @@ const AdminDashboard3 = () => {
   }, []);
 
 
-   const [hasAccess, setHasAccess] = useState(null);
-   const [loading, setLoading] = useState(false);
- 
-   const pageId = 3;
- 
-   const [employeeID, setEmployeeID] = useState("");
- 
-   useEffect(() => {
- 
-     const storedUser = localStorage.getItem("email");
-     const storedRole = localStorage.getItem("role");
-     const storedID = localStorage.getItem("person_id");
-     const storedEmployeeID = localStorage.getItem("employee_id");
- 
-     if (storedUser && storedRole && storedID) {
-       setUser(storedUser);
-       setUserRole(storedRole);
-       setUserID(storedID);
-       setEmployeeID(storedEmployeeID);
- 
-       if (storedRole === "registrar") {
-         checkAccess(storedEmployeeID);
-       } else {
-         window.location.href = "/login";
-       }
-     } else {
-       window.location.href = "/login";
-     }
-   }, []);
- 
-   const checkAccess = async (employeeID) => {
-     try {
-       const response = await axios.get(`${API_BASE_URL}/api/page_access/${employeeID}/${pageId}`);
-       if (response.data && response.data.page_privilege === 1) {
-         setHasAccess(true);
-       } else {
-         setHasAccess(false);
-       }
-     } catch (error) {
-       console.error('Error checking access:', error);
-       setHasAccess(false);
-       if (error.response && error.response.data.message) {
-         console.log(error.response.data.message);
-       } else {
-         console.log("An unexpected error occurred.");
-       }
-       setLoading(false);
-     }
-   };
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const pageId = 3;
+
+  const [employeeID, setEmployeeID] = useState("");
+
+  useEffect(() => {
+
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const storedID = localStorage.getItem("person_id");
+    const storedEmployeeID = localStorage.getItem("employee_id");
+
+    if (storedUser && storedRole && storedID) {
+      setUser(storedUser);
+      setUserRole(storedRole);
+      setUserID(storedID);
+      setEmployeeID(storedEmployeeID);
+
+      if (storedRole === "registrar") {
+        checkAccess(storedEmployeeID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+  const checkAccess = async (employeeID) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/page_access/${employeeID}/${pageId}`);
+      if (response.data && response.data.page_privilege === 1) {
+        setHasAccess(true);
+      } else {
+        setHasAccess(false);
+      }
+    } catch (error) {
+      console.error('Error checking access:', error);
+      setHasAccess(false);
+      if (error.response && error.response.data.message) {
+        console.log(error.response.data.message);
+      } else {
+        console.log("An unexpected error occurred.");
+      }
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("email");
@@ -456,7 +449,7 @@ const AdminDashboard3 = () => {
 
   const [errors, setErrors] = useState({});
 
- 
+
 
   const [clickedSteps, setClickedSteps] = useState(Array(steps.length).fill(false));
 
@@ -655,7 +648,7 @@ const AdminDashboard3 = () => {
           justifyContent: "space-between",
           alignItems: "center",
           width: "100%",
-        
+
         }}
       >
         {stepsData.map((step, index) => (
@@ -714,7 +707,7 @@ const AdminDashboard3 = () => {
         ))}
       </Box>
 
-        <div style={{ height: "40px" }}></div>
+      <div style={{ height: "40px" }}></div>
 
 
 
@@ -749,7 +742,7 @@ const AdminDashboard3 = () => {
       </TableContainer>
 
 
-       <Box
+      <Box
         sx={{
           display: "flex",
           justifyContent: "center",

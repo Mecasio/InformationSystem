@@ -135,10 +135,11 @@ const AdmissionDashboardPanel = () => {
         { title: "APPLICANT LIST", link: "/applicant_list_admin", icon: ListAltOutlined, page_id: 7 },
         { title: "APPLICANT FORM", link: "/admin_dashboard1", icon: AccountCircle, page_id: 1 },
         { title: "DOCUMENTS SUBMITTED", link: "/student_requirements", icon: Description, page_id: 61 },
+        { title: "EXAMINATION PERMIT", link: "/registrar_examination_profile", icon: Badge, page_id: 48 },
         { title: "ROOM REGISTRATION", link: "/room_registration", icon: MeetingRoom, page_id: 52 },
         { title: "ENTRANCE EXAM ROOM ASSIGNMENT", link: "/assign_entrance_exam", icon: MeetingRoom, page_id: 9 },
         { title: "ENTRANCE EXAM SCHEDULE MANAGEMENT", link: "/assign_schedule_applicant", icon: EditCalendar, page_id: 11 },
-        { title: "EXAMINATION PERMIT", link: "/registrar_examination_profile", icon: Badge, page_id: 48 },
+
         { title: "PROCTOR'S APPLICANT LIST", link: "/admission_schedule_room_list", icon: People, page_id: 33 },
         { title: "ENTRANCE EXAMINATION SCORES", link: "/applicant_scoring", icon: Score, page_id: 8 },
         { title: "ANNOUNCEMENT FOR ADMISSION", link: "/announcement_for_admission", icon: CampaignIcon, page_id: 98 },
@@ -152,12 +153,13 @@ const AdmissionDashboardPanel = () => {
         { title: "APPLICANT LIST", link: "/applicant_list", icon: ListAlt, page_id: 6 },
         { title: "APPLICANT FORM", link: "/registrar_dashboard1", icon: AccountCircle, page_id: 43 },
         { title: "DOCUMENTS SUBMITTED", link: "/registrar_requirements", icon: FolderCopy, page_id: 49 },
-        { title: "QUALIFYING / INTERVIEW ROOM MANAGEMENT", link: "/assign_qualifying_interview_exam", icon: MeetingRoom, page_id: 10 },
-        { title: "QUALIFYING / INTERVIEW SCHEDULE MANAGEMENT", link: "/assign_schedule_applicants_qualifying_interview", icon: EditCalendar, page_id: 12 },
-        { title: "QUALIFYING / INTERVIEWER APPLICANT LIST", link: "/enrollment_schedule_room_list", icon: People, page_id: 36 },
         { title: "QUALIFYING / INTERVIEW EXAM SCORES", link: "/qualifying_interview_exam_scores", icon: Assessment, page_id: 37 },
         { title: "STUDENT NUMBERING FOR COLLEGE", link: "/student_numbering_per_college", icon: FormatListNumbered, page_id: 60 },
         { title: "COURSE TAGGING", link: "/course_tagging", icon: Class, page_id: 17 },
+        { title: "QUALIFYING / INTERVIEW ROOM MANAGEMENT", link: "/assign_qualifying_interview_exam", icon: MeetingRoom, page_id: 10 },
+        { title: "QUALIFYING / INTERVIEW SCHEDULE MANAGEMENT", link: "/assign_schedule_applicants_qualifying_interview", icon: EditCalendar, page_id: 12 },
+        { title: "QUALIFYING / INTERVIEWER APPLICANT LIST", link: "/enrollment_schedule_room_list", icon: People, page_id: 36 },
+
       ],
     },
 
@@ -180,7 +182,7 @@ const AdmissionDashboardPanel = () => {
       items: [
         { title: "APPLICANT LIST", link: "/super_admin_applicant_list", icon: ListAltOutlined, page_id: 80 },
         { title: "APPLICANT FORM", link: "/readmission_dashboard1", icon: AccountCircle, page_id: 38 },
-      
+
         { title: "CLASS LIST", link: "/class_roster", icon: Class, page_id: 15 },
         { title: "SEARCH CERTIFICATE OF REGISTRATION", link: "/search_cor", icon: Search, page_id: 56 },
         { title: "STUDENT NUMBERING PANEL", link: "/student_numbering", icon: Numbers, page_id: 59 },

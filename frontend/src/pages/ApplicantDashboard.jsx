@@ -662,6 +662,7 @@ const ApplicantDashboard = (props) => {
               boxShadow: 3,
               height: "135px",
               width: "1485px",
+              backgroundColor: "#fef9e1",
               marginLeft: "10px",
               p: 2,
               transition: "transform 0.3s ease, box-shadow 0.3s ease",
@@ -1299,7 +1300,7 @@ const ApplicantDashboard = (props) => {
                           width: 60,
                           height: 60,
                           borderRadius: "50%",
-                          backgroundColor: isActive ? "#800000" : isCompleted ? "#800000" : "#E8C999",
+                          backgroundColor: isActive ? "#800000" : isCompleted ? "green" : "orange",
 
                           border: `2px solid ${borderColor}`,
                           display: "flex",
@@ -1310,7 +1311,7 @@ const ApplicantDashboard = (props) => {
                         }}
                       >
                         {React.cloneElement(icons[index], {
-                          sx: { color: isActive || isCompleted ? "white" : "#6D2323", fontSize: 30 },
+                          sx: { color: isActive || isCompleted ? "white" : "#000", fontSize: 30 },
                         })}
                       </Box>
                     );

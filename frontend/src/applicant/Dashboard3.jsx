@@ -382,73 +382,73 @@ const Dashboard3 = (props) => {
       <br />
 
       <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          width: "100%",
+          mt: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            p: 2,
+            borderRadius: "10px",
+            backgroundColor: "#fffaf5",
+            border: "1px solid #6D2323",
+            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+            width: "100%",
+            overflow: "hidden",
+          }}
+        >
+          {/* Icon */}
+          <Box
             sx={{
               display: "flex",
+              alignItems: "center",
               justifyContent: "center",
-              width: "100%",
-              mt: 2,
+              backgroundColor: "#800000",
+              borderRadius: "8px",
+              width: 60,
+              height: 60,
+              flexShrink: 0,
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                p: 2,
-                borderRadius: "10px",
-                backgroundColor: "#fffaf5",
-                border: "1px solid #6D2323",
-                boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-                width: "100%",
-                overflow: "hidden",
-              }}
-            >
-              {/* Icon */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: "#800000",
-                  borderRadius: "8px",
-                  width: 60,
-                  height: 60,
-                  flexShrink: 0,
-                }}
-              >
-                <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
-              </Box>
-    
-              {/* Text */}
-              <Typography
-                sx={{
-                  fontSize: "20px",
-                  fontFamily: "Arial",
-                  color: "#3e3e3e",
-                  lineHeight: 1.3, // slightly tighter to fit in fewer rows
-                  whiteSpace: "normal",
-                  overflow: "hidden",
-                }}
-              >
-                <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-                <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
-                <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
-    
-              </Typography>
-            </Box>
+            <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
           </Box>
-    
-          <h1
-            style={{
-              fontSize: "30px",
-              fontWeight: "bold",
-              textAlign: "center",
-              color: "black",
-              marginTop: "25px",
+
+          {/* Text */}
+          <Typography
+            sx={{
+              fontSize: "20px",
+              fontFamily: "Arial",
+              color: "#3e3e3e",
+              lineHeight: 1.3, // slightly tighter to fit in fewer rows
+              whiteSpace: "normal",
+              overflow: "hidden",
             }}
           >
-            LISTS OF ALL PRINTABLE FILES
-          </h1>
+            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+
+          </Typography>
+        </Box>
+      </Box>
+
+      <h1
+        style={{
+          fontSize: "30px",
+          fontWeight: "bold",
+          textAlign: "center",
+          color: "black",
+          marginTop: "25px",
+        }}
+      >
+        LISTS OF ALL PRINTABLE FILES
+      </h1>
 
       <Box
         sx={{
@@ -625,52 +625,51 @@ const Dashboard3 = (props) => {
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
 
-
             <Box
               sx={{
                 display: "flex",
-                gap: 2, // space between fields
+                flexWrap: "nowrap",   // 🔥 forces one row only
+                gap: 2,
                 mb: 2,
               }}
             >
-              {/* Each Box here is one input container */}
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
+              {/* Educational Attainment */}
+              <Box sx={{ flex: "1" }}>
+                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                   Educational Attainment
                 </Typography>
-                <Box sx={{ flex: "1 1 25%" }}>
-                  <FormControl fullWidth size="small" required error={!!errors.schoolLevel}>
-                    <InputLabel id="schoolLevel-label">Educational Attainment</InputLabel>
-                    <Select
-                      labelId="schoolLevel-label"
-                      id="schoolLevel"
-                      name="schoolLevel"
-                      value={person.schoolLevel ?? ""}
-                      label="School Level"
-                      onChange={handleChange}
-                      onBlur={() => handleUpdate(person)}
 
-                    >
-                      <MenuItem value="">
-                        <em>Select School Level</em>
-                      </MenuItem>
-                      <MenuItem value="High School/Junior High School">High School/Junior High School</MenuItem>
-                      <MenuItem value="ALS">ALS</MenuItem>
-                      <MenuItem value="Vocational/Trade Course">Vocational/Trade Course</MenuItem>
-                    </Select>
-                    {errors.schoolLevel && (
-                      <FormHelperText>This field is required.</FormHelperText>
-                    )}
-                  </FormControl>
-                </Box>
-
+                <FormControl fullWidth size="small" required error={!!errors.schoolLevel}>
+                  <InputLabel id="schoolLevel-label">Educational Attainment</InputLabel>
+                  <Select
+                    labelId="schoolLevel-label"
+                    id="schoolLevel"
+                    name="schoolLevel"
+                    value={person.schoolLevel ?? ""}
+                    label="Educational Attainment"
+                    onChange={handleChange}
+                    onBlur={() => handleUpdate(person)}
+                  >
+                    <MenuItem value="">
+                      <em>Select School Level</em>
+                    </MenuItem>
+                    <MenuItem value="High School/Junior High School">
+                      High School/Junior High School
+                    </MenuItem>
+                    <MenuItem value="ALS">ALS</MenuItem>
+                  </Select>
+                  {errors.schoolLevel && (
+                    <FormHelperText>This field is required.</FormHelperText>
+                  )}
+                </FormControl>
               </Box>
 
-
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
+              {/* School Last Attended */}
+              <Box sx={{ flex: "1" }}>
+                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                   School Last Attended
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
@@ -680,45 +679,52 @@ const Dashboard3 = (props) => {
                   value={person.schoolLastAttended || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.schoolLastAttended}
-                  helperText={errors.schoolLastAttended ? "This field is required." : ""}
+                  helperText={
+                    errors.schoolLastAttended ? "This field is required." : ""
+                  }
                 />
               </Box>
 
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
-                  School Address
+              {/* School Address */}
+              <Box sx={{ flex: "1" }}>
+                <Typography
+                  variant="subtitle1"
+                  mb={1}
+                  sx={{ minHeight: "32px", fontSize: "12.5px" }}
+                >
+                  School Full Address (Street / BRGY / City)
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
                   required
                   name="schoolAddress"
+                  placeholder="Enter your School Address"
                   value={person.schoolAddress || ""}
                   onChange={handleChange}
-                  placeholder="Enter your School Address"
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.schoolAddress}
                   helperText={errors.schoolAddress ? "This field is required." : ""}
                 />
               </Box>
 
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
+              {/* Course Program */}
+              <Box sx={{ flex: "1" }}>
+                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                   Course Program
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
-                  name="courseProgram"
                   required
-                  value={person.courseProgram || ""}
+                  name="courseProgram"
                   placeholder="Enter your Course Program"
+                  value={person.courseProgram || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.courseProgram}
                   helperText={errors.courseProgram ? "This field is required." : ""}
                 />
@@ -801,15 +807,17 @@ const Dashboard3 = (props) => {
             <Box
               sx={{
                 display: "flex",
+                flexWrap: "nowrap",
                 gap: 2,
                 mb: 2,
               }}
             >
               {/* School Level 1 */}
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
+              <Box sx={{ flex: "1" }}>
+                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                   Educational Attainment
                 </Typography>
+
                 <FormControl fullWidth size="small" required error={!!errors.schoolLevel1}>
                   <InputLabel id="schoolLevel1-label">Educational Attainment</InputLabel>
                   <Select
@@ -817,19 +825,19 @@ const Dashboard3 = (props) => {
                     id="schoolLevel1"
                     name="schoolLevel1"
                     value={person.schoolLevel1 ?? ""}
-                    label="School Level"
+                    label="Educational Attainment"
                     onChange={handleChange}
                     onBlur={() => handleUpdate(person)}
-
                   >
-                    <MenuItem value=""><em>Select School Level</em></MenuItem>
-
+                    <MenuItem value="">
+                      <em>Select School Level</em>
+                    </MenuItem>
                     <MenuItem value="Senior High School">Senior High School</MenuItem>
                     <MenuItem value="Undergraduate">Undergraduate</MenuItem>
                     <MenuItem value="Graduate">Graduate</MenuItem>
                     <MenuItem value="ALS">ALS</MenuItem>
-                    <MenuItem value="Vocational/Trade Course">Vocational/Trade Course</MenuItem>
                   </Select>
+
                   {errors.schoolLevel1 && (
                     <FormHelperText>This field is required.</FormHelperText>
                   )}
@@ -837,10 +845,11 @@ const Dashboard3 = (props) => {
               </Box>
 
               {/* School Last Attended 1 */}
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
+              <Box sx={{ flex: "1" }}>
+                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                   School Last Attended
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
@@ -850,17 +859,21 @@ const Dashboard3 = (props) => {
                   value={person.schoolLastAttended1 || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.schoolLastAttended1}
                   helperText={errors.schoolLastAttended1 ? "This field is required." : ""}
                 />
               </Box>
 
               {/* School Address 1 */}
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
-                  School Address
+              <Box sx={{ flex: "1" }}>
+                <Typography
+                  variant="subtitle1"
+                  mb={1}
+                  sx={{ minHeight: "32px", fontSize: "12.5px" }}
+                >
+                  School Full Address (Street / BRGY / City)
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
@@ -870,17 +883,17 @@ const Dashboard3 = (props) => {
                   value={person.schoolAddress1 || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.schoolAddress1}
                   helperText={errors.schoolAddress1 ? "This field is required." : ""}
                 />
               </Box>
 
               {/* Course Program 1 */}
-              <Box sx={{ flex: "1 1 25%" }}>
-                <Typography variant="subtitle1" mb={1}>
+              <Box sx={{ flex: "1" }}>
+                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                   Course Program
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
@@ -890,12 +903,12 @@ const Dashboard3 = (props) => {
                   value={person.courseProgram1 || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.courseProgram1}
                   helperText={errors.courseProgram1 ? "This field is required." : ""}
                 />
               </Box>
             </Box>
+
 
             <Box
               sx={{

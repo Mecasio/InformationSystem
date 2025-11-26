@@ -71,17 +71,10 @@ const AdminDashboard2 = () => {
 
 
   const stepsData = [
-    { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
-        { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
-        { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
-        { label: "Room Registration", to: "/room_registration", icon: <KeyIcon fontSize="large" /> },
-        { label: "Entrance Exam Room Assignment", to: "/assign_entrance_exam", icon: <MeetingRoomIcon fontSize="large" /> },
-        { label: "Entrance Exam Schedule Management", to: "/assign_schedule_applicant", icon: <ScheduleIcon fontSize="large" /> },
-        { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
-        { label: "Proctor's Applicant List", to: "/proctor_applicant_list", icon: <PeopleIcon fontSize="large" /> },
-        { label: "Entrance Examination Scores", to: "/applicant_scoring", icon: <FactCheckIcon fontSize="large" /> },
-        { label: "Announcement", to: "/announcement_for_admission", icon: <CampaignIcon fontSize="large" /> },
-
+   { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
+      { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
+      { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
+       { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
 
 
   ];
@@ -738,7 +731,7 @@ const AdminDashboard2 = () => {
           justifyContent: "space-between",
           alignItems: "center",
           width: "100%",
-         
+
         }}
       >
         {stepsData.map((step, index) => (
@@ -797,7 +790,7 @@ const AdminDashboard2 = () => {
         ))}
       </Box>
 
-          <div style={{ height: "40px" }}></div>
+      <div style={{ height: "40px" }}></div>
 
 
 
@@ -832,7 +825,7 @@ const AdminDashboard2 = () => {
       </TableContainer>
 
 
-       <Box
+      <Box
         sx={{
           display: "flex",
           justifyContent: "center",
