@@ -31,6 +31,8 @@ import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import FactCheckIcon from '@mui/icons-material/FactCheck';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+
 
 const StudentDashboard1 = () => {
     const settings = useContext(SettingsContext);
@@ -372,9 +374,10 @@ const StudentDashboard1 = () => {
             const { person_id, created_at, current_step, ...cleanPayload } = updatedData;
 
             await axios.put(
-                `${API_BASE_URL}/api/enrollment_person/${personIdToUpdate}`,
+                `${API_BASE_URL}/api/student/update_person/${personIdToUpdate}`,
                 cleanPayload
             );
+
 
             console.log("Real-time update saved.");
         } catch (err) {
@@ -390,9 +393,10 @@ const StudentDashboard1 = () => {
             const { person_id, created_at, current_step, ...cleanPayload } = person;
 
             await axios.put(
-                `${API_BASE_URL}/api/enrollment_person/${personIdToUpdate}`,
+                `${API_BASE_URL}/api/student/update_person/${personIdToUpdate}`,
                 cleanPayload
             );
+
 
             console.log("Auto-saved on blur");
         } catch (err) {
@@ -408,9 +412,10 @@ const StudentDashboard1 = () => {
             const { person_id, created_at, current_step, ...cleanPayload } = person;
 
             await axios.put(
-                `${API_BASE_URL}/api/enrollment_person/${personIdToUpdate}`,
+                `${API_BASE_URL}/api/student/update_person/${personIdToUpdate}`,
                 cleanPayload
             );
+
 
             console.log("Auto-saved.");
         } catch (err) {
@@ -823,12 +828,12 @@ const StudentDashboard1 = () => {
                             justifyContent: "center",
                             backgroundColor: "#800000",
                             borderRadius: "8px",
-                            width: 50,
-                            height: 50,
+                            width: 60,
+                            height: 60,
                             flexShrink: 0,
                         }}
                     >
-                        <ErrorIcon sx={{ color: "white", fontSize: 36 }} />
+                        <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
                     </Box>
 
                     {/* Text */}
@@ -843,12 +848,27 @@ const StudentDashboard1 = () => {
                         }}
                     >
                         <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-                        <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-                        <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-                        <strong>3.</strong> This is the list of all printable files.
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+
                     </Typography>
                 </Box>
             </Box>
+
+            <h1
+                style={{
+                    fontSize: "30px",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    color: "black",
+                    marginTop: "25px",
+                }}
+            >
+                LISTS OF ALL PRINTABLE FILES
+            </h1>
+
+
+
 
 
             {/* Cards Section */}
@@ -1059,7 +1079,7 @@ const StudentDashboard1 = () => {
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
-                                    readOnly
+
                                     value={person.campus == null ? "" : String(person.campus)}
                                     label="Campus (Manila/Cavite)"
                                     onChange={(e) => {
@@ -1187,7 +1207,7 @@ const StudentDashboard1 = () => {
                                         <FormControl fullWidth size="small" required error={!!errors.program}>
                                             <InputLabel>Program</InputLabel>
                                             <Select
-                                                readOnly
+
                                                 name="program"
                                                 value={person.program || ""}
                                                 onBlur={handleBlur}
@@ -1315,7 +1335,7 @@ const StudentDashboard1 = () => {
                                     labelId="year-level-label"
                                     id="year-level-select"
                                     name="yearLevel"
-                                    readOnly
+
                                     value={person.yearLevel || ""}
                                     label="Year Level"
                                     onChange={handleChange}
@@ -1973,7 +1993,7 @@ const StudentDashboard1 = () => {
                                     <Select
                                         labelId="tribe-label"
                                         id="tribeEthnicGroup"
-                                        readOnly
+
                                         name="tribeEthnicGroup"
                                         value={person.tribeEthnicGroup || ""}
                                         onChange={handleChange}
@@ -2055,7 +2075,6 @@ const StudentDashboard1 = () => {
                                     name="cellphoneNumber"
                                     placeholder="Enter your Cellphone Number +63"
                                     required
-                                    InputProps={{ readOnly: true }}
 
                                     value={person.cellphoneNumber}
                                     onBlur={handleBlur}
@@ -2074,7 +2093,6 @@ const StudentDashboard1 = () => {
                                     fullWidth
                                     size="small"
                                     name="emailAddress"
-                                    InputProps={{ readOnly: true }}
 
                                     required
                                     value={person.emailAddress}
@@ -2090,58 +2108,47 @@ const StudentDashboard1 = () => {
 
 
 
+
                         <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Present Address:</Typography>
                         <hr style={{ border: "1px solid #ccc", width: "100%" }} />
                         <br />
-
-
-                        <Box display="flex" gap={2} mb={2}>
-                            <Box flex={1}>
-                                <Typography mb={1} fontWeight="medium">Present Street</Typography>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    InputProps={{ readOnly: true }}
-
-                                    name="presentStreet"
-                                    value={person.presentStreet}
-                                    onBlur={handleBlur}
-                                    placeholder="Enter your Present Street"
-                                    onChange={handleChange}
-                                    error={!!errors.presentStreet}
-                                    helperText={errors.presentStreet && "This field is required."}
-                                />
-                            </Box>
-
-                            <Box flex={1}>
-                                <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    InputProps={{ readOnly: true }}
-
-                                    name="presentZipCode"
-                                    placeholder="Enter your Zip Code"
-                                    value={person.presentZipCode}
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
-                                    error={!!errors.presentZipCode}
-                                    helperText={errors.presentZipCode && "This field is required."}
-                                />
-                            </Box>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center', // vertically center
+                                justifyContent: 'center', // horizontally center
+                                backgroundColor: '#FFF4E5',
+                                border: '1px solid #FFA726',
+                                borderRadius: 2,
+                                p: 2,
+                                height: "50px",
+                                mb: 2,
+                                textAlign: 'center' // ensures multiline text is centered
+                            }}
+                        >
+                            <WarningAmberIcon sx={{ color: '#FF9800', mr: 1 }} />
+                            <Typography fontWeight="medium" color="#BF360C">
+                                NOTICE: Fill up first the{" "}
+                                <strong>
+                                    REGION <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span>
+                                    PERMANENT PROVINCE <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span>
+                                    PERMANENT MUNICIPALITY <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span>
+                                    PERMANENT BARANGAY
+                                </strong>
+                            </Typography>
                         </Box>
 
 
-                        <Box display="flex" gap={2} mb={2}>
 
+
+                        <Box display="flex" gap={2} mb={2}>
+                            {/* Present Region */}
                             <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
-                                <InputLabel id="present-region-label">Region</InputLabel>
+                                <Typography mb={1} fontWeight="medium">Region</Typography>
                                 <Select
-                                    labelId="present-region-label"
                                     name="presentRegion"
-                                    readOnly
                                     value={person.presentRegion || ""}
-                                    onBlur={handleBlur}
+                                    onBlur={() => handleUpdate(person)}
                                     onChange={(e) => {
                                         handleChange(e);
                                         setSelectedRegion(e.target.value);
@@ -2153,31 +2160,25 @@ const StudentDashboard1 = () => {
                                         setBarangayList([]);
                                         autoSave();
                                     }}
-                                    label="Region"
+                                    displayEmpty
                                 >
-                                    <MenuItem value="">
-                                        <em>Select Region</em>
-                                    </MenuItem>
+                                    <MenuItem value="">Select Region</MenuItem>
                                     {regionList.map((region) => (
                                         <MenuItem key={region.region_code} value={region.region_name}>
                                             {region.region_name}
                                         </MenuItem>
                                     ))}
                                 </Select>
-                                {errors.presentRegion && (
-                                    <FormHelperText>This field is required.</FormHelperText>
-                                )}
+                                {errors.presentRegion && <FormHelperText>This field is required.</FormHelperText>}
                             </FormControl>
 
-
+                            {/* Present Province */}
                             <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
-                                <InputLabel id="present-province-label">Province</InputLabel>
+                                <Typography mb={1} fontWeight="medium">Province</Typography>
                                 <Select
-                                    labelId="present-province-label"
                                     name="presentProvince"
-                                    readOnly
                                     value={person.presentProvince || ""}
-                                    onBlur={handleBlur}
+                                    onBlur={() => handleUpdate(person)}
                                     onChange={(e) => {
                                         handleChange(e);
                                         setSelectedProvince(e.target.value);
@@ -2187,35 +2188,25 @@ const StudentDashboard1 = () => {
                                         setBarangayList([]);
                                         autoSave();
                                     }}
-                                    label="Province"
-                                    disabled={!person.presentRegion}
+                                    displayEmpty
                                 >
-                                    <MenuItem value="">
-                                        <em>Select Province</em>
-                                    </MenuItem>
+                                    <MenuItem value="">Select Province</MenuItem>
                                     {provinceList.map((province) => (
                                         <MenuItem key={province.province_code} value={province.province_name}>
                                             {province.province_name}
                                         </MenuItem>
                                     ))}
                                 </Select>
-                                {errors.presentProvince && (
-                                    <FormHelperText>This field is required.</FormHelperText>
-                                )}
+                                {errors.presentProvince && <FormHelperText>This field is required.</FormHelperText>}
                             </FormControl>
-                        </Box>
 
-                        {/* Municipality & Barangay */}
-                        <Box display="flex" gap={2} mb={2}>
                             {/* Present Municipality */}
                             <FormControl fullWidth size="small" required error={!!errors.presentMunicipality}>
-                                <InputLabel id="present-municipality-label">Municipality</InputLabel>
+                                <Typography mb={1} fontWeight="medium">Municipality</Typography>
                                 <Select
-                                    labelId="present-municipality-label"
                                     name="presentMunicipality"
-                                    readOnly
                                     value={person.presentMunicipality || ""}
-                                    onBlur={handleBlur}
+                                    onBlur={() => handleUpdate(person)}
                                     onChange={(e) => {
                                         handleChange(e);
                                         setSelectedCity(e.target.value);
@@ -2223,53 +2214,72 @@ const StudentDashboard1 = () => {
                                         setBarangayList([]);
                                         autoSave();
                                     }}
-                                    label="Municipality"
-                                    disabled={!person.presentProvince}
+                                    displayEmpty
                                 >
-                                    <MenuItem value="">
-                                        <em>Select Municipality</em>
-                                    </MenuItem>
+                                    <MenuItem value="">Select Municipality</MenuItem>
                                     {cityList.map((city) => (
                                         <MenuItem key={city.city_code} value={city.city_name}>
                                             {city.city_name}
                                         </MenuItem>
                                     ))}
                                 </Select>
-                                {errors.presentMunicipality && (
-                                    <FormHelperText>This field is required.</FormHelperText>
-                                )}
+                                {errors.presentMunicipality && <FormHelperText>This field is required.</FormHelperText>}
                             </FormControl>
 
                             {/* Present Barangay */}
                             <FormControl fullWidth size="small" required error={!!errors.presentBarangay}>
-                                <InputLabel id="present-barangay-label">Barangay</InputLabel>
+                                <Typography mb={1} fontWeight="medium">Present Barangay</Typography>
                                 <Select
-                                    labelId="present-barangay-label"
                                     name="presentBarangay"
-                                    readOnly
                                     value={person.presentBarangay || ""}
-                                    onBlur={handleBlur}
+                                    onBlur={() => handleUpdate(person)}
                                     onChange={(e) => {
                                         handleChange(e);
                                         setSelectedBarangay(e.target.value);
                                         autoSave();
                                     }}
-                                    label="Barangay"
-                                    disabled={!person.presentMunicipality}
+                                    displayEmpty
                                 >
-                                    <MenuItem value="">
-                                        <em>Select Barangay</em>
-                                    </MenuItem>
+                                    <MenuItem value="">Select Barangay</MenuItem>
                                     {barangayList.map((brgy) => (
                                         <MenuItem key={brgy.brgy_code} value={brgy.brgy_name}>
                                             {brgy.brgy_name}
                                         </MenuItem>
                                     ))}
                                 </Select>
-                                {errors.presentBarangay && (
-                                    <FormHelperText>This field is required.</FormHelperText>
-                                )}
+                                {errors.presentBarangay && <FormHelperText>This field is required.</FormHelperText>}
                             </FormControl>
+                        </Box>
+
+
+                        <Box display="flex" gap={2} mb={2}>
+                            <Box flex={1}>
+                                <Typography mb={1} fontWeight="medium">Present Street</Typography>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    name="presentStreet"
+                                    value={person.presentStreet || ""}
+                                    onBlur={() => handleUpdate(person)} placeholder="Enter your Present Street"
+                                    onChange={handleChange}
+                                    error={!!errors.presentStreet}
+                                    helperText={errors.presentStreet && "This field is required."}
+                                />
+                            </Box>
+
+                            <Box flex={1}>
+                                <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    name="presentZipCode"
+                                    placeholder="Enter your Zip Code"
+                                    value={person.presentZipCode || ""}
+                                    onBlur={() => handleUpdate(person)} onChange={handleChange}
+                                    error={!!errors.presentZipCode}
+                                    helperText={errors.presentZipCode && "This field is required."}
+                                />
+                            </Box>
                         </Box>
 
 
@@ -2280,11 +2290,8 @@ const StudentDashboard1 = () => {
                                 fullWidth
                                 size="small"
                                 name="presentDswdHouseholdNumber"
-                                InputProps={{ readOnly: true }}
-
-                                value={person.presentDswdHouseholdNumber}
-                                onBlur={handleBlur}
-                                onChange={handleChange}
+                                value={person.presentDswdHouseholdNumber || ""}
+                                onBlur={() => handleUpdate(person)} onChange={handleChange}
                                 placeholder="Enter your Present DSWD Household Number"
                                 error={!!errors.presentDswdHouseholdNumber}
                                 helperText={errors.presentDswdHouseholdNumber && "This field is required."}
@@ -2297,16 +2304,15 @@ const StudentDashboard1 = () => {
                         <FormControlLabel
                             control={
                                 <Checkbox
-                                    name="same_as_present_address"
-                                    disabled
-                                    checked={person.same_as_present_address === 1}
+                                    name="sameAsPresentAddress"
+                                    checked={person.sameAsPresentAddress === 1}
                                     onChange={(e) => {
                                         const checked = e.target.checked;
-
                                         const updatedPerson = {
                                             ...person,
-                                            same_as_present_address: checked ? 1 : 0,
+                                            sameAsPresentAddress: checked ? 1 : 0,
                                         };
+
 
                                         if (checked) {
                                             updatedPerson.permanentStreet = person.presentStreet;
@@ -2326,14 +2332,127 @@ const StudentDashboard1 = () => {
                                         setPerson(updatedPerson);
                                         handleUpdate(updatedPerson); // optional: real-time save
                                     }}
-                                    onBlur={handleBlur}
-                                />
+                                    onBlur={() => handleUpdate(person)} />
                             }
                             label="Same as Present Address"
                         />
 
 
-                        {/* Street & Zip Code */}
+
+
+                        <Box display="flex" gap={2} mb={2}>
+                            {/* Permanent Region */}
+                            <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentRegion}>
+                                <Typography mb={1} fontWeight="medium">Permanent Region</Typography>
+                                <Select
+                                    name="permanentRegion"
+                                    value={person.permanentRegion || ""}
+                                    displayEmpty
+                                    onBlur={() => handleUpdate(person)}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        setPermanentRegion(e.target.value);
+                                        setPermanentProvince("");
+                                        setPermanentCity("");
+                                        setPermanentBarangay("");
+                                        setPermanentProvinceList([]);
+                                        setPermanentCityList([]);
+                                        setPermanentBarangayList([]);
+                                        autoSave();
+                                    }}
+                                >
+                                    <MenuItem value="">Select Region</MenuItem>
+                                    {permanentRegionList.map((region) => (
+                                        <MenuItem key={region.region_code} value={region.region_name}>
+                                            {region.region_name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.permanentRegion && <FormHelperText>This field is required.</FormHelperText>}
+                            </FormControl>
+
+                            {/* Permanent Province */}
+                            <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentProvince}>
+                                <Typography mb={1} fontWeight="medium">Permanent Province</Typography>
+                                <Select
+                                    name="permanentProvince"
+                                    value={person.permanentProvince || ""}
+                                    displayEmpty
+                                    onBlur={() => handleUpdate(person)}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        setPermanentProvince(e.target.value);
+                                        setPermanentCity("");
+                                        setPermanentBarangay("");
+                                        setPermanentCityList([]);
+                                        setPermanentBarangayList([]);
+                                        autoSave();
+                                    }}
+                                    disabled={!person.permanentRegion}
+                                >
+                                    <MenuItem value="">Select Province</MenuItem>
+                                    {permanentProvinceList.map((province) => (
+                                        <MenuItem key={province.province_code} value={province.province_name}>
+                                            {province.province_name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.permanentProvince && <FormHelperText>This field is required.</FormHelperText>}
+                            </FormControl>
+
+                            {/* Permanent Municipality */}
+                            <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentMunicipality}>
+                                <Typography mb={1} fontWeight="medium">Permanent Municipality</Typography>
+                                <Select
+                                    name="permanentMunicipality"
+                                    value={person.permanentMunicipality || ""}
+                                    displayEmpty
+                                    onBlur={() => handleUpdate(person)}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        setPermanentCity(e.target.value);
+                                        setPermanentBarangay("");
+                                        setPermanentBarangayList([]);
+                                        autoSave();
+                                    }}
+                                    disabled={!person.permanentProvince}
+                                >
+                                    <MenuItem value="">Select Municipality</MenuItem>
+                                    {permanentCityList.map((city) => (
+                                        <MenuItem key={city.city_code} value={city.city_name}>
+                                            {city.city_name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.permanentMunicipality && <FormHelperText>This field is required.</FormHelperText>}
+                            </FormControl>
+
+                            {/* Permanent Barangay */}
+                            <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentBarangay}>
+                                <Typography mb={1} fontWeight="medium">Permanent Barangay</Typography>
+                                <Select
+                                    name="permanentBarangay"
+                                    value={person.permanentBarangay || ""}
+                                    displayEmpty
+                                    onBlur={() => handleUpdate(person)}
+                                    onChange={(e) => {
+                                        handleChange(e);
+                                        setPermanentBarangay(e.target.value);
+                                        autoSave();
+                                    }}
+                                    disabled={!person.permanentMunicipality}
+                                >
+                                    <MenuItem value="">Select Barangay</MenuItem>
+                                    {permanentBarangayList.map((brgy) => (
+                                        <MenuItem key={brgy.brgy_code} value={brgy.brgy_name}>
+                                            {brgy.brgy_name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.permanentBarangay && <FormHelperText>This field is required.</FormHelperText>}
+                            </FormControl>
+                        </Box>
+
                         <Box display="flex" gap={2} mb={2}>
                             <Box flex={1}>
                                 <Typography mb={1} fontWeight="medium">Permanent Street</Typography>
@@ -2341,12 +2460,9 @@ const StudentDashboard1 = () => {
                                     fullWidth
                                     size="small"
                                     name="permanentStreet"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your Permanent Street"
-                                    value={person.permanentStreet}
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
+                                    value={person.permanentStreet || ""}
+                                    onBlur={() => handleUpdate(person)} onChange={handleChange}
                                     error={!!errors.permanentStreet}
                                     helperText={errors.permanentStreet && "This field is required."}
                                 />
@@ -2358,173 +2474,15 @@ const StudentDashboard1 = () => {
                                     fullWidth
                                     size="small"
                                     name="permanentZipCode"
-                                    InputProps={{ readOnly: true }}
-
                                     placeholder="Enter your Permanent Zip Code"
-                                    value={person.permanentZipCode}
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
+                                    value={person.permanentZipCode || ""}
+                                    onBlur={() => handleUpdate(person)} onChange={handleChange}
                                     error={!!errors.permanentZipCode}
                                     helperText={errors.permanentZipCode && "This field is required."}
                                 />
                             </Box>
                         </Box>
-                        {/* Permanent Region & Province */}
-                        <Box display="flex" gap={2} mb={2}>
-                            {/* Permanent Region */}
-                            <Box flex={1}>
-                                <Typography mb={1} fontWeight="medium">Permanent Region</Typography>
-                                <FormControl fullWidth size="small" required error={!!errors.permanentRegion}>
-                                    <InputLabel id="permanent-region-label">Select Region</InputLabel>
-                                    <Select
-                                        labelId="permanent-region-label"
-                                        id="permanentRegion"
-                                        readOnly
-                                        name="permanentRegion"
-                                        value={person.permanentRegion || ""}
-                                        label="Select Region"
-                                        onBlur={handleBlur}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            setPermanentRegion(e.target.value);
-                                            setPermanentProvince("");
-                                            setPermanentCity("");
-                                            setPermanentBarangay("");
-                                            setPermanentProvinceList([]);
-                                            setPermanentCityList([]);
-                                            setPermanentBarangayList([]);
-                                            autoSave();
-                                        }}
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select Region</em>
-                                        </MenuItem>
-                                        {permanentRegionList.map((region) => (
-                                            <MenuItem key={region.region_code} value={region.region_name}>
-                                                {region.region_name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {errors.permanentRegion && (
-                                        <Typography variant="caption" color="error">This field is required.</Typography>
-                                    )}
-                                </FormControl>
-                            </Box>
 
-                            {/* Permanent Province */}
-                            <Box flex={1}>
-                                <Typography mb={1} fontWeight="medium">Permanent Province</Typography>
-                                <FormControl fullWidth size="small" required error={!!errors.permanentProvince}>
-                                    <InputLabel id="permanent-province-label">Select Province</InputLabel>
-                                    <Select
-                                        labelId="permanent-province-label"
-                                        id="permanentProvince"
-                                        readOnly
-                                        name="permanentProvince"
-                                        value={person.permanentProvince || ""}
-                                        label="Select Province"
-                                        onBlur={handleBlur}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            setPermanentProvince(e.target.value);
-                                            setPermanentCity("");
-                                            setPermanentBarangay("");
-                                            setPermanentCityList([]);
-                                            setPermanentBarangayList([]);
-                                            autoSave();
-                                        }}
-                                        disabled={!person.permanentRegion}
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select Province</em>
-                                        </MenuItem>
-                                        {permanentProvinceList.map((province) => (
-                                            <MenuItem key={province.province_code} value={province.province_name}>
-                                                {province.province_name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {errors.permanentProvince && (
-                                        <Typography variant="caption" color="error">This field is required.</Typography>
-                                    )}
-                                </FormControl>
-                            </Box>
-                        </Box>
-
-                        {/* Permanent Municipality & Barangay */}
-                        <Box display="flex" gap={2} mb={2}>
-                            {/* Permanent Municipality */}
-                            <Box flex={1}>
-                                <Typography mb={1} fontWeight="medium">Permanent Municipality</Typography>
-                                <FormControl fullWidth size="small" required error={!!errors.permanentMunicipality}>
-                                    <InputLabel id="permanent-municipality-label">Select Municipality</InputLabel>
-                                    <Select
-                                        labelId="permanent-municipality-label"
-                                        id="permanentMunicipality"
-                                        readOnly
-                                        name="permanentMunicipality"
-                                        value={person.permanentMunicipality || ""}
-                                        label="Select Municipality"
-                                        onBlur={handleBlur}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            setPermanentCity(e.target.value);
-                                            setPermanentBarangay("");
-                                            setPermanentBarangayList([]);
-                                            autoSave();
-                                        }}
-                                        disabled={!person.permanentProvince}
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select Municipality</em>
-                                        </MenuItem>
-                                        {permanentCityList.map((city) => (
-                                            <MenuItem key={city.city_code} value={city.city_name}>
-                                                {city.city_name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {errors.permanentMunicipality && (
-                                        <Typography variant="caption" color="error">This field is required.</Typography>
-                                    )}
-                                </FormControl>
-                            </Box>
-
-                            {/* Permanent Barangay */}
-                            <Box flex={1}>
-                                <Typography mb={1} fontWeight="medium">Permanent Barangay</Typography>
-                                <FormControl fullWidth size="small" required error={!!errors.permanentBarangay}>
-                                    <InputLabel id="permanent-barangay-label">Select Barangay</InputLabel>
-                                    <Select
-                                        labelId="permanent-barangay-label"
-                                        id="permanentBarangay"
-                                        readOnly
-                                        name="permanentBarangay"
-                                        value={person.permanentBarangay || ""}
-                                        label="Select Barangay"
-                                        onBlur={handleBlur}
-                                        onChange={(e) => {
-                                            handleChange(e);
-                                            setPermanentBarangay(e.target.value);
-                                            autoSave();
-                                        }}
-                                        disabled={!person.permanentMunicipality}
-                                    >
-                                        <MenuItem value="">
-                                            <em>Select Barangay</em>
-                                        </MenuItem>
-                                        {permanentBarangayList.map((brgy) => (
-                                            <MenuItem key={brgy.brgy_code} value={brgy.brgy_name}>
-                                                {brgy.brgy_name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {errors.permanentBarangay && (
-                                        <Typography variant="caption" color="error">This field is required.</Typography>
-                                    )}
-                                </FormControl>
-                            </Box>
-                        </Box>
 
 
                         {/* DSWD Household Number */}
@@ -2536,11 +2494,8 @@ const StudentDashboard1 = () => {
                                 variant="outlined"
                                 placeholder="Enter your Permanent DSWD Household Number"
                                 name="permanentDswdHouseholdNumber"
-                                InputProps={{ readOnly: true }}
-
                                 value={person.permanentDswdHouseholdNumber || ""}
-                                onBlur={handleBlur}
-                                onChange={handleChange}
+                                onBlur={() => handleUpdate(person)} onChange={handleChange}
                                 error={!!errors.permanentDswdHouseholdNumber}
                                 helperText={errors.permanentDswdHouseholdNumber && "This field is required."}
                             />

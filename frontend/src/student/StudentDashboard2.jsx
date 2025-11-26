@@ -211,18 +211,60 @@ const StudentDashboard2 = () => {
 
 
 
-    // Do not alter
     const handleUpdate = async (updatedData) => {
-        if (!person || !person.person_id) return;
-
         try {
+            const personIdToUpdate = selectedPerson?.person_id || userID;
+
+            // Remove internal fields that should NOT be saved
+            const { person_id, created_at, current_step, ...cleanPayload } = updatedData;
+
             await axios.put(
-                `${API_BASE_URL}/api/enrollment_person/${person.person_id}`, // ✅ enrollment DB
-                updatedData
+                `${API_BASE_URL}/api/student/update_person/${personIdToUpdate}`,
+                cleanPayload
             );
-            console.log("✅ Auto-saved successfully");
-        } catch (error) {
-            console.error("❌ Auto-save failed:", error);
+
+
+            console.log("Real-time update saved.");
+        } catch (err) {
+            console.error("Real-time update failed", err);
+        }
+    };
+
+
+    const handleBlur = async () => {
+        try {
+            const personIdToUpdate = selectedPerson?.person_id || userID;
+
+            const { person_id, created_at, current_step, ...cleanPayload } = person;
+
+            await axios.put(
+                `${API_BASE_URL}/api/student/update_person/${personIdToUpdate}`,
+                cleanPayload
+            );
+
+
+            console.log("Auto-saved on blur");
+        } catch (err) {
+            console.error("Auto-save failed", err);
+        }
+    };
+
+
+    const autoSave = async () => {
+        try {
+            const personIdToUpdate = selectedPerson?.person_id || userID;
+
+            const { person_id, created_at, current_step, ...cleanPayload } = person;
+
+            await axios.put(
+                `${API_BASE_URL}/api/student/update_person/${personIdToUpdate}`,
+                cleanPayload
+            );
+
+
+            console.log("Auto-saved.");
+        } catch (err) {
+            console.error("Auto-save failed.");
         }
     };
 
@@ -352,7 +394,7 @@ const StudentDashboard2 = () => {
 
     ];
 
-  
+
     // dot not alter
     return (
         <Box sx={{ height: "calc(100vh - 140px)", overflowY: "auto", paddingRight: 1, backgroundColor: "transparent" }}>
@@ -387,62 +429,77 @@ const StudentDashboard2 = () => {
             <br />
 
 
-<Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          width: "100%",
-          mt: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            p: 2,
-            borderRadius: "10px",
-            backgroundColor: "#fffaf5",
-            border: "1px solid #6D2323",
-            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-            width: "100%",
-            overflow: "hidden",
-          }}
-        >
-          {/* Icon */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#800000",
-              borderRadius: "8px",
-              width: 50,
-              height: 50,
-              flexShrink: 0,
-            }}
-          >
-            <ErrorIcon sx={{ color: "white", fontSize: 36 }} />
-          </Box>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: "10px",
+                        backgroundColor: "#fffaf5",
+                        border: "1px solid #6D2323",
+                        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+                        width: "100%",
+                        overflow: "hidden",
+                    }}
+                >
+                    {/* Icon */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#800000",
+                            borderRadius: "8px",
+                            width: 60,
+                            height: 60,
+                            flexShrink: 0,
+                        }}
+                    >
+                        <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
+                    </Box>
 
-          {/* Text */}
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontFamily: "Arial",
-              color: "#3e3e3e",
-              lineHeight: 1.3, // slightly tighter to fit in fewer rows
-              whiteSpace: "normal",
-              overflow: "hidden",
-            }}
-          >
-            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-            <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-            <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-            <strong>3.</strong> This is the list of all printable files.
-          </Typography>
-        </Box>
-      </Box>
+                    {/* Text */}
+                    <Typography
+                        sx={{
+                            fontSize: "20px",
+                            fontFamily: "Arial",
+                            color: "#3e3e3e",
+                            lineHeight: 1.3, // slightly tighter to fit in fewer rows
+                            whiteSpace: "normal",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+
+                    </Typography>
+                </Box>
+            </Box>
+
+            <h1
+                style={{
+                    fontSize: "30px",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    color: "black",
+                    marginTop: "25px",
+                }}
+            >
+                LISTS OF ALL PRINTABLE FILES
+            </h1>
+
+
+
 
 
             {/* Cards Section */}
@@ -1655,11 +1712,11 @@ const StudentDashboard2 = () => {
                                 }
                                 sx={{
                                     backgroundColor: mainButtonColor,
-                                    border: `2px solid ${borderColor}`, 
+                                    border: `2px solid ${borderColor}`,
                                     color: '#fff',
                                     '&:hover': {
                                         backgroundColor: "#000000",
-                               
+
                                         color: '#fff',
                                         '& .MuiSvgIcon-root': {
                                             color: '#fff',

@@ -3571,6 +3571,84 @@ app.put("/api/enrollment/person/:person_id", async (req, res) => {
   }
 });
 
+// ===========================================================
+// ✅ STUDENT — can update ONLY their own personal information
+//     (db3 ENROLLMENT person_table)
+// ===========================================================
+app.put("/api/student/update_person/:person_id", async (req, res) => {
+  const { person_id } = req.params;
+  const updatedData = req.body;
+
+  try {
+    // ❗ OPTIONAL: Prevent updating fields students should NOT touch
+    const allowed = [
+    "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+  "program", "program2", "program3", "yearLevel", "last_name", "first_name",
+  "middle_name", "extension", "nickname", "height", "weight", "lrnNumber",
+  "nolrnNumber", "gender", "pwdMember", "pwdType", "pwdId", "birthOfDate",
+  "age", "birthPlace", "languageDialectSpoken", "citizenship", "religion",
+  "civilStatus", "tribeEthnicGroup", "cellphoneNumber", "emailAddress",
+  "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+  "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+  "sameAsPresentAddress", "permanentStreet", "permanentBarangay",
+  "permanentZipCode", "permanentRegion", "permanentProvince",
+  "permanentMunicipality", "permanentDswdHouseholdNumber", "solo_parent",
+  "father_deceased", "father_family_name", "father_given_name",
+  "father_middle_name", "father_ext", "father_nickname", "father_education",
+  "father_education_level", "father_last_school", "father_course",
+  "father_year_graduated", "father_school_address", "father_contact",
+  "father_occupation", "father_employer", "father_income", "father_email",
+  "mother_deceased", "mother_family_name", "mother_given_name",
+  "mother_middle_name", "mother_ext", "mother_nickname", "mother_education",
+  "mother_education_level", "mother_last_school", "mother_course",
+  "mother_year_graduated", "mother_school_address", "mother_contact",
+  "mother_occupation", "mother_employer", "mother_income", "mother_email",
+  "guardian", "guardian_family_name", "guardian_given_name",
+  "guardian_middle_name", "guardian_ext", "guardian_nickname",
+  "guardian_address", "guardian_contact", "guardian_email", "annual_income",
+  "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+  "honor", "generalAverage", "yearGraduated", "schoolLevel1",
+  "schoolLastAttended1", "schoolAddress1", "courseProgram1", "honor1",
+  "generalAverage1", "yearGraduated1", "strand", "cough", "colds", "fever",
+  "asthma", "faintingSpells", "heartDisease", "tuberculosis",
+  "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury", "hiv",
+  "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+  "smokingCigarette", "alcoholDrinking", "hospitalized",
+  "hospitalizationDetails", "medications", "hadCovid", "covidDate",
+  "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+  "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+  "chestXray", "cbc", "urinalysis", "otherworkups", "symptomsToday",
+  "remarks", "termsOfAgreement", "created_at", "current_step"
+    ];
+
+    // Remove all fields NOT allowed
+    const cleanPayload = {};
+    for (const key of Object.keys(updatedData)) {
+      if (allowed.includes(key)) {
+        cleanPayload[key] = updatedData[key];
+      }
+    }
+
+    const [result] = await db3.query(
+      "UPDATE person_table SET ? WHERE person_id = ?",
+      [cleanPayload, person_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Person not found in ENROLLMENT DB" });
+    }
+
+    res.json({
+      success: true,
+      message: "Student information updated successfully (DB3)"
+    });
+
+  } catch (err) {
+    console.error("❌ Error updating student (DB3):", err);
+    res.status(500).json({ error: "Failed to update student record" });
+  }
+});
+
 
 // GET for Dashboard1
 app.get("/api/dashboard1/:id", checkStepAccess(1), async (req, res) => {
@@ -6583,6 +6661,37 @@ app.get("/api/interview/not-emailed-applicants", async (req, res) => {
   }
 });
 
+app.put("/api/interview/remove_applicant", async (req, res) => {
+  try {
+    const { applicant_id } = req.body;
+
+    if (!applicant_id) {
+      return res.status(400).json({ message: "Missing applicant_id" });
+    }
+
+    // 1️⃣ Reset interview_applicants table
+    await db.query(
+      `UPDATE interview_applicants 
+       SET schedule_id = NULL, email_sent = 0 
+       WHERE applicant_id = ?`,
+      [applicant_id]
+    );
+
+    // 2️⃣ Reset person_status_table INTERVIEW STATUS
+    await db.query(
+      `UPDATE person_status_table 
+       SET interview_status = NULL 
+       WHERE applicant_id = ?`,
+      [applicant_id]
+    );
+
+    res.json({ message: "Applicant interview schedule removed successfully." });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // 2. Get all interview schedules
 app.get("/interview_schedules", async (req, res) => {
@@ -14849,51 +14958,51 @@ app.get("/api/student_data_as_applicant/:id", async (req, res) => {
 
 // ✅ UPDATE person_table in ENROLLMENT DB3
 app.put('/api/enrollment_person/:person_id', async (req, res) => {
-    try {
-        const { person_id } = req.params;
-        const updateData = req.body;
+  try {
+    const { person_id } = req.params;
+    const updateData = req.body;
 
-        if (!person_id) {
-            return res.status(400).json({ error: "Missing person_id" });
-        }
+    if (!person_id) {
+      return res.status(400).json({ error: "Missing person_id" });
+    }
 
-        if (!updateData || Object.keys(updateData).length === 0) {
-            return res.status(400).json({ error: "No update data provided" });
-        }
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "No update data provided" });
+    }
 
-        // Remove unsafe fields if present
-        delete updateData.person_id;
-        delete updateData.created_at;
-        delete updateData.current_step;
+    // Remove unsafe fields if present
+    delete updateData.person_id;
+    delete updateData.created_at;
+    delete updateData.current_step;
 
-        // Build dynamic SET fields
-        const fields = Object.keys(updateData)
-            .map(field => `${field} = ?`)
-            .join(', ');
+    // Build dynamic SET fields
+    const fields = Object.keys(updateData)
+      .map(field => `${field} = ?`)
+      .join(', ');
 
-        const values = Object.values(updateData);
+    const values = Object.values(updateData);
 
-        // Execute update query
-        const query = `
+    // Execute update query
+    const query = `
             UPDATE person_table
             SET ${fields}
             WHERE person_id = ?
         `;
 
-        values.push(person_id);
+    values.push(person_id);
 
-        const [result] = await db3.query(query, values);
+    const [result] = await db3.query(query, values);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Person not found" });
-        }
-
-        return res.json({ message: "Person updated successfully", updated: updateData });
-
-    } catch (error) {
-        console.error("❌ Error updating enrollment person:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Person not found" });
     }
+
+    return res.json({ message: "Person updated successfully", updated: updateData });
+
+  } catch (error) {
+    console.error("❌ Error updating enrollment person:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 

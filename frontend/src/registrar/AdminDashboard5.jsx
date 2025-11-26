@@ -672,7 +672,7 @@ const AdminDashboard5 = () => {
 
 
 
-      <Box
+       <Box
         sx={{
           display: "flex",
           justifyContent: "center",
@@ -702,12 +702,12 @@ const AdminDashboard5 = () => {
               justifyContent: "center",
               backgroundColor: "#800000",
               borderRadius: "8px",
-              width: 50,
-              height: 50,
+              width: 60,
+              height: 60,
               flexShrink: 0,
             }}
           >
-            <ErrorIcon sx={{ color: "white", fontSize: 36 }} />
+            <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
           </Box>
 
           {/* Text */}
@@ -722,12 +722,27 @@ const AdminDashboard5 = () => {
             }}
           >
             <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-            <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-            <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-            <strong>3.</strong> This is the list of all printable files.
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+
           </Typography>
         </Box>
       </Box>
+
+      <h1
+        style={{
+          fontSize: "30px",
+          fontWeight: "bold",
+          textAlign: "center",
+          color: "black",
+          marginTop: "25px",
+        }}
+      >
+        LISTS OF ALL PRINTABLE FILES
+      </h1>
+
+
+
 
 
       {/* Cards Section */}

@@ -26,7 +26,7 @@ import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 import API_BASE_URL from "../apiConfig";
-import MenuBookIcon from '@mui/icons-material/MenuBook'; 
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 const RegistrarDashboard5 = () => {
 
@@ -70,18 +70,18 @@ const RegistrarDashboard5 = () => {
     }, [settings]);
 
 
-     const stepsData = [
-   
-           { label: "Admission Process For College", to: "/applicant_list", icon: <SchoolIcon fontSize="large" /> },
-           { label: "Applicant Form", to: "/registrar_dashboard1", icon: <AssignmentIcon fontSize="large" /> },
-           { label: "Student Requirements", to: "/registrar_requirements", icon: <AssignmentTurnedInIcon fontSize="large" /> },
-        
-           { label: "Qualifying / Interview Exam Score", to: "/qualifying_interview_exam_scores", icon: <PersonSearchIcon fontSize="large" /> },
-           { label: "Student Numbering", to: "/student_numbering_per_college", icon: <DashboardIcon fontSize="large" /> },
-           { label: "Course Tagging", to: "/course_tagging", icon: <MenuBookIcon fontSize="large" /> },
-   
-   
-       ];
+    const stepsData = [
+
+        { label: "Admission Process For College", to: "/applicant_list", icon: <SchoolIcon fontSize="large" /> },
+        { label: "Applicant Form", to: "/registrar_dashboard1", icon: <AssignmentIcon fontSize="large" /> },
+        { label: "Student Requirements", to: "/registrar_requirements", icon: <AssignmentTurnedInIcon fontSize="large" /> },
+
+        { label: "Qualifying / Interview Exam Score", to: "/qualifying_interview_exam_scores", icon: <PersonSearchIcon fontSize="large" /> },
+        { label: "Student Numbering", to: "/student_numbering_per_college", icon: <DashboardIcon fontSize="large" /> },
+        { label: "Course Tagging", to: "/course_tagging", icon: <MenuBookIcon fontSize="large" /> },
+
+
+    ];
 
     const [currentStep, setCurrentStep] = useState(1);
     const [visitedSteps, setVisitedSteps] = useState(Array(stepsData.length).fill(false));
@@ -152,26 +152,26 @@ const RegistrarDashboard5 = () => {
         }
     }, []);
 
-   const checkAccess = async (employeeID) => {
-       try {
-         const response = await axios.get(`${API_BASE_URL}/api/page_access/${employeeID}/${pageId}`);
-         if (response.data && response.data.page_privilege === 1) {
-           setHasAccess(true);
-         } else {
-           setHasAccess(false);
-         }
-       } catch (error) {
-         console.error('Error checking access:', error);
-         setHasAccess(false);
-         if (error.response && error.response.data.message) {
-           console.log(error.response.data.message);
-         } else {
-           console.log("An unexpected error occurred.");
-         }
-         setLoading(false);
-       }
-     };
-   
+    const checkAccess = async (employeeID) => {
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/page_access/${employeeID}/${pageId}`);
+            if (response.data && response.data.page_privilege === 1) {
+                setHasAccess(true);
+            } else {
+                setHasAccess(false);
+            }
+        } catch (error) {
+            console.error('Error checking access:', error);
+            setHasAccess(false);
+            if (error.response && error.response.data.message) {
+                console.log(error.response.data.message);
+            } else {
+                console.log("An unexpected error occurred.");
+            }
+            setLoading(false);
+        }
+    };
+
 
 
 
@@ -184,48 +184,48 @@ const RegistrarDashboard5 = () => {
 
     const location = useLocation();
 
-      const queryParams = new URLSearchParams(location.search);
-      const queryPersonId = queryParams.get("person_id")?.trim() || "";
-    
-      useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const queryPersonId = queryParams.get("person_id")?.trim() || "";
+
+    useEffect(() => {
         const storedUser = localStorage.getItem("email");
         const storedRole = localStorage.getItem("role");
         const loggedInPersonId = localStorage.getItem("person_id");
-    
+
         if (!storedUser || !storedRole || !loggedInPersonId) {
-          window.location.href = "/login";
-          return;
+            window.location.href = "/login";
+            return;
         }
-    
+
         setUser(storedUser);
         setUserRole(storedRole);
-    
+
         const allowedRoles = ["registrar", "applicant", "superadmin"];
         if (!allowedRoles.includes(storedRole)) {
-          window.location.href = "/login";
-          return;
+            window.location.href = "/login";
+            return;
         }
-    
+
         const lastSelected = sessionStorage.getItem("admin_edit_person_id");
-    
+
         // ⭐ CASE 1: URL HAS ?person_id=
         if (queryPersonId !== "") {
-          sessionStorage.setItem("admin_edit_person_id", queryPersonId);
-          setUserID(queryPersonId);
-          return;
+            sessionStorage.setItem("admin_edit_person_id", queryPersonId);
+            setUserID(queryPersonId);
+            return;
         }
-    
+
         // ⭐ CASE 2: URL has NO ID but we have a last selected student
         if (lastSelected) {
-          setUserID(lastSelected);
-          return;
+            setUserID(lastSelected);
+            return;
         }
-    
+
         // ⭐ CASE 3: No URL ID and no last selected → start blank
         setUserID("");
-      }, [queryPersonId]);
-    
-    
+    }, [queryPersonId]);
+
+
 
     useEffect(() => {
         let consumedFlag = false;
@@ -488,7 +488,7 @@ const RegistrarDashboard5 = () => {
         }
     };
 
-     const links = [
+    const links = [
         {
             to: userID ? `/admin_ecat_application_form?person_id=${userID}` : "/admin_ecat_application_form",
             label: "ECAT Application Form",
@@ -644,7 +644,7 @@ const RegistrarDashboard5 = () => {
             </Box>
 
 
-                 <div style={{ height: "40px" }}></div>
+            <div style={{ height: "40px" }}></div>
 
 
 
@@ -709,12 +709,12 @@ const RegistrarDashboard5 = () => {
                             justifyContent: "center",
                             backgroundColor: "#800000",
                             borderRadius: "8px",
-                            width: 50,
-                            height: 50,
+                            width: 60,
+                            height: 60,
                             flexShrink: 0,
                         }}
                     >
-                        <ErrorIcon sx={{ color: "white", fontSize: 36 }} />
+                        <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
                     </Box>
 
                     {/* Text */}
@@ -729,12 +729,28 @@ const RegistrarDashboard5 = () => {
                         }}
                     >
                         <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-                        <strong>1.</strong> Kindly type <strong>'NA'</strong> in boxes where there are no possible answers to the information being requested. &nbsp; | &nbsp;
-                        <strong>2.</strong> To use the letter <strong>'Ñ'</strong>, press <kbd>ALT</kbd> + <kbd>165</kbd>; for <strong>'ñ'</strong>, press <kbd>ALT</kbd> + <kbd>164</kbd>. &nbsp; | &nbsp;
-                        <strong>3.</strong> This is the list of all printable files.
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+
                     </Typography>
                 </Box>
             </Box>
+
+            <h1
+                style={{
+                    fontSize: "30px",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    color: "black",
+                    marginTop: "25px",
+                }}
+            >
+                LISTS OF ALL PRINTABLE FILES
+            </h1>
+
+
+
+
 
 
             {/* Cards Section */}

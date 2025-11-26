@@ -32,6 +32,8 @@ import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 import SearchIcon from "@mui/icons-material/Search";
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 
 const InterviewerApplicantList = () => {
@@ -61,6 +63,22 @@ const InterviewerApplicantList = () => {
 
   const pageId = 36;
 
+  const removeApplicantFromSchedule = async (applicant_number) => {
+    console.log("APPLICANT BEING SENT:", applicant_number);
+
+    if (!window.confirm("Remove applicant from schedule?")) return;
+
+    try {
+      await axios.put(`${API_BASE_URL}/api/interview/remove_applicant`, {
+        applicant_id: applicant_number
+      });
+
+      handleSearch(); // refresh table
+
+    } catch (error) {
+      console.error("Error removing applicant:", error);
+    }
+  };
 
 
   const [titleColor, setTitleColor] = useState("#000000");
@@ -430,23 +448,6 @@ const InterviewerApplicantList = () => {
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
 
-  // 🔒 Disable right-click
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-  // 🔒 Block DevTools shortcuts + Ctrl+P silently
-  document.addEventListener('keydown', (e) => {
-    const isBlockedKey =
-      e.key === 'F12' || // DevTools
-      e.key === 'F11' || // Fullscreen
-      (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
-      (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
-      (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
-
-    if (isBlockedKey) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
 
   // Put this at the very bottom before the return 
   if (loading || hasAccess === null) {
@@ -644,7 +645,9 @@ const InterviewerApplicantList = () => {
                 <TableCell sx={{ color: "white", textAlign: "center", border: `2px solid ${borderColor}` }}>Program</TableCell>
                 <TableCell sx={{ color: "white", textAlign: "center", border: `2px solid ${borderColor}` }}>Building</TableCell>
                 <TableCell sx={{ color: "white", textAlign: "center", border: `2px solid ${borderColor}` }}>Room</TableCell>
-
+                <TableCell sx={{ color: "white", textAlign: "center", border: `2px solid ${borderColor}` }}>
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
 
@@ -672,6 +675,22 @@ const InterviewerApplicantList = () => {
                   </TableCell>
                   <TableCell align="left" sx={{ border: `2px solid ${borderColor}` }}>
                     {a.room_description || interviewerData?.room_description || "N/A"} {/* ✅ NEW */}
+                  </TableCell>
+                  <TableCell align="center" sx={{ border: `2px solid ${borderColor}` }}>
+                    <IconButton
+                      color="error"
+                      onClick={() => removeApplicantFromSchedule(a.applicant_number)}
+                      sx={{
+                        backgroundColor: "#ffebee",
+                        border: "2px solid red",
+                        "&:hover": {
+                          backgroundColor: "#ffcdd2",
+                        },
+                        borderRadius: "8px",
+                      }}
+                    >
+                      <CloseIcon />
+                    </IconButton>
                   </TableCell>
 
                 </TableRow>

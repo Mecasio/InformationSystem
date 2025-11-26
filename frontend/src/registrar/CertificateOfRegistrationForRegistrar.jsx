@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef, forwardRef } from "reac
 import { SettingsContext } from "../App";
 import axios from "axios";
 import { Box, TextField, Container, Typography, Button } from "@mui/material";
-import FreeTuitionImage from "../assets/FREETUITION.png";
+import FreeTuitionImage from "../assets/FreeTuition.png";
 import EaristLogo from "../assets/EaristLogo.png";
 import '../styles/Print.css'
 import { Search } from "@mui/icons-material";

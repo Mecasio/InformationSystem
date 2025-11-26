@@ -542,7 +542,7 @@ const Dashboard1 = (props) => {
   const isFormValid = () => {
     const requiredFields = [
       "campus", "academicProgram", "classifiedAs", "applyingAs", "program",
-      "yearLevel", "profile_img", "last_name", "first_name", "middle_name", "nickname",
+      "yearLevel", "profile_img", "last_name", "first_name",
       "height", "weight", "gender", "birthOfDate", "age", "birthPlace",
       "languageDialectSpoken", "citizenship", "religion", "civilStatus", "tribeEthnicGroup",
       "cellphoneNumber", "emailAddress",
@@ -784,7 +784,7 @@ const Dashboard1 = (props) => {
             }}
           >
             <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' or N/A in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
             <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
 
           </Typography>
@@ -1186,6 +1186,31 @@ const Dashboard1 = (props) => {
                     </FormControl>
                   </Box> */}
                 </Box>
+                <div className="flex items-center mb-4 gap-2">
+                  <label className="w-40 font-medium">Year Level:</label>
+                  <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
+                    <InputLabel id="year-level-label">Year Level</InputLabel>
+                    <Select
+                      labelId="year-level-label"
+                      id="year-level-select"
+                      name="yearLevel"
+                      value={person.yearLevel || ""}
+                      label="Year Level"
+                      onChange={handleChange}
+                      onBlur={() => handleUpdate(person)}                >
+                      <MenuItem value=""><em>Select Year Level</em></MenuItem>
+                      <MenuItem value="First Year">First Year</MenuItem>
+                      <MenuItem value="Second Year">Second Year</MenuItem>
+                      <MenuItem value="Third Year">Third Year</MenuItem>
+                      <MenuItem value="Fourth Year">Fourth Year</MenuItem>
+                      <MenuItem value="Fifth Year">Fifth Year</MenuItem>
+                    </Select>
+                    {errors.yearLevel && (
+                      <FormHelperText>This field is required.</FormHelperText>
+                    )}
+                  </FormControl>
+                </div>
+
               </Box>
 
               <Box
@@ -1232,32 +1257,8 @@ const Dashboard1 = (props) => {
             </Box>
 
             {/* Year Level */}
-            <div className="flex items-center mb-4 gap-2">
-              <label className="w-40 font-medium">Year Level:</label>
-              <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
-                <InputLabel id="year-level-label">Year Level</InputLabel>
-                <Select
-                  labelId="year-level-label"
-                  id="year-level-select"
-                  name="yearLevel"
-                  value={person.yearLevel || ""}
-                  label="Year Level"
-                  onChange={handleChange}
-                  onBlur={() => handleUpdate(person)}                >
-                  <MenuItem value=""><em>Select Year Level</em></MenuItem>
-                  <MenuItem value="First Year">First Year</MenuItem>
-                  <MenuItem value="Second Year">Second Year</MenuItem>
-                  <MenuItem value="Third Year">Third Year</MenuItem>
-                  <MenuItem value="Fourth Year">Fourth Year</MenuItem>
-                  <MenuItem value="Fifth Year">Fifth Year</MenuItem>
-                </Select>
-                {errors.yearLevel && (
-                  <FormHelperText>This field is required.</FormHelperText>
-                )}
-              </FormControl>
-            </div>
 
-            <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Person Details:</Typography>
+            <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold", marginTop: "-20px" }}>Person Details:</Typography>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
 
@@ -1457,7 +1458,7 @@ const Dashboard1 = (props) => {
               <TextField
                 select
                 size="small"
-                label="Gender"
+                label="SEX"
                 name="gender"
                 required
                 value={person.gender == null ? "" : String(person.gender)}
@@ -1923,18 +1924,32 @@ const Dashboard1 = (props) => {
 
               <Box flex={1} display="flex" alignItems="center" gap={2}>
                 <Typography sx={{ width: 180 }} fontWeight="medium">
-                  Cellphone Number:
+                  Contact Number:
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
                   name="cellphoneNumber"
-                  placeholder="Enter your Cellphone Number +63"
-                  required
+                  placeholder="9XXXXXXXXX"
                   value={person.cellphoneNumber || ""}
-                  onBlur={() => handleUpdate(person)} onChange={handleChange}
+                  onBlur={() => handleUpdate(person)}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value.replace(/\D/g, ""); // remove letters
+                    handleChange({
+                      target: {
+                        name: "cellphoneNumber",
+                        value: onlyNumbers,
+                      },
+                    });
+                  }}
                   error={!!errors.cellphoneNumber}
                   helperText={errors.cellphoneNumber && "This field is required."}
+                  InputProps={{
+                    startAdornment: (
+                      <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                    ),
+                  }}
                 />
               </Box>
 
@@ -1943,6 +1958,7 @@ const Dashboard1 = (props) => {
                 <Typography sx={{ width: 180 }} fontWeight="medium">
                   Email Address:
                 </Typography>
+
                 <TextField
                   fullWidth
                   size="small"
@@ -1950,13 +1966,19 @@ const Dashboard1 = (props) => {
                   required
                   value={person.emailAddress || ""}
                   placeholder="Enter your Email Address (e.g., username@gmail.com)"
-                  onBlur={() => handleUpdate(person)} onChange={handleChange}
+                  onBlur={() => handleUpdate(person)}
+                  onChange={handleChange}
                   error={!!errors.emailAddress}
-                  helperText={errors.emailAddress && "This field is required."}
+                  helperText={errors.emailAddress}
+                  inputProps={{
+                    pattern: "^[a-zA-Z0-9._%+-]+@gmail\\.com$"
+                  }}
                 />
               </Box>
+              {errors.emailAddress && (
+                <FormHelperText>This field is required.</FormHelperText>
+              )}
             </Box>
-
 
 
 
@@ -2001,16 +2023,25 @@ const Dashboard1 = (props) => {
                   value={person.presentRegion || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e);
-                    setSelectedRegion(e.target.value);
+                    handleChange(e); // update Region
+
+                    // reset dependent dropdowns in the person object
+                    handleChange({ target: { name: "presentProvince", value: "" } });
+                    handleChange({ target: { name: "presentMunicipality", value: "" } });
+                    handleChange({ target: { name: "presentBarangay", value: "" } });
+
+                    // clear local UI states
                     setSelectedProvince("");
                     setSelectedCity("");
                     setSelectedBarangay("");
+
                     setProvinceList([]);
                     setCityList([]);
                     setBarangayList([]);
+
                     autoSave();
                   }}
+
                   displayEmpty
                 >
                   <MenuItem value="">Select Region</MenuItem>
@@ -2031,14 +2062,25 @@ const Dashboard1 = (props) => {
                   value={person.presentProvince || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e);
-                    setSelectedProvince(e.target.value);
+                    handleChange(e); // update Region
+
+                    // reset dependent dropdowns in the person object
+                    handleChange({ target: { name: "presentProvince", value: "" } });
+                    handleChange({ target: { name: "presentMunicipality", value: "" } });
+                    handleChange({ target: { name: "presentBarangay", value: "" } });
+
+                    // clear local UI states
+                    setSelectedProvince("");
                     setSelectedCity("");
                     setSelectedBarangay("");
+
+                    setProvinceList([]);
                     setCityList([]);
                     setBarangayList([]);
+
                     autoSave();
                   }}
+
                   displayEmpty
                 >
                   <MenuItem value="">Select Province</MenuItem>
@@ -2059,12 +2101,25 @@ const Dashboard1 = (props) => {
                   value={person.presentMunicipality || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e);
-                    setSelectedCity(e.target.value);
+                    handleChange(e); // update Region
+
+                    // reset dependent dropdowns in the person object
+                    handleChange({ target: { name: "presentProvince", value: "" } });
+                    handleChange({ target: { name: "presentMunicipality", value: "" } });
+                    handleChange({ target: { name: "presentBarangay", value: "" } });
+
+                    // clear local UI states
+                    setSelectedProvince("");
+                    setSelectedCity("");
                     setSelectedBarangay("");
+
+                    setProvinceList([]);
+                    setCityList([]);
                     setBarangayList([]);
+
                     autoSave();
                   }}
+
                   displayEmpty
                 >
                   <MenuItem value="">Select Municipality</MenuItem>
@@ -2085,10 +2140,25 @@ const Dashboard1 = (props) => {
                   value={person.presentBarangay || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e);
-                    setSelectedBarangay(e.target.value);
+                    handleChange(e); // update Region
+
+                    // reset dependent dropdowns in the person object
+                    handleChange({ target: { name: "presentProvince", value: "" } });
+                    handleChange({ target: { name: "presentMunicipality", value: "" } });
+                    handleChange({ target: { name: "presentBarangay", value: "" } });
+
+                    // clear local UI states
+                    setSelectedProvince("");
+                    setSelectedCity("");
+                    setSelectedBarangay("");
+
+                    setProvinceList([]);
+                    setCityList([]);
+                    setBarangayList([]);
+
                     autoSave();
                   }}
+
                   displayEmpty
                 >
                   <MenuItem value="">Select Barangay</MenuItem>
