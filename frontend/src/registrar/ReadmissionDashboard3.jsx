@@ -24,6 +24,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import GradeIcon from "@mui/icons-material/Grade";
 import API_BASE_URL from "../apiConfig";
+
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 const ReadmissionDashboard3 = () => {
 
   const settings = useContext(SettingsContext);
@@ -66,11 +68,10 @@ const ReadmissionDashboard3 = () => {
   }, [settings]);
 
   const stepsData = [
-    { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
+    { label: "Student Records", to: "/student_list", icon: <ListAltIcon /> },
     { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
-    { label: "Class List", to: "/class_roster", icon: <ClassIcon /> },
-    { label: "Search Certificate of Registration", to: "/search_cor", icon: <SearchIcon /> },
-    { label: "Student Numbering", to: "/student_numbering", icon: <ConfirmationNumberIcon /> },
+    { label: "Submitted Documents", to: "/submitted_documents", icon: <UploadFileIcon /> },
+    { label: "Search Certificate of Registration", to: "/search_cor", icon: <ListAltIcon /> },
     { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },
     { label: "Transcript of Records", to: "/transcript_of_records", icon: <SchoolIcon /> },
   ];
@@ -168,49 +169,70 @@ const ReadmissionDashboard3 = () => {
   // do not alter
   const location = useLocation();
 
-   const queryParams = new URLSearchParams(location.search);
-   const queryPersonId = queryParams.get("person_id")?.trim() || "";
- 
-   useEffect(() => {
-     const storedUser = localStorage.getItem("email");
-     const storedRole = localStorage.getItem("role");
-     const loggedInPersonId = localStorage.getItem("person_id");
- 
-     if (!storedUser || !storedRole || !loggedInPersonId) {
-       window.location.href = "/login";
-       return;
-     }
- 
-     setUser(storedUser);
-     setUserRole(storedRole);
- 
-     const allowedRoles = ["registrar", "applicant", "superadmin"];
-     if (!allowedRoles.includes(storedRole)) {
-       window.location.href = "/login";
-       return;
-     }
- 
-     const lastSelected = sessionStorage.getItem("admin_edit_person_id");
- 
-     // ⭐ CASE 1: URL HAS ?person_id=
-     if (queryPersonId !== "") {
-       sessionStorage.setItem("admin_edit_person_id", queryPersonId);
-       setUserID(queryPersonId);
-       return;
-     }
- 
-     // ⭐ CASE 2: URL has NO ID but we have a last selected student
-     if (lastSelected) {
-       setUserID(lastSelected);
-       return;
-     }
- 
-     // ⭐ CASE 3: No URL ID and no last selected → start blank
-     setUserID("");
-   }, [queryPersonId]);
- 
- 
- 
+  const queryParams = new URLSearchParams(location.search);
+  const queryPersonId = queryParams.get("person_id")?.trim() || "";
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("email");
+    const storedRole = localStorage.getItem("role");
+    const loggedInPersonId = localStorage.getItem("person_id");
+
+    if (!storedUser || !storedRole || !loggedInPersonId) {
+      window.location.href = "/login";
+      return;
+    }
+
+    setUser(storedUser);
+    setUserRole(storedRole);
+
+    const allowedRoles = ["registrar", "applicant", "superadmin"];
+    if (!allowedRoles.includes(storedRole)) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const lastSelected = sessionStorage.getItem("admin_edit_person_id");
+
+    // ⭐ CASE 1: URL HAS ?person_id=
+    if (queryPersonId !== "") {
+      sessionStorage.setItem("admin_edit_person_id", queryPersonId);
+      setUserID(queryPersonId);
+      return;
+    }
+
+    // ⭐ CASE 2: URL has NO ID but we have a last selected student
+    if (lastSelected) {
+      setUserID(lastSelected);
+      return;
+    }
+
+    // ⭐ CASE 3: No URL ID and no last selected → start blank
+    setUserID("");
+  }, [queryPersonId]);
+
+
+  const [studentData, setStudentData] = useState(null);
+
+  const params = new URLSearchParams(location.search);
+
+  const person_id = params.get("person_id");
+  const student_number = params.get("student_number");
+
+  useEffect(() => {
+    const fetchStudent = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/student-info`, {
+          params: { person_id, student_number }
+        });
+        setStudentData(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    if (person_id || student_number) fetchStudent();
+  }, [person_id, student_number]);
+
 
   const [selectedPerson, setSelectedPerson] = useState(null);
 
@@ -433,7 +455,7 @@ const ReadmissionDashboard3 = () => {
       label: `Application For ${shortTerm ? shortTerm.toUpperCase() : ""} College Admission`,
     },
     { to: "/admission_services", label: "Application/Student Satisfactory Survey" },
-   
+
   ];
 
 
@@ -606,8 +628,8 @@ const ReadmissionDashboard3 = () => {
         </Table>
       </TableContainer>
 
-   
-  <Box
+
+      <Box
         sx={{
           display: "flex",
           justifyContent: "center",

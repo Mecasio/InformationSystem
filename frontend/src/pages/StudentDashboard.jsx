@@ -769,14 +769,6 @@ const StudentDashboard = ({ profileImage, setProfileImage }) => {
                     Incomplete: {incomplete}
                   </Typography>
                 </Stack>
-                <Stack direction="row" spacing={3} justifyContent="center">
-                  <Typography sx={{ fontSize: "14px", width: "125px" }}>
-                    Completed: 0
-                  </Typography>
-                  <Typography sx={{ fontSize: "14px", width: "150px" }}>
-                    Ongoing: 11
-                  </Typography>
-                </Stack>
               </CardContent>
             </Card>
           </Grid>

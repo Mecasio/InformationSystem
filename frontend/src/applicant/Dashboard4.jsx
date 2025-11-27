@@ -351,63 +351,66 @@ const Dashboard4 = (props) => {
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
 
       <br />
-
-    <Box
+ <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          width: "100%",
+          mt: 2,
+        }}
+      >
+        <Box
           sx={{
             display: "flex",
-            justifyContent: "center",
+            alignItems: "center",
+            gap: 2,
+            p: 2,
+            borderRadius: "10px",
+            backgroundColor: "#fffaf5",
+            border: "1px solid #6D2323",
+            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
             width: "100%",
-            mt: 2,
+            overflow: "hidden",
           }}
         >
+          {/* Icon */}
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 2,
-              p: 2,
-              borderRadius: "10px",
-              backgroundColor: "#fffaf5",
-              border: "1px solid #6D2323",
-              boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-              width: "100%",
+              justifyContent: "center",
+              backgroundColor: "#800000",
+              borderRadius: "8px",
+              width: 60,
+              height: 60,
+              flexShrink: 0,
+            }}
+          >
+            <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
+          </Box>
+
+          {/* Text */}
+          <Typography
+            sx={{
+              fontSize: "20px",
+              fontFamily: "Arial",
+              color: "#3e3e3e",
+              lineHeight: 1.3, // slightly tighter to fit in fewer rows
+              whiteSpace: "normal",
               overflow: "hidden",
             }}
           >
-            {/* Icon */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#800000",
-                borderRadius: "8px",
-                width: 60,
-                height: 60,
-                flexShrink: 0,
-              }}
-            >
-              <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
-            </Box>
-  
-            {/* Text */}
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontFamily: "Arial",
-                color: "#3e3e3e",
-                lineHeight: 1.3, // slightly tighter to fit in fewer rows
-                whiteSpace: "normal",
-                overflow: "hidden",
-              }}
-            >
-              <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-              <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
-              <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
-  
-            </Typography>
-          </Box>
+            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' or N/A in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+
+          </Typography>
         </Box>
+      </Box>
+
+
+
+
   
         <h1
           style={{

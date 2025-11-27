@@ -25,6 +25,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import GradeIcon from "@mui/icons-material/Grade";
 import API_BASE_URL from "../apiConfig";
+
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+
 const ReadmissionDashboard2 = () => {
 
     const settings = useContext(SettingsContext);
@@ -67,13 +70,12 @@ const ReadmissionDashboard2 = () => {
     }, [settings]);
 
     const stepsData = [
-        { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
-        { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
-        { label: "Class List", to: "/class_roster", icon: <ClassIcon /> },
-        { label: "Search Certificate of Registration", to: "/search_cor", icon: <SearchIcon /> },
-        { label: "Student Numbering", to: "/student_numbering", icon: <ConfirmationNumberIcon /> },
-        { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },
-        { label: "Transcript of Records", to: "/transcript_of_records", icon: <SchoolIcon /> },
+            { label: "Student Records", to: "/student_list", icon: <ListAltIcon /> },
+               { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
+               { label: "Submitted Documents", to: "/submitted_documents", icon: <UploadFileIcon /> },
+               { label: "Search Certificate of Registration", to: "/search_cor", icon: <ListAltIcon /> },
+               { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },
+               { label: "Transcript of Records", to: "/transcript_of_records", icon: <SchoolIcon /> },
     ];
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -202,6 +204,27 @@ const ReadmissionDashboard2 = () => {
       setUserID("");
     }, [queryPersonId]);
   
+    const [studentData, setStudentData] = useState(null);
+  
+    const params = new URLSearchParams(location.search);
+  
+    const person_id = params.get("person_id");
+    const student_number = params.get("student_number");
+  
+    useEffect(() => {
+      const fetchStudent = async () => {
+        try {
+          const res = await axios.get(`${API_BASE_URL}/api/student-info`, {
+            params: { person_id, student_number }
+          });
+          setStudentData(res.data);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+  
+      if (person_id || student_number) fetchStudent();
+    }, [person_id, student_number]);
   
   
     const [selectedPerson, setSelectedPerson] = useState(null);

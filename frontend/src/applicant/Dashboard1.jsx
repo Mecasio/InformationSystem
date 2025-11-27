@@ -183,7 +183,12 @@ const Dashboard1 = (props) => {
       setClickedSteps(newClickedSteps);
       navigate(steps[index].path); // ✅ actually move to step
     } else {
-      alert("Please fill all required fields before proceeding.");
+      setSnackbar({
+        open: true,
+        message: "Please fill all required fields before proceeding.",
+        severity: "error"
+      });
+
     }
   };
 
@@ -559,6 +564,14 @@ const Dashboard1 = (props) => {
     requiredFields.forEach((field) => {
       const value = person[field];
       const stringValue = value?.toString().trim();
+      // Special rule for emailAddress
+      const emailValue = person.emailAddress?.trim();
+
+      // If user has not typed a username
+      if (!emailValue || emailValue === "@gmail.com") {
+        newErrors.emailAddress = true;
+        isValid = false;
+      }
 
       if (!stringValue) {
         newErrors[field] = true;
@@ -1115,7 +1128,7 @@ const Dashboard1 = (props) => {
                 {/* Program Fields */}
                 <Box display="flex" flexDirection="column" sx={{ width: "100%" }}>
                   {/* Program 1 */}
-                  <Box display="flex" alignItems="center" gap={2} mb={1}>
+                  <Box display="flex" alignItems="center" gap={2} mb={3}>
                     <label className="w-40 font-medium">Course Applied:</label>
                     <FormControl fullWidth size="small" required error={!!errors.program}>
                       <InputLabel>Course Applied</InputLabel>
@@ -1137,6 +1150,7 @@ const Dashboard1 = (props) => {
                       )}
                     </FormControl>
                   </Box>
+
 
 
                   {/* <Box display="flex" alignItems="center" gap={2} mb={1}>
@@ -1185,6 +1199,32 @@ const Dashboard1 = (props) => {
                       )}
                     </FormControl>
                   </Box> */}
+
+                  {/* Year Level */}
+                  <div className="flex items-center mb-4 gap-2">
+                    <label className="w-40 mt:[2] font-medium ">Year Level:</label>
+                    <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
+                      <InputLabel id="year-level-label">Year Level</InputLabel>
+                      <Select
+                        labelId="year-level-label"
+                        id="year-level-select"
+                        name="yearLevel"
+                        value={person.yearLevel || ""}
+                        label="Year Level"
+                        onChange={handleChange}
+                        onBlur={() => handleUpdate(person)}                >
+                        <MenuItem value=""><em>Select Year Level</em></MenuItem>
+                        <MenuItem value="First Year">First Year</MenuItem>
+                        <MenuItem value="Second Year">Second Year</MenuItem>
+                        <MenuItem value="Third Year">Third Year</MenuItem>
+                        <MenuItem value="Fourth Year">Fourth Year</MenuItem>
+                        <MenuItem value="Fifth Year">Fifth Year</MenuItem>
+                      </Select>
+                      {errors.yearLevel && (
+                        <FormHelperText>This field is required.</FormHelperText>
+                      )}
+                    </FormControl>
+                  </div>
                 </Box>
               </Box>
 
@@ -1193,10 +1233,10 @@ const Dashboard1 = (props) => {
                   textAlign: "center",
                   marginTop: "10px",
                   marginLeft: "35px",
-                  marginBottom: "20px",
+                  marginBottom: "-10px",
                   border: errors.profile_img ? "1px solid red" : "1px solid black",
-                  width: "5.08cm",
-                  height: "5.08cm",
+                  width: "5.50cm",
+                  height: "5.50cm",
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
@@ -1231,33 +1271,9 @@ const Dashboard1 = (props) => {
 
             </Box>
 
-            {/* Year Level */}
-            <div className="flex items-center mb-4 gap-2">
-              <label className="w-40 font-medium">Year Level:</label>
-              <FormControl fullWidth size="small" required error={!!errors.yearLevel}>
-                <InputLabel id="year-level-label">Year Level</InputLabel>
-                <Select
-                  labelId="year-level-label"
-                  id="year-level-select"
-                  name="yearLevel"
-                  value={person.yearLevel || ""}
-                  label="Year Level"
-                  onChange={handleChange}
-                  onBlur={() => handleUpdate(person)}                >
-                  <MenuItem value=""><em>Select Year Level</em></MenuItem>
-                  <MenuItem value="First Year">First Year</MenuItem>
-                  <MenuItem value="Second Year">Second Year</MenuItem>
-                  <MenuItem value="Third Year">Third Year</MenuItem>
-                  <MenuItem value="Fourth Year">Fourth Year</MenuItem>
-                  <MenuItem value="Fifth Year">Fifth Year</MenuItem>
-                </Select>
-                {errors.yearLevel && (
-                  <FormHelperText>This field is required.</FormHelperText>
-                )}
-              </FormControl>
-            </div>
 
-            <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Person Details:</Typography>
+
+            <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold", mt: "-50px" }}>Person Details:</Typography>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
 
@@ -1357,17 +1373,19 @@ const Dashboard1 = (props) => {
             </Box>
             <Box display="flex" gap={4} mb={2}>
               {/* Height Field */}
-              <Box display="flex" flexDirection="column" flex="0 0 24%">
+              <Box display="flex" flexDirection="column" flex="0 0 26%">
                 <Box display="flex" alignItems="center" gap={1}>
                   <Typography fontWeight="medium" minWidth="60px">
                     Height:
                   </Typography>
                   <TextField
                     size="small"
+                    type="number"
                     name="height"
                     value={person.height || ""}
                     onChange={handleChange}
-                    onBlur={() => handleUpdate(person)} placeholder="Enter your Height"
+                    onBlur={() => handleUpdate(person)}
+                    placeholder="Enter your Height"
                     error={!!errors.height}
                     fullWidth
                   />
@@ -1381,20 +1399,23 @@ const Dashboard1 = (props) => {
               </Box>
 
               {/* Weight Field */}
-              <Box display="flex" flexDirection="column" flex="0 0 24%">
+              <Box display="flex" flexDirection="column" flex="0 0 26%">
                 <Box display="flex" alignItems="center" gap={1}>
                   <Typography fontWeight="medium" minWidth="60px">
                     Weight:
                   </Typography>
                   <TextField
                     size="small"
+                    type="number"
                     name="weight"
                     value={person.weight || ""}
                     onChange={handleChange}
-                    onBlur={() => handleUpdate(person)} placeholder="Enter your Weight"
+                    onBlur={() => handleUpdate(person)}
+                    placeholder="Enter your Weight"
                     error={!!errors.weight}
                     fullWidth
                   />
+
                   <Typography variant="body2">kg</Typography>
                 </Box>
                 {errors.weight && (
@@ -1964,15 +1985,27 @@ const Dashboard1 = (props) => {
                   name="emailAddress"
                   required
                   value={person.emailAddress || ""}
-                  placeholder="Enter your Email Address (e.g., username@gmail.com)"
+                  placeholder="Enter your Gmail address"
                   onBlur={() => handleUpdate(person)}
-                  onChange={handleChange}
                   error={!!errors.emailAddress}
-                  helperText={errors.emailAddress}
-                  inputProps={{
-                    pattern: "^[a-zA-Z0-9._%+-]+@gmail\\.com$"
+                  helperText={errors.emailAddress ? "This field is required." : ""}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\s/g, "");
+
+                    value = value.replace(/@.*/, "");
+
+                    const finalValue = value === "" ? "" : value + "@gmail.com";
+
+                    handleChange({
+                      target: {
+                        name: "emailAddress",
+                        value: finalValue
+                      }
+                    });
                   }}
                 />
+
+
               </Box>
             </Box>
 
@@ -2011,193 +2044,146 @@ const Dashboard1 = (props) => {
 
 
             <Box display="flex" gap={2} mb={2}>
-              {/* Present Region */}
+
+              {/* REGION */}
               <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
                 <Typography mb={1} fontWeight="medium">Region</Typography>
+
                 <Select
                   name="presentRegion"
+                  displayEmpty
                   value={person.presentRegion || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e); // update Region
-
-                    // reset dependent dropdowns in the person object
-                    handleChange({ target: { name: "presentProvince", value: "" } });
-                    handleChange({ target: { name: "presentMunicipality", value: "" } });
-                    handleChange({ target: { name: "presentBarangay", value: "" } });
-
-                    // clear local UI states
+                    handleChange(e);
+                    setSelectedRegion(e.target.value);
                     setSelectedProvince("");
                     setSelectedCity("");
                     setSelectedBarangay("");
-
                     setProvinceList([]);
                     setCityList([]);
                     setBarangayList([]);
-
                     autoSave();
                   }}
-
-                  displayEmpty
                 >
-                  <MenuItem value="">Select Region</MenuItem>
-                  {regionList.map((region) => (
+                  <MenuItem value=""><em>Select Region</em></MenuItem>
+
+                  {regionList.map(region => (
                     <MenuItem key={region.region_code} value={region.region_name}>
                       {region.region_name}
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.presentRegion && <FormHelperText>This field is required.</FormHelperText>}
+
+                {errors.presentRegion && (
+                  <FormHelperText>This field is required.</FormHelperText>
+                )}
               </FormControl>
 
-              {/* Present Province */}
+              {/* PROVINCE */}
               <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
                 <Typography mb={1} fontWeight="medium">Province</Typography>
+
                 <Select
                   name="presentProvince"
+                  displayEmpty
                   value={person.presentProvince || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e); // update Region
-
-                    // reset dependent dropdowns in the person object
-                    handleChange({ target: { name: "presentProvince", value: "" } });
-                    handleChange({ target: { name: "presentMunicipality", value: "" } });
-                    handleChange({ target: { name: "presentBarangay", value: "" } });
-
-                    // clear local UI states
-                    setSelectedProvince("");
+                    handleChange(e);
+                    setSelectedProvince(e.target.value);
                     setSelectedCity("");
                     setSelectedBarangay("");
-
-                    setProvinceList([]);
                     setCityList([]);
                     setBarangayList([]);
-
                     autoSave();
                   }}
-
-                  displayEmpty
+                  disabled={!person.presentRegion}
                 >
-                  <MenuItem value="">Select Province</MenuItem>
-                  {provinceList.map((province) => (
+                  <MenuItem value=""><em>Select Province</em></MenuItem>
+
+                  {provinceList.map(province => (
                     <MenuItem key={province.province_code} value={province.province_name}>
                       {province.province_name}
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.presentProvince && <FormHelperText>This field is required.</FormHelperText>}
+
+                {errors.presentProvince && (
+                  <FormHelperText>This field is required.</FormHelperText>
+                )}
               </FormControl>
 
-              {/* Present Municipality */}
+            </Box>
+
+            {/* MUNICIPALITY & BARANGAY */}
+            <Box display="flex" gap={2} mb={2}>
+
+              {/* MUNICIPALITY */}
               <FormControl fullWidth size="small" required error={!!errors.presentMunicipality}>
                 <Typography mb={1} fontWeight="medium">Municipality</Typography>
+
                 <Select
                   name="presentMunicipality"
+                  displayEmpty
                   value={person.presentMunicipality || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e); // update Region
-
-                    // reset dependent dropdowns in the person object
-                    handleChange({ target: { name: "presentProvince", value: "" } });
-                    handleChange({ target: { name: "presentMunicipality", value: "" } });
-                    handleChange({ target: { name: "presentBarangay", value: "" } });
-
-                    // clear local UI states
-                    setSelectedProvince("");
-                    setSelectedCity("");
+                    handleChange(e);
+                    setSelectedCity(e.target.value);
                     setSelectedBarangay("");
-
-                    setProvinceList([]);
-                    setCityList([]);
                     setBarangayList([]);
-
                     autoSave();
                   }}
-
-                  displayEmpty
+                  disabled={!person.presentProvince}
                 >
-                  <MenuItem value="">Select Municipality</MenuItem>
-                  {cityList.map((city) => (
+                  <MenuItem value=""><em>Select Municipality</em></MenuItem>
+
+                  {cityList.map(city => (
                     <MenuItem key={city.city_code} value={city.city_name}>
                       {city.city_name}
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.presentMunicipality && <FormHelperText>This field is required.</FormHelperText>}
+
+                {errors.presentMunicipality && (
+                  <FormHelperText>This field is required.</FormHelperText>
+                )}
               </FormControl>
 
-              {/* Present Barangay */}
+              {/* BARANGAY */}
               <FormControl fullWidth size="small" required error={!!errors.presentBarangay}>
-                <Typography mb={1} fontWeight="medium">Present Barangay</Typography>
+                <Typography mb={1} fontWeight="medium">Barangay</Typography>
+
                 <Select
                   name="presentBarangay"
+                  displayEmpty
                   value={person.presentBarangay || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
-                    handleChange(e); // update Region
-
-                    // reset dependent dropdowns in the person object
-                    handleChange({ target: { name: "presentProvince", value: "" } });
-                    handleChange({ target: { name: "presentMunicipality", value: "" } });
-                    handleChange({ target: { name: "presentBarangay", value: "" } });
-
-                    // clear local UI states
-                    setSelectedProvince("");
-                    setSelectedCity("");
-                    setSelectedBarangay("");
-
-                    setProvinceList([]);
-                    setCityList([]);
-                    setBarangayList([]);
-
+                    handleChange(e);
+                    setSelectedBarangay(e.target.value);
                     autoSave();
                   }}
-
-                  displayEmpty
+                  disabled={!person.presentMunicipality}
                 >
-                  <MenuItem value="">Select Barangay</MenuItem>
-                  {barangayList.map((brgy) => (
+                  <MenuItem value=""><em>Select Barangay</em></MenuItem>
+
+                  {barangayList.map(brgy => (
                     <MenuItem key={brgy.brgy_code} value={brgy.brgy_name}>
                       {brgy.brgy_name}
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.presentBarangay && <FormHelperText>This field is required.</FormHelperText>}
+
+                {errors.presentBarangay && (
+                  <FormHelperText>This field is required.</FormHelperText>
+                )}
               </FormControl>
+
             </Box>
 
 
-            <Box display="flex" gap={2} mb={2}>
-              <Box flex={1}>
-                <Typography mb={1} fontWeight="medium">Present Street</Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  name="presentStreet"
-                  value={person.presentStreet || ""}
-                  onBlur={() => handleUpdate(person)} placeholder="Enter your Present Street"
-                  onChange={handleChange}
-                  error={!!errors.presentStreet}
-                  helperText={errors.presentStreet && "This field is required."}
-                />
-              </Box>
-
-              <Box flex={1}>
-                <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  name="presentZipCode"
-                  placeholder="Enter your Zip Code"
-                  value={person.presentZipCode || ""}
-                  onBlur={() => handleUpdate(person)} onChange={handleChange}
-                  error={!!errors.presentZipCode}
-                  helperText={errors.presentZipCode && "This field is required."}
-                />
-              </Box>
-            </Box>
 
 
             {/* DSWD Household Number */}
@@ -2218,6 +2204,8 @@ const Dashboard1 = (props) => {
             <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Permanent Address:</Typography>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
+
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -2257,118 +2245,159 @@ const Dashboard1 = (props) => {
 
 
 
+            {/* Permanent Region & Province */}
             <Box display="flex" gap={2} mb={2}>
+
               {/* Permanent Region */}
-              <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentRegion}>
+              <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Permanent Region</Typography>
-                <Select
-                  name="permanentRegion"
-                  value={person.permanentRegion || ""}
-                  displayEmpty
-                  onBlur={() => handleUpdate(person)}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setPermanentRegion(e.target.value);
-                    setPermanentProvince("");
-                    setPermanentCity("");
-                    setPermanentBarangay("");
-                    setPermanentProvinceList([]);
-                    setPermanentCityList([]);
-                    setPermanentBarangayList([]);
-                    autoSave();
-                  }}
-                >
-                  <MenuItem value="">Select Region</MenuItem>
-                  {permanentRegionList.map((region) => (
-                    <MenuItem key={region.region_code} value={region.region_name}>
-                      {region.region_name}
+                <FormControl fullWidth size="small" required error={!!errors.permanentRegion}>
+                  <Select
+                    name="permanentRegion"
+                    displayEmpty
+                    value={person.permanentRegion || ""}
+                    onBlur={() => handleUpdate(person)}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setPermanentRegion(e.target.value);
+                      setPermanentProvince("");
+                      setPermanentCity("");
+                      setPermanentBarangay("");
+                      setPermanentProvinceList([]);
+                      setPermanentCityList([]);
+                      setPermanentBarangayList([]);
+                      autoSave();
+                    }}
+                  >
+                    <MenuItem value="">
+                      <em>Select Region</em>
                     </MenuItem>
-                  ))}
-                </Select>
-                {errors.permanentRegion && <FormHelperText>This field is required.</FormHelperText>}
-              </FormControl>
+
+                    {permanentRegionList.map(region => (
+                      <MenuItem key={region.region_code} value={region.region_name}>
+                        {region.region_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  {errors.permanentRegion && (
+                    <FormHelperText error>This field is required.</FormHelperText>
+                  )}
+                </FormControl>
+              </Box>
 
               {/* Permanent Province */}
-              <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentProvince}>
+              <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Permanent Province</Typography>
-                <Select
-                  name="permanentProvince"
-                  value={person.permanentProvince || ""}
-                  displayEmpty
-                  onBlur={() => handleUpdate(person)}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setPermanentProvince(e.target.value);
-                    setPermanentCity("");
-                    setPermanentBarangay("");
-                    setPermanentCityList([]);
-                    setPermanentBarangayList([]);
-                    autoSave();
-                  }}
-                  disabled={!person.permanentRegion}
-                >
-                  <MenuItem value="">Select Province</MenuItem>
-                  {permanentProvinceList.map((province) => (
-                    <MenuItem key={province.province_code} value={province.province_name}>
-                      {province.province_name}
+                <FormControl fullWidth size="small" required error={!!errors.permanentProvince}>
+                  <Select
+                    name="permanentProvince"
+                    displayEmpty
+                    value={person.permanentProvince || ""}
+                    onBlur={() => handleUpdate(person)}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setPermanentProvince(e.target.value);
+                      setPermanentCity("");
+                      setPermanentBarangay("");
+                      setPermanentCityList([]);
+                      setPermanentBarangayList([]);
+                      autoSave();
+                    }}
+                    disabled={!person.permanentRegion}
+                  >
+                    <MenuItem value="">
+                      <em>Select Province</em>
                     </MenuItem>
-                  ))}
-                </Select>
-                {errors.permanentProvince && <FormHelperText>This field is required.</FormHelperText>}
-              </FormControl>
+
+                    {permanentProvinceList.map(province => (
+                      <MenuItem key={province.province_code} value={province.province_name}>
+                        {province.province_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  {errors.permanentProvince && (
+                    <FormHelperText error>This field is required.</FormHelperText>
+                  )}
+                </FormControl>
+              </Box>
+
+            </Box>
+
+            {/* Permanent Municipality & Barangay */}
+            <Box display="flex" gap={2} mb={2}>
 
               {/* Permanent Municipality */}
-              <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentMunicipality}>
+              <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Permanent Municipality</Typography>
-                <Select
-                  name="permanentMunicipality"
-                  value={person.permanentMunicipality || ""}
-                  displayEmpty
-                  onBlur={() => handleUpdate(person)}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setPermanentCity(e.target.value);
-                    setPermanentBarangay("");
-                    setPermanentBarangayList([]);
-                    autoSave();
-                  }}
-                  disabled={!person.permanentProvince}
-                >
-                  <MenuItem value="">Select Municipality</MenuItem>
-                  {permanentCityList.map((city) => (
-                    <MenuItem key={city.city_code} value={city.city_name}>
-                      {city.city_name}
+                <FormControl fullWidth size="small" required error={!!errors.permanentMunicipality}>
+                  <Select
+                    name="permanentMunicipality"
+                    displayEmpty
+                    value={person.permanentMunicipality || ""}
+                    onBlur={() => handleUpdate(person)}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setPermanentCity(e.target.value);
+                      setPermanentBarangay("");
+                      setPermanentBarangayList([]);
+                      autoSave();
+                    }}
+                    disabled={!person.permanentProvince}
+                  >
+                    <MenuItem value="">
+                      <em>Select Municipality</em>
                     </MenuItem>
-                  ))}
-                </Select>
-                {errors.permanentMunicipality && <FormHelperText>This field is required.</FormHelperText>}
-              </FormControl>
+
+                    {permanentCityList.map(city => (
+                      <MenuItem key={city.city_code} value={city.city_name}>
+                        {city.city_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  {errors.permanentMunicipality && (
+                    <FormHelperText error>This field is required.</FormHelperText>
+                  )}
+                </FormControl>
+              </Box>
 
               {/* Permanent Barangay */}
-              <FormControl sx={{ flex: "1 1 25%" }} size="small" required error={!!errors.permanentBarangay}>
+              <Box flex={1}>
                 <Typography mb={1} fontWeight="medium">Permanent Barangay</Typography>
-                <Select
-                  name="permanentBarangay"
-                  value={person.permanentBarangay || ""}
-                  displayEmpty
-                  onBlur={() => handleUpdate(person)}
-                  onChange={(e) => {
-                    handleChange(e);
-                    setPermanentBarangay(e.target.value);
-                    autoSave();
-                  }}
-                  disabled={!person.permanentMunicipality}
-                >
-                  <MenuItem value="">Select Barangay</MenuItem>
-                  {permanentBarangayList.map((brgy) => (
-                    <MenuItem key={brgy.brgy_code} value={brgy.brgy_name}>
-                      {brgy.brgy_name}
+                <FormControl fullWidth size="small" required error={!!errors.permanentBarangay}>
+                  <Select
+                    name="permanentBarangay"
+                    displayEmpty
+                    value={person.permanentBarangay || ""}
+                    onBlur={() => handleUpdate(person)}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setPermanentBarangay(e.target.value);
+                      autoSave();
+                    }}
+                    disabled={!person.permanentMunicipality}
+                  >
+                    <MenuItem value="">
+                      <em>Select Barangay</em>
                     </MenuItem>
-                  ))}
-                </Select>
-                {errors.permanentBarangay && <FormHelperText>This field is required.</FormHelperText>}
-              </FormControl>
+
+                    {permanentBarangayList.map(brgy => (
+                      <MenuItem key={brgy.brgy_code} value={brgy.brgy_name}>
+                        {brgy.brgy_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  {errors.permanentBarangay && (
+                    <FormHelperText error>This field is required.</FormHelperText>
+                  )}
+                </FormControl>
+              </Box>
+
             </Box>
+
 
             <Box display="flex" gap={2} mb={2}>
               <Box flex={1}>
@@ -2684,7 +2713,11 @@ const Dashboard1 = (props) => {
                     navigate(`/dashboard/${keys.step2}`);
 
                   } else {
-                    alert("Please complete all required fields before proceeding.");
+                    setSnackbar({
+                      open: true,
+                      message: "Please complete all required fields before proceeding.",
+                      severity: "error",
+                    });
                   }
                 }}
                 endIcon={
@@ -2722,6 +2755,29 @@ const Dashboard1 = (props) => {
                 {snackbar.message}
               </Alert>
             </Snackbar>
+
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={4000}
+              onClose={handleCloseSnackbar}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }} // <-- top center
+            >
+              <Alert
+                onClose={handleCloseSnackbar}
+                severity={snackbar.severity} // "error" for red
+                sx={{
+                  width: "100%",
+                  height: 50,       // bigger height
+                  fontSize: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {snackbar.message}
+              </Alert>
+            </Snackbar>
+
 
           </Container>
         </form>

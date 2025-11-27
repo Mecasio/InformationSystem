@@ -17,14 +17,14 @@ const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:5173", "http://192.168.84.228:5173"],
+    origin: ["http://localhost:5173", "http://192.168.1.3:5173"],
     methods: ["GET", "POST"]
   }
 });
 
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.84.228:5173"],  // ✅ Explicitly allow Vite dev server
+  origin: ["http://localhost:5173", "http://192.168.1.3:5173"],  // ✅ Explicitly allow Vite dev server
   credentials: true                  // ✅ Allow credentials (cookies, auth)
 }));
 
@@ -604,7 +604,7 @@ const ROLE_PAGE_ACCESS = {
   admission: [92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98],
   enrollment: [92, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60,],
   clinic: [92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
-  registrar: [92, 96, 13, 73, 15, 80, 38, 39, 40, 41, 42, 56, 59, 50, 62, 100],
+  registrar: [92, 96, 13, 73, 15, 80, 38, 39, 40, 41, 42, 44, 56, 59, 50, 62, 100],
   superadmin: "ALL"
 };
 
@@ -2581,11 +2581,13 @@ app.get("/exam_schedules", async (req, res) => {
   }
 });
 
+// FILTER OF YEAR AND SEMESTER
 app.get("/exam_schedules_with_count/:yearId/:semesterId", async (req, res) => {
   const { yearId, semesterId } = req.params;
 
   try {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT 
         ees.schedule_id,
         ees.day_description,
@@ -2596,24 +2598,20 @@ app.get("/exam_schedules_with_count/:yearId/:semesterId", async (req, res) => {
         ees.proctor,
         ees.room_quota,
         ees.created_at,
+        SUBSTRING(ea.applicant_id, 5, 1) AS middle_code,
         COUNT(ea.applicant_id) AS current_occupancy
       FROM admission.entrance_exam_schedule ees
-      
-      -- JOIN enrollment.year_table TO FILTER
       JOIN enrollment.year_table yt 
         ON yt.status = 1
         AND yt.year_id = ?
-      
-      -- JOIN enrollment.semester_table TO FILTER
-      JOIN enrollment.semester_table st
-        ON st.semester_id = ?
-      
       LEFT JOIN admission.exam_applicants ea
         ON ees.schedule_id = ea.schedule_id
-        
+        AND SUBSTRING(ea.applicant_id, 5, 1) = ?
       GROUP BY ees.schedule_id
       ORDER BY ees.day_description, ees.start_time;
-    `, [yearId, semesterId]);
+    `,
+      [yearId, semesterId]
+    );
 
     res.json(rows);
   } catch (err) {
@@ -2622,12 +2620,16 @@ app.get("/exam_schedules_with_count/:yearId/:semesterId", async (req, res) => {
   }
 });
 
-// GET: interview schedules with applicant count, filtered by department if needed
-app.get("/interview_schedules_with_count/:yearId/:semesterId", async (req, res) => {
-  const { yearId, semesterId } = req.params;
 
-  try {
-    const [rows] = await db.query(`
+// GET: interview schedules with applicant count, filtered by department if needed
+app.get(
+  "/interview_schedules_with_count/:yearId/:semesterId",
+  async (req, res) => {
+    const { yearId, semesterId } = req.params;
+
+    try {
+      const [rows] = await db.query(
+        `
       SELECT 
         ies.schedule_id,
         ies.day_description,
@@ -2639,19 +2641,94 @@ app.get("/interview_schedules_with_count/:yearId/:semesterId", async (req, res) 
         ies.room_quota,
         COUNT(ia.applicant_id) AS current_occupancy
       FROM admission.interview_exam_schedule ies
+      JOIN enrollment.year_table yt 
+        ON yt.status = 1
+        AND yt.year_id = ?
       LEFT JOIN admission.interview_applicants ia
         ON ies.schedule_id = ia.schedule_id
+        AND SUBSTRING(ia.applicant_id, 5, 1) = ?
       GROUP BY ies.schedule_id
       ORDER BY ies.day_description, ies.start_time
-    `);
+    `,
+        [yearId, semesterId]
+      );
 
-    res.json(rows);
+      res.json(rows);
+    } catch (err) {
+      console.error("Interview Schedule Error:", err);
+      res.status(500).send("Server error");
+    }
+  }
+);
+
+
+// NEW API
+app.post("/api/update-grade", async (req, res) => {
+  const { course_id, student_number, final_grade } = req.body;
+  console.log("Enrolled ID", course_id);
+  console.log("Student Number", student_number);
+  console.log("Final Grade", final_grade);
+
+  if (!course_id || !student_number || final_grade === undefined) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const [result] = await db3.execute(
+      `UPDATE enrolled_subject 
+             SET final_grade = ?
+             WHERE student_number = ? AND course_id = ?`,
+      [final_grade, student_number, course_id]
+    );
+
+    res.json({ success: true, message: "Grade updated" });
   } catch (err) {
-    console.error("Interview Schedule Error:", err);
-    res.status(500).send("Server error");
+    console.error(err);
+    res.status(500).json({ message: "Failed to update grade" });
   }
 });
 
+app.get("/api/all-students", async (req, res) => {
+  try {
+    const [rows] = await db3.execute(`
+      SELECT DISTINCT 
+        ru.requirements_id, 
+        yt.year_id, 
+        smt.semester_id, 
+        ylt.year_level_id, 
+        dt.dprtmnt_id, 
+        pgt.program_id, 
+        snt.student_number, 
+        pt.campus, 
+        es.en_remarks,
+        rt.description, 
+        pt.first_name, 
+        pt.last_name, 
+        pt.middle_name,
+        pt.emailAddress,
+        cct.curriculum_id,
+        dt.dprtmnt_code, pgt.program_description, pt.birthOfDate, pt.gender, yt.year_description, smt.semester_description, ylt.year_level_description  FROM enrolled_subject AS es
+      LEFT JOIN student_numbering_table AS snt ON es.student_number = snt.student_number
+      LEFT JOIN person_table AS pt ON snt.person_id = pt.person_id
+      INNER JOIN requirement_uploads AS ru ON snt.person_id = ru.person_id
+      INNER JOIN requirements_table AS rt ON ru.requirements_id = rt.id
+      LEFT JOIN curriculum_table AS cct ON es.curriculum_id = cct.curriculum_id
+      LEFT JOIN program_table AS pgt ON cct.program_id = pgt.program_id
+      LEFT JOIN active_school_year_table AS sy ON es.active_school_year_id = sy.id
+      LEFT JOIN year_table AS yt ON sy.year_id = yt.year_id
+      LEFT JOIN semester_table AS smt ON sy.semester_id = smt.semester_id
+      LEFT JOIN student_status_table AS sst ON snt.student_number = sst.student_number
+      LEFT JOIN year_level_table AS ylt ON sst.year_level_id = ylt.year_level_id
+      LEFT JOIN dprtmnt_curriculum_table AS dct ON cct.curriculum_id = dct.dprtmnt_curriculum_id
+      LEFT JOIN dprtmnt_table AS dt ON dct.dprtmnt_id = dt.dprtmnt_id;`
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Error fetching all students:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
 
 // 📌 Import Excel to person_status_table
@@ -3582,43 +3659,43 @@ app.put("/api/student/update_person/:person_id", async (req, res) => {
   try {
     // ❗ OPTIONAL: Prevent updating fields students should NOT touch
     const allowed = [
-    "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
-  "program", "program2", "program3", "yearLevel", "last_name", "first_name",
-  "middle_name", "extension", "nickname", "height", "weight", "lrnNumber",
-  "nolrnNumber", "gender", "pwdMember", "pwdType", "pwdId", "birthOfDate",
-  "age", "birthPlace", "languageDialectSpoken", "citizenship", "religion",
-  "civilStatus", "tribeEthnicGroup", "cellphoneNumber", "emailAddress",
-  "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
-  "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
-  "sameAsPresentAddress", "permanentStreet", "permanentBarangay",
-  "permanentZipCode", "permanentRegion", "permanentProvince",
-  "permanentMunicipality", "permanentDswdHouseholdNumber", "solo_parent",
-  "father_deceased", "father_family_name", "father_given_name",
-  "father_middle_name", "father_ext", "father_nickname", "father_education",
-  "father_education_level", "father_last_school", "father_course",
-  "father_year_graduated", "father_school_address", "father_contact",
-  "father_occupation", "father_employer", "father_income", "father_email",
-  "mother_deceased", "mother_family_name", "mother_given_name",
-  "mother_middle_name", "mother_ext", "mother_nickname", "mother_education",
-  "mother_education_level", "mother_last_school", "mother_course",
-  "mother_year_graduated", "mother_school_address", "mother_contact",
-  "mother_occupation", "mother_employer", "mother_income", "mother_email",
-  "guardian", "guardian_family_name", "guardian_given_name",
-  "guardian_middle_name", "guardian_ext", "guardian_nickname",
-  "guardian_address", "guardian_contact", "guardian_email", "annual_income",
-  "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
-  "honor", "generalAverage", "yearGraduated", "schoolLevel1",
-  "schoolLastAttended1", "schoolAddress1", "courseProgram1", "honor1",
-  "generalAverage1", "yearGraduated1", "strand", "cough", "colds", "fever",
-  "asthma", "faintingSpells", "heartDisease", "tuberculosis",
-  "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury", "hiv",
-  "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
-  "smokingCigarette", "alcoholDrinking", "hospitalized",
-  "hospitalizationDetails", "medications", "hadCovid", "covidDate",
-  "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
-  "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
-  "chestXray", "cbc", "urinalysis", "otherworkups", "symptomsToday",
-  "remarks", "termsOfAgreement", "created_at", "current_step"
+      "profile_img", "campus", "academicProgram", "classifiedAs", "applyingAs",
+      "program", "program2", "program3", "yearLevel", "last_name", "first_name",
+      "middle_name", "extension", "nickname", "height", "weight", "lrnNumber",
+      "nolrnNumber", "gender", "pwdMember", "pwdType", "pwdId", "birthOfDate",
+      "age", "birthPlace", "languageDialectSpoken", "citizenship", "religion",
+      "civilStatus", "tribeEthnicGroup", "cellphoneNumber", "emailAddress",
+      "presentStreet", "presentBarangay", "presentZipCode", "presentRegion",
+      "presentProvince", "presentMunicipality", "presentDswdHouseholdNumber",
+      "sameAsPresentAddress", "permanentStreet", "permanentBarangay",
+      "permanentZipCode", "permanentRegion", "permanentProvince",
+      "permanentMunicipality", "permanentDswdHouseholdNumber", "solo_parent",
+      "father_deceased", "father_family_name", "father_given_name",
+      "father_middle_name", "father_ext", "father_nickname", "father_education",
+      "father_education_level", "father_last_school", "father_course",
+      "father_year_graduated", "father_school_address", "father_contact",
+      "father_occupation", "father_employer", "father_income", "father_email",
+      "mother_deceased", "mother_family_name", "mother_given_name",
+      "mother_middle_name", "mother_ext", "mother_nickname", "mother_education",
+      "mother_education_level", "mother_last_school", "mother_course",
+      "mother_year_graduated", "mother_school_address", "mother_contact",
+      "mother_occupation", "mother_employer", "mother_income", "mother_email",
+      "guardian", "guardian_family_name", "guardian_given_name",
+      "guardian_middle_name", "guardian_ext", "guardian_nickname",
+      "guardian_address", "guardian_contact", "guardian_email", "annual_income",
+      "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+      "honor", "generalAverage", "yearGraduated", "schoolLevel1",
+      "schoolLastAttended1", "schoolAddress1", "courseProgram1", "honor1",
+      "generalAverage1", "yearGraduated1", "strand", "cough", "colds", "fever",
+      "asthma", "faintingSpells", "heartDisease", "tuberculosis",
+      "frequentHeadaches", "hernia", "chronicCough", "headNeckInjury", "hiv",
+      "highBloodPressure", "diabetesMellitus", "allergies", "cancer",
+      "smokingCigarette", "alcoholDrinking", "hospitalized",
+      "hospitalizationDetails", "medications", "hadCovid", "covidDate",
+      "vaccine1Brand", "vaccine1Date", "vaccine2Brand", "vaccine2Date",
+      "booster1Brand", "booster1Date", "booster2Brand", "booster2Date",
+      "chestXray", "cbc", "urinalysis", "otherworkups", "symptomsToday",
+      "remarks", "termsOfAgreement", "created_at", "current_step"
     ];
 
     // Remove all fields NOT allowed
@@ -5277,6 +5354,7 @@ app.post("/registrar-change-password", async (req, res) => {
   }
 });
 
+
 // Student Change Password 
 app.post("/student-change-password", async (req, res) => {
   const { person_id, currentPassword, newPassword } = req.body;
@@ -5747,6 +5825,23 @@ WHERE proctor LIKE ?
     }
   });
 
+  app.get("/api/employee/:employeeID", async (req, res) => {
+    const { employeeID } = req.params;
+    console.log(employeeID);
+    try {
+      const [rows] = await db3.query(
+        "SELECT page_id FROM page_access WHERE user_id = ?",
+        [employeeID]
+      );
+
+      const pageIds = rows.map(r => r.page_id);
+
+      res.json({ success: true, accessList: pageIds });
+    } catch (err) {
+      console.error("Error fetching access list:", err);
+      res.status(500).json({ error: "Database error" });
+    }
+  });
 
   // ✅ Unified Save or Update for Qualifying / Interview Scores (with duplicate-safe notifications)
   app.post("/api/interview/save", async (req, res) => {
@@ -10686,7 +10781,11 @@ app.get("/api/professor-schedule/:profId", async (req, res) => {
         pgt.program_code,
         st.description AS section_description,
         rt.room_description, 
-        cst.course_code
+        cst.course_code,
+        cst.course_id,
+        t.department_section_id,
+        st.id as section_id,
+        t.school_year_id
       FROM time_table t
       JOIN room_day_table d ON d.id = t.room_day
       INNER JOIN active_school_year_table asy ON t.school_year_id = asy.id
@@ -10707,6 +10806,7 @@ app.get("/api/professor-schedule/:profId", async (req, res) => {
     res.status(500).send("DB Error");
   }
 });
+
 
 app.get("/api/student-dashboard/:id", async (req, res) => {
   const { id } = req.params;
@@ -14741,11 +14841,12 @@ app.get("/api/person_status/:person_id", async (req, res) => {
   }
 });
 
+
 app.get("/get_prof_data/:id", async (req, res) => {
   const id = req.params.id;
 
   const query = `
-    SELECT pt.prof_id, pt.person_id, pt.profile_image, pt.email, pt.fname, pt.mname, pt.lname FROM prof_table AS pt
+    SELECT pt.prof_id, pt.person_id, pt.profile_image, pt.email, pt.fname, pt.mname, pt.lname, pt.employee_id FROM prof_table AS pt
     WHERE pt.person_id = ?
   `;
 

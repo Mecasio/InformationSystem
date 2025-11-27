@@ -33,7 +33,7 @@ import ClassIcon from "@mui/icons-material/Class";
 import SearchIcon from "@mui/icons-material/Search";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import GradeIcon from "@mui/icons-material/Grade";
-
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 
@@ -81,11 +81,10 @@ const ReadmissionDashboard1 = () => {
   }, [settings]);
 
   const stepsData = [
-    { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
+    { label: "Student Records", to: "/student_list", icon: <ListAltIcon /> },
     { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
-    { label: "Class List", to: "/class_roster", icon: <ClassIcon /> },
-    { label: "Search Certificate of Registration", to: "/search_cor", icon: <SearchIcon /> },
-    { label: "Student Numbering", to: "/student_numbering", icon: <ConfirmationNumberIcon /> },
+    { label: "Submitted Documents", to: "/submitted_documents", icon: <UploadFileIcon /> },
+    { label: "Search Certificate of Registration", to: "/search_cor", icon: <ListAltIcon /> },
     { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },
     { label: "Transcript of Records", to: "/transcript_of_records", icon: <SchoolIcon /> },
   ];
@@ -253,23 +252,6 @@ const ReadmissionDashboard1 = () => {
 
 
 
-
-
-  const fetchByPersonId = async (personID) => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/person/${personID}`);
-      setPerson(res.data);
-      setSelectedPerson(res.data);
-      if (res.data?.applicant_number) {
-        // optional: whatever logic you want
-      }
-    } catch (err) {
-      console.error("❌ person (DB3) fetch failed:", err);
-    }
-  };
-
-
-
   const tabs1 = [
     { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
     { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
@@ -297,12 +279,6 @@ const ReadmissionDashboard1 = () => {
     { label: "Health Medical Records", icon: <HealthAndSafetyIcon />, path: "/readmission_dashboard4" },
     { label: "Other Information", icon: <InfoIcon />, path: "/readmission_dashboard5" },
   ];
-
-  const handleStepClick = (index) => {
-    setActiveStep(index);
-    setClickedSteps((prev) => [...new Set([...prev, index])]);
-    navigate(steps[index].path); // Go to the clicked step’s page
-  };
 
 
 
@@ -970,6 +946,120 @@ const ReadmissionDashboard1 = () => {
   }, [searchQuery, persons]);
 
 
+
+  const [studentData, setStudentData] = useState(null);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentDetails, setStudentDetails] = useState([]);
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 9) {
+      setSelectedStudent(null);
+      setStudentData([]);
+      return;
+    }
+
+    const fetchStudent = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/program_evaluation/${searchQuery}`);
+        const data = await res.json();
+
+
+        if (data) {
+          setSelectedStudent(data);
+          setStudentData(data);
+
+          if (searchQuery) {
+            localStorage.setItem("student_data_id", searchQuery);
+          }
+
+          const detailsRes = await fetch(`${API_BASE_URL}/api/program_evaluation/details/${searchQuery}`);
+          const detailsData = await detailsRes.json();
+          if (Array.isArray(detailsData) && detailsData.length > 0) {
+            setStudentDetails(detailsData);
+          } else {
+            setStudentDetails([]);
+            setSnackbarMessage("No enrolled subjects found for this student.");
+            setOpenSnackbar(true);
+          }
+        } else {
+          setSelectedStudent(null);
+          setStudentData([]);
+          setStudentDetails([]);
+          setSnackbarMessage("No student data found.");
+          setOpenSnackbar(true);
+        }
+      } catch (err) {
+        console.error("Error fetching student", err);
+        setSnackbarMessage("Server error. Please try again.");
+        localStorage.removeItem("student_data_id");
+        setOpenSnackbar(true);
+      }
+    };
+
+    fetchStudent();
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const personIdFromUrl = queryParams.get("person_id");
+
+    if (!personIdFromUrl) return;
+
+    // fetch info of that person
+    axios
+      .get(`http://localhost:5000/api/person_with_applicant/${personIdFromUrl}`)
+      .then((res) => {
+        if (res.data?.applicant_number) {
+
+          // AUTO-INSERT applicant_number into search bar
+          setSearchQuery(res.data.applicant_number);
+
+          // If you have a fetchUploads() or fetchExamScore() — call it
+          if (typeof fetchUploadsByApplicantNumber === "function") {
+            fetchUploadsByApplicantNumber(res.data.applicant_number);
+          }
+
+          if (typeof fetchApplicants === "function") {
+            fetchApplicants();
+          }
+        }
+      })
+      .catch((err) => console.error("Auto search failed:", err));
+  }, [location.search]);
+
+  const handleStepClick = (index, to) => {
+    setActiveStep(index);
+
+    const pid = localStorage.getItem("student_data_id");
+    console.log(pid);
+    if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
+      navigate(`${to}?student_number=${pid}`);
+    } else {
+      navigate(to);
+    }
+  };
+
+  useEffect(() => {
+    const storedId = localStorage.getItem("student_data_id");
+
+    if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
+      setSearchQuery(storedId);
+    }
+  }, []);
+
+
+
+  const [studentNumber, setStudentNumber] = useState(() => {
+    return localStorage.getItem("studentNumberForCOR") || localStorage.getItem("student_data_id") || "";
+  });
+  const [debouncedStudentNumber, setDebouncedStudentNumber] = useState("");
+
+
+
+
   // ✅ For Excel Import
   const [excelFile, setExcelFile] = useState(null);
 
@@ -1121,12 +1211,11 @@ const ReadmissionDashboard1 = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
-              readOnly: true,
+              readOnly: false,   // 🔥 unlock the search bar
               startAdornment: <Search sx={{ mr: 1 }} />,
             }}
             sx={{ width: { xs: "100%", sm: "425px" } }}
           />
-
 
         </Box>
       </Box>
@@ -1929,21 +2018,22 @@ const ReadmissionDashboard1 = () => {
                 />
               </Box>
             </Box>
+
+
             <Box display="flex" gap={4} mb={2}>
               {/* Height Field */}
-              <Box display="flex" flexDirection="column" flex="0 0 24%">
+              <Box display="flex" flexDirection="column" flex="0 0 26%">
                 <Box display="flex" alignItems="center" gap={1}>
                   <Typography fontWeight="medium" minWidth="60px">
                     Height:
                   </Typography>
                   <TextField
-                    InputProps={{ readOnly: true }}
-
                     size="small"
+                    type="number"
                     name="height"
-                    value={person.height ?? ""}
+                    value={person.height || ""}
                     onChange={handleChange}
-                    onBlur={handleBlur}
+                    onBlur={() => handleUpdate(person)}
                     placeholder="Enter your Height"
                     error={!!errors.height}
                     fullWidth
@@ -1958,23 +2048,23 @@ const ReadmissionDashboard1 = () => {
               </Box>
 
               {/* Weight Field */}
-              <Box display="flex" flexDirection="column" flex="0 0 24%">
+              <Box display="flex" flexDirection="column" flex="0 0 26%">
                 <Box display="flex" alignItems="center" gap={1}>
                   <Typography fontWeight="medium" minWidth="60px">
                     Weight:
                   </Typography>
                   <TextField
-                    InputProps={{ readOnly: true }}
-
                     size="small"
+                    type="number"
                     name="weight"
-                    value={person.weight ?? ""}
+                    value={person.weight || ""}
                     onChange={handleChange}
-                    onBlur={handleBlur}
+                    onBlur={() => handleUpdate(person)}
                     placeholder="Enter your Weight"
                     error={!!errors.weight}
                     fullWidth
                   />
+
                   <Typography variant="body2">kg</Typography>
                 </Box>
                 {errors.weight && (
@@ -1984,6 +2074,13 @@ const ReadmissionDashboard1 = () => {
                 )}
               </Box>
             </Box>
+
+
+
+
+
+
+
 
             <Box display="flex" alignItems="center" gap={2} flexWrap="nowrap" width="100%" mb={2}>
               {/* LRN Label */}
@@ -2545,21 +2642,34 @@ const ReadmissionDashboard1 = () => {
 
               <Box flex={1} display="flex" alignItems="center" gap={2}>
                 <Typography sx={{ width: 180 }} fontWeight="medium">
-                  Cellphone Number:
+                  Contact Number:
                 </Typography>
-                <TextField
-                  InputProps={{ readOnly: true }}
 
+                <TextField
                   fullWidth
+
                   size="small"
                   name="cellphoneNumber"
-                  placeholder="Enter your Cellphone Number +63"
-                  required
-                  value={person.cellphoneNumber ?? ""}
-                  onBlur={handleBlur}
-                  onChange={handleChange}
+                  placeholder="9XXXXXXXXX"
+                  value={person.cellphoneNumber || ""}
+                  onBlur={() => handleUpdate(person)}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value.replace(/\D/g, ""); // remove letters
+                    handleChange({
+                      target: {
+                        name: "cellphoneNumber",
+                        value: onlyNumbers,
+                      },
+                    });
+                  }}
                   error={!!errors.cellphoneNumber}
                   helperText={errors.cellphoneNumber && "This field is required."}
+                  InputProps={{
+                    readOnly: true,
+                    startAdornment: (
+                      <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                    ),
+                  }}
                 />
               </Box>
 
@@ -2568,23 +2678,36 @@ const ReadmissionDashboard1 = () => {
                 <Typography sx={{ width: 180 }} fontWeight="medium">
                   Email Address:
                 </Typography>
-                <TextField
-                  InputProps={{ readOnly: true }}
 
+                <TextField
                   fullWidth
                   size="small"
                   name="emailAddress"
                   required
-                  value={person.emailAddress ?? ""}
-                  placeholder="Enter your Email Address (e.g., username@gmail.com)"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
+                  value={person.emailAddress || ""}
+                  placeholder="Enter your Gmail address"
+                  onBlur={() => handleUpdate(person)}
                   error={!!errors.emailAddress}
-                  helperText={errors.emailAddress && "This field is required."}
+                  helperText={errors.emailAddress ? "This field is required." : ""}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\s/g, "");
+
+                    value = value.replace(/@.*/, "");
+
+                    const finalValue = value === "" ? "" : value + "@gmail.com";
+
+                    handleChange({
+                      target: {
+                        name: "emailAddress",
+                        value: finalValue
+                      }
+                    });
+                  }}
                 />
+
+
               </Box>
             </Box>
-
 
 
 

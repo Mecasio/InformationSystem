@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
 import axios from "axios";
-import { Box, TextField, Typography, Card } from "@mui/material";
+import { Box, TextField, Typography, Card, Table, TableHead, TableCell, TableRow, TableContainer, Paper } from "@mui/material";
 import '../styles/Print.css'
 import CertificateOfRegistration from '../registrar/CertificateOfRegistrationForRegistrar';
 import SearchIcon from "@mui/icons-material/Search";
@@ -15,6 +15,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../apiConfig";
 
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
 
@@ -125,22 +126,89 @@ const SearchCertificateOfRegistration = () => {
   const [clickedSteps, setClickedSteps] = useState([]);
 
   const tabs1 = [
-    { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
+    { label: "Student Records", to: "/student_list", icon: <ListAltIcon /> },
     { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
-    { label: "Class List", to: "/class_roster", icon: <ClassIcon /> },
-    { label: "Search Certificate of Registration", to: "/search_cor", icon: <SearchIcon /> },
-    { label: "Student Numbering", to: "/student_numbering", icon: <ConfirmationNumberIcon /> },
+    { label: "Submitted Documents", to: "/submitted_documents", icon: <UploadFileIcon /> },
+    { label: "Search Certificate of Registration", to: "/search_cor", icon: <ListAltIcon /> },
     { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },
     { label: "Transcript of Records", to: "/transcript_of_records", icon: <SchoolIcon /> },
   ];
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentData, setStudentData] = useState([]);
+  const [studentDetails, setStudentDetails] = useState([]);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 9) {
+      setSelectedStudent(null);
+      setStudentData([]);
+      return;
+    }
+
+    const fetchStudent = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/program_evaluation/${searchQuery}`);
+        const data = await res.json();
+
+
+        if (data) {
+          setSelectedStudent(data);
+          setStudentData(data);
+
+          if (searchQuery) {
+            localStorage.setItem("student_data_id", searchQuery);
+          }
+
+          const detailsRes = await fetch(`${API_BASE_URL}/api/program_evaluation/details/${searchQuery}`);
+          const detailsData = await detailsRes.json();
+          if (Array.isArray(detailsData) && detailsData.length > 0) {
+            setStudentDetails(detailsData);
+          } else {
+            setStudentDetails([]);
+            setSnackbarMessage("No enrolled subjects found for this student.");
+            setOpenSnackbar(true);
+          }
+        } else {
+          setSelectedStudent(null);
+          setStudentData([]);
+          setStudentDetails([]);
+          setSnackbarMessage("No student data found.");
+          setOpenSnackbar(true);
+        }
+      } catch (err) {
+        console.error("Error fetching student", err);
+        setSnackbarMessage("Server error. Please try again.");
+        localStorage.removeItem("student_data_id");
+        setOpenSnackbar(true);
+      }
+    };
+
+    fetchStudent();
+  }, [searchQuery]);
 
 
   const handleStepClick = (index, to) => {
     setActiveStep(index);
-    navigate(to); // this will actually change the page
+
+    const pid = localStorage.getItem("student_data_id");
+    console.log(pid);
+    if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
+      navigate(`${to}?student_number=${pid}`);
+    } else {
+      navigate(to);
+    }
   };
 
+  useEffect(() => {
+    const storedId = localStorage.getItem("student_data_id");
+
+    if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
+      setSearchQuery(storedId);
+    }
+  }, []);
 
 
 
@@ -288,6 +356,38 @@ const SearchCertificateOfRegistration = () => {
 
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
       <br />
+      <TableContainer component={Paper} sx={{ width: '100%' }}>
+        <Table>
+          <TableHead sx={{ backgroundColor: settings?.header_color || "#1976d2", border: `2px solid ${borderColor}`, }}>
+            <TableRow>
+              {/* Left cell: Student Number */}
+              <TableCell sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}>
+                Student Number:&nbsp;
+                <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
+                  {studentData.student_number || "N/A"}
+
+                </span>
+              </TableCell>
+
+              {/* Right cell: Student Name */}
+              <TableCell
+                align="right"
+                sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}
+              >
+                Student Name:&nbsp;
+                <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
+                  {studentData && studentData.last_name
+                    ? `${studentData.last_name.toUpperCase()}, ${studentData.first_name.toUpperCase()} ${studentData.middle_name.toUpperCase()}`
+                    : "N/A"}
+                </span>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+        </Table>
+      </TableContainer>
+      <br />
+
+
       <Box
         sx={{
           display: "flex",
@@ -305,7 +405,7 @@ const SearchCertificateOfRegistration = () => {
               sx={{
                 flex: 1,
                 maxWidth: `${100 / tabs1.length}%`, // evenly fit 100%
-                height: 100,
+                   height: 140,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

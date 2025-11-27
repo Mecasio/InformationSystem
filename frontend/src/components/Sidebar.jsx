@@ -235,7 +235,7 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
 
     const fetchAccessAndDetermineRole = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/api/${employeeID}`);
+        const res = await axios.get(`${API_BASE_URL}/api/employee/${employeeID}`);
 
         if (res.data.success) {
           const accessList = res.data.accessList;
@@ -948,39 +948,37 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
               </li>
             </Link>
 
-            {/* Grading Management */}
-            <Link to="/grading_sheet">
+            {/* Workload */}
+            <Link to="/faculty_workload">
               <li
                 className="w-full flex items-center px-2 rounded m-2 mx-0 button-hover"
                 style={{
                   backgroundColor:
-                    location.pathname === "/grading_sheet"
+                    location.pathname === "/faculty_workload"
                       ? mainButtonColor
                       : "transparent",
                   color:
-                    location.pathname === "/grading_sheet"
+                    location.pathname === "/faculty_workload"
                       ? "#ffffff"
                       : "inherit",
                   border: `2px solid ${borderColor}`,
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  if (location.pathname !== "/grading_sheet") {
+                  if (location.pathname !== "/faculty_workload") {
                     e.currentTarget.style.backgroundColor = mainButtonColor;
                     e.currentTarget.style.color = "#ffffff";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (location.pathname !== "/grading_sheet") {
+                  if (location.pathname !== "/faculty_workload") {
                     e.currentTarget.style.backgroundColor = "transparent";
                     e.currentTarget.style.color = "inherit";
                   }
                 }}
               >
-                <AssignmentTurnedInIcon />
-                <span className="pl-4 p-2 px-0 pointer-events-none">
-                  Grading Management
-                </span>
+                <WorkIcon />
+                <span className="pl-4 p-2 px-0 pointer-events-none">Workload</span>
               </li>
             </Link>
 
@@ -1018,37 +1016,39 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
               </li>
             </Link>
 
-            {/* Workload */}
-            <Link to="/faculty_workload">
+            {/* Grading Management */}
+            <Link to="/grading_sheet">
               <li
                 className="w-full flex items-center px-2 rounded m-2 mx-0 button-hover"
                 style={{
                   backgroundColor:
-                    location.pathname === "/faculty_workload"
+                    location.pathname === "/grading_sheet"
                       ? mainButtonColor
                       : "transparent",
                   color:
-                    location.pathname === "/faculty_workload"
+                    location.pathname === "/grading_sheet"
                       ? "#ffffff"
                       : "inherit",
                   border: `2px solid ${borderColor}`,
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  if (location.pathname !== "/faculty_workload") {
+                  if (location.pathname !== "/grading_sheet") {
                     e.currentTarget.style.backgroundColor = mainButtonColor;
                     e.currentTarget.style.color = "#ffffff";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (location.pathname !== "/faculty_workload") {
+                  if (location.pathname !== "/grading_sheet") {
                     e.currentTarget.style.backgroundColor = "transparent";
                     e.currentTarget.style.color = "inherit";
                   }
                 }}
               >
-                <WorkIcon />
-                <span className="pl-4 p-2 px-0 pointer-events-none">Workload</span>
+                <AssignmentTurnedInIcon />
+                <span className="pl-4 p-2 px-0 pointer-events-none">
+                  Grading Management
+                </span>
               </li>
             </Link>
 

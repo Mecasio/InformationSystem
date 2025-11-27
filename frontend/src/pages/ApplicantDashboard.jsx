@@ -1300,7 +1300,7 @@ const ApplicantDashboard = (props) => {
                           width: 60,
                           height: 60,
                           borderRadius: "50%",
-                          backgroundColor: isActive ? "#800000" : isCompleted ? "green" : "orange",
+                          backgroundColor: isActive ? mainButtonColor : isCompleted ? mainButtonColor : "#E8C999",
 
                           border: `2px solid ${borderColor}`,
                           display: "flex",
@@ -1311,7 +1311,7 @@ const ApplicantDashboard = (props) => {
                         }}
                       >
                         {React.cloneElement(icons[index], {
-                          sx: { color: isActive || isCompleted ? "white" : "#000", fontSize: 30 },
+                          sx: { color: isActive || isCompleted ? "white" : "#6D2323", fontSize: 30 },
                         })}
                       </Box>
                     );

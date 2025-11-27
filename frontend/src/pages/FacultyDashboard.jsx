@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
-import '../styles/TempStyles.css';
-import axios from 'axios';
+import "../styles/TempStyles.css";
+import axios from "axios";
 import {
   Box,
   Grid,
@@ -15,22 +15,21 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Dialog } from "@mui/material";
-import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
+import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
 import PersonIcon from "@mui/icons-material/Person";
 import { Link } from "react-router-dom";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 import API_BASE_URL from "../apiConfig";
 const FacultyDashboard = ({ profileImage, setProfileImage }) => {
-
   const settings = useContext(SettingsContext);
 
   const [titleColor, setTitleColor] = useState("#000000");
   const [subtitleColor, setSubtitleColor] = useState("#555555");
   const [borderColor, setBorderColor] = useState("#000000");
   const [mainButtonColor, setMainButtonColor] = useState("#1976d2");
-  const [subButtonColor, setSubButtonColor] = useState("#ffffff");   // ✅ NEW
-  const [stepperColor, setStepperColor] = useState("#000000");       // ✅ NEW
+  const [subButtonColor, setSubButtonColor] = useState("#ffffff"); // ✅ NEW
+  const [stepperColor, setStepperColor] = useState("#000000"); // ✅ NEW
 
   const [fetchedLogo, setFetchedLogo] = useState(null);
   const [companyName, setCompanyName] = useState("");
@@ -44,9 +43,10 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
     if (settings.title_color) setTitleColor(settings.title_color);
     if (settings.subtitle_color) setSubtitleColor(settings.subtitle_color);
     if (settings.border_color) setBorderColor(settings.border_color);
-    if (settings.main_button_color) setMainButtonColor(settings.main_button_color);
-    if (settings.sub_button_color) setSubButtonColor(settings.sub_button_color);   // ✅ NEW
-    if (settings.stepper_color) setStepperColor(settings.stepper_color);           // ✅ NEW
+    if (settings.main_button_color)
+      setMainButtonColor(settings.main_button_color);
+    if (settings.sub_button_color) setSubButtonColor(settings.sub_button_color); // ✅ NEW
+    if (settings.stepper_color) setStepperColor(settings.stepper_color); // ✅ NEW
 
     // 🏫 Logo
     if (settings.logo_url) {
@@ -59,9 +59,7 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
     if (settings.company_name) setCompanyName(settings.company_name);
     if (settings.short_term) setShortTerm(settings.short_term);
     if (settings.campus_address) setCampusAddress(settings.campus_address);
-
   }, [settings]);
-
 
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
@@ -101,11 +99,12 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
 
   const fetchPersonData = async (id) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/get_prof_data/${id}`)
+      const res = await axios.get(`${API_BASE_URL}/get_prof_data/${id}`);
       const first = res.data[0];
       const profInfo = {
         prof_id: first.prof_id,
         person_id: first.person_id,
+        employee_id: first.employee_id,
         fname: first.fname,
         mname: first.mname,
         lname: first.lname,
@@ -115,7 +114,7 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
     } catch (err) {
       setMessage("Error Fetching Professor Personal Data");
     }
-  }
+  };
 
   useEffect(() => {
     if (personData.prof_id) {
@@ -130,6 +129,30 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
     } catch (err) {
       console.error("Failed to fetch schedule:", err);
     }
+  };
+
+  const parseTime = (timeStr) => {
+    if (!timeStr) return 0;
+    const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    if (!match) return 0;
+    let [_, h, m, mod] = match;
+    let hours = Number(h);
+    const minutes = Number(m);
+    if (mod?.toUpperCase() === "PM" && hours < 12) hours += 12;
+    if (mod?.toUpperCase() === "AM" && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  };
+
+  const getTotalWorkingHours = () => {
+    if (!schedule || !schedule.length) return 0;
+
+    const totalMinutes = schedule.reduce((total, entry) => {
+      const start = parseTime(entry.school_time_start);
+      const end = parseTime(entry.school_time_end);
+      return total + (end - start);
+    }, 0);
+
+    return totalMinutes / 60;
   };
 
   const [announcements, setAnnouncements] = useState([]);
@@ -202,7 +225,6 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
   const handlePrevMonth = () => setDate(new Date(year, month - 1, 1));
   const handleNextMonth = () => setDate(new Date(year, month + 1, 1));
 
-
   const [holidays, setHolidays] = useState({});
 
   useEffect(() => {
@@ -223,7 +245,6 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
     };
     fetchHolidays();
   }, [year]);
-
 
   const formattedDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -293,9 +314,9 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
             sx={{
               borderRadius: 1,
               boxShadow: 3,
-              p: 1.5,              // reduced padding
+              p: 1.5, // reduced padding
               border: `2px solid ${borderColor}`,
-              minHeight: 100,       // smaller min height
+              minHeight: 100, // smaller min height
               height: "auto",
               transition: "transform 0.3s ease, box-shadow 0.3s ease",
               "&:hover": {
@@ -325,7 +346,7 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                         }
                         alt={personData?.fname}
                         sx={{
-                          width: { xs: 70, sm: 80, md: 90 },  // smaller
+                          width: { xs: 70, sm: 80, md: 90 }, // smaller
                           height: { xs: 70, sm: 80, md: 90 },
                           border: `2px solid ${borderColor}`,
                           cursor: "pointer",
@@ -378,30 +399,57 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                         variant="h4"
                         fontWeight="bold"
                         sx={{
-                          fontSize: { xs: "24px", sm: "26px", md: "32px" },  // smaller
+                          fontSize: { xs: "24px", sm: "26px", md: "32px" }, // smaller
                         }}
                       >
-                        Welcome back!{" "}
+                        Welcome back!
                         {personData
-                          ? `${personData.lname}, ${personData.fname} ${personData.mname || ""}`
+                          ? `${personData.lname}, ${personData.fname} ${
+                              personData.mname || ""
+                            }`
                           : ""}
                       </Typography>
 
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontSize: { xs: "16px", sm: "18px", md: "20px" }, // smaller
-                          color: "black",
+                      <Box
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "1rem",
+                          alignItems: "center",
                         }}
                       >
-                        <b>Employee ID:</b> {personData?.person_id || "N/A"}
-                      </Typography>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontSize: { xs: "16px", sm: "18px", md: "20px" }, // smaller
+                            color: "black",
+                          }}
+                        >
+                          <b>Employee ID:</b> {personData?.employee_id || "N/A"}
+                        </Typography>
+
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontSize: { xs: "16px", sm: "18px", md: "20px" }, // smaller
+                            color: "black",
+                          }}
+                        >
+                          <b>Working Hours:</b> {getTotalWorkingHours()}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
                 </Grid>
 
                 {/* RIGHT SECTION — Date */}
-                <Grid item xs={12} sm={4} md={3} textAlign={{ xs: "left", sm: "right" }}>
+                <Grid
+                  item
+                  xs={12}
+                  sm={4}
+                  md={3}
+                  textAlign={{ xs: "left", sm: "right" }}
+                >
                   <Typography
                     variant="body1"
                     sx={{ fontSize: { xs: "16px", sm: "18px", md: "20px" } }} // smaller
@@ -415,8 +463,6 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
         </Grid>
       </Grid>
 
-
-
       <Box
         sx={{
           display: "flex",
@@ -429,8 +475,8 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
         {/* Announcements */}
         <Box
           sx={{
-            flex: "0 0 100%",           // large width
-            maxWidth: { xs: "100%", sm: "450px", md: "732px" }, // responsive scaling
+            flex: "0 0 100%", // large width
+            maxWidth: { xs: "100%", sm: "450px", md: "725px" }, // responsive scaling
             height: "472px",
           }}
         >
@@ -449,7 +495,11 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
           >
             <CardContent sx={{ width: "100%", height: "100%" }}>
               {/* ✅ Header same as top version */}
-              <Typography sx={{ textAlign: "center", marginTop: "-1rem" }} variant="h6" gutterBottom>
+              <Typography
+                sx={{ textAlign: "center", marginTop: "-1rem" }}
+                variant="h6"
+                gutterBottom
+              >
                 Announcements
               </Typography>
 
@@ -457,11 +507,22 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
 
               {/* ✅ No announcements */}
               {announcements.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" align="center">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  align="center"
+                >
                   No active announcements.
                 </Typography>
               ) : (
-                <Box sx={{ position: "relative", maxHeight: "420px", height: "100%", overflow: "hidden" }}>
+                <Box
+                  sx={{
+                    position: "relative",
+                    maxHeight: "420px",
+                    height: "100%",
+                    overflow: "hidden",
+                  }}
+                >
                   {/* Display current announcement */}
                   {announcements.length > 0 && (
                     <Box
@@ -514,7 +575,11 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                         </>
                       )}
 
-                      <Typography variant="caption" style={{ display: "flex" }} color="text.secondary">
+                      <Typography
+                        variant="caption"
+                        style={{ display: "flex" }}
+                        color="text.secondary"
+                      >
                         Posted: {""}
                         {new Date(
                           announcements[currentIndex].created_at
@@ -534,7 +599,9 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                       <IconButton
                         onClick={() =>
                           setCurrentIndex(
-                            (prev) => (prev - 1 + announcements.length) % announcements.length
+                            (prev) =>
+                              (prev - 1 + announcements.length) %
+                              announcements.length
                           )
                         }
                         sx={{
@@ -546,12 +613,16 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                           "&:hover": { backgroundColor: "#fff" },
                         }}
                       >
-                        <KeyboardBackspaceIcon sx={{ color: "maroon", fontSize: 24 }} />
+                        <KeyboardBackspaceIcon
+                          sx={{ color: "maroon", fontSize: 24 }}
+                        />
                       </IconButton>
 
                       <IconButton
                         onClick={() =>
-                          setCurrentIndex((prev) => (prev + 1) % announcements.length)
+                          setCurrentIndex(
+                            (prev) => (prev + 1) % announcements.length
+                          )
                         }
                         sx={{
                           position: "absolute",
@@ -562,7 +633,9 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                           "&:hover": { backgroundColor: "#fff" },
                         }}
                       >
-                        <KeyboardBackspaceIcon sx={{ color: "maroon", fontSize: 24 }} />
+                        <KeyboardBackspaceIcon
+                          sx={{ color: "maroon", fontSize: 24 }}
+                        />
                       </IconButton>
                     </>
                   )}
@@ -614,7 +687,9 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                     "&:hover": { backgroundColor: "#f5f5f5" },
                   }}
                 >
-                  <KeyboardBackspaceIcon sx={{ fontSize: 30, color: "black" }} />
+                  <KeyboardBackspaceIcon
+                    sx={{ fontSize: 30, color: "black" }}
+                  />
                 </IconButton>
                 {/* Fullscreen Image */}
                 <Box
@@ -685,17 +760,28 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                 }}
               >
                 <Grid item>
-                  <IconButton size="small" onClick={handlePrevMonth} sx={{ color: "white", fontSize: "12px" }}>
+                  <IconButton
+                    size="small"
+                    onClick={handlePrevMonth}
+                    sx={{ color: "white", fontSize: "12px" }}
+                  >
                     <ArrowBackIos fontSize="12px" />
                   </IconButton>
                 </Grid>
                 <Grid item>
-                  <Typography variant="subtitle1" sx={{ fontWeight: "bold", fontSize: "12px" }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: "bold", fontSize: "12px" }}
+                  >
                     {date.toLocaleString("default", { month: "long" })} {year}
                   </Typography>
                 </Grid>
                 <Grid item>
-                  <IconButton size="small" onClick={handleNextMonth} sx={{ color: "white", fontSize: "12px" }}>
+                  <IconButton
+                    size="small"
+                    onClick={handleNextMonth}
+                    sx={{ color: "white", fontSize: "12px" }}
+                  >
                     <ArrowForwardIos fontSize="12px" />
                   </IconButton>
                 </Grid>
@@ -745,10 +831,12 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                       );
                     }
 
-                    const isToday = day === today && month === thisMonth && year === thisYear;
-                    const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(
-                      day
-                    ).padStart(2, "0")}`;
+                    const isToday =
+                      day === today && month === thisMonth && year === thisYear;
+                    const dateKey = `${year}-${String(month + 1).padStart(
+                      2,
+                      "0"
+                    )}-${String(day).padStart(2, "0")}`;
                     const isHoliday = holidays[dateKey];
                     const dayCell = (
                       <Box
@@ -762,8 +850,8 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                           backgroundColor: isToday
                             ? settings?.header_color || "#1976d2"
                             : isHoliday
-                              ? "#E8C999"
-                              : "#fff",
+                            ? "#E8C999"
+                            : "#fff",
                           color: isToday ? "white" : "black",
                           fontWeight: isHoliday ? "bold" : "500",
                           cursor: isHoliday ? "pointer" : "default",
@@ -782,8 +870,12 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                         key={`${i}-${j}`}
                         title={
                           <>
-                            <Typography fontWeight="bold">{isHoliday.localName}</Typography>
-                            <Typography variant="caption">{isHoliday.date}</Typography>
+                            <Typography fontWeight="bold">
+                              {isHoliday.localName}
+                            </Typography>
+                            <Typography variant="caption">
+                              {isHoliday.date}
+                            </Typography>
                           </>
                         }
                         arrow
@@ -792,7 +884,9 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                         {dayCell}
                       </Tooltip>
                     ) : (
-                      <React.Fragment key={`${i}-${j}`}>{dayCell}</React.Fragment>
+                      <React.Fragment key={`${i}-${j}`}>
+                        {dayCell}
+                      </React.Fragment>
                     );
                   })
                 )}
@@ -906,13 +1000,24 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                   padding: "10px",
                 }}
               >
-                {schedule.filter(item => item.description === todayDay.toUpperCase()).length === 0 ? (
-                  <Typography sx={{ fontSize: "13px", textAlign: "center", marginTop: "20px", color: "#666" }}>
+                {schedule.filter(
+                  (item) => item.description === todayDay.toUpperCase()
+                ).length === 0 ? (
+                  <Typography
+                    sx={{
+                      fontSize: "13px",
+                      textAlign: "center",
+                      marginTop: "20px",
+                      color: "#666",
+                    }}
+                  >
                     No schedule for today.
                   </Typography>
                 ) : (
                   schedule
-                    .filter(item => item.description === todayDay.toUpperCase())
+                    .filter(
+                      (item) => item.description === todayDay.toUpperCase()
+                    )
                     .map((item, index) => (
                       <Box
                         key={index}
@@ -928,32 +1033,44 @@ const FacultyDashboard = ({ profileImage, setProfileImage }) => {
                           "&:hover": {
                             boxShadow: "0 3px 8px rgba(0,0,0,0.18)",
                             transform: "scale(1.02)",
-                            borderColor: settings?.main_button_color || "#1976d2",
+                            borderColor:
+                              settings?.main_button_color || "#1976d2",
                             backgroundColor: "#f0f8ff",
                           },
                         }}
                       >
-                        <Typography sx={{ fontSize: "13px", fontWeight: "bold", color: "#333" }}>
-                          {item.course_code} - {item.program_code} - {item.section}
+                        <Typography
+                          sx={{
+                            fontSize: "13px",
+                            fontWeight: "bold",
+                            color: "#333",
+                          }}
+                        >
+                          {item.course_code} - {item.program_code} -{" "}
+                          {item.section}
                         </Typography>
 
                         <Typography sx={{ fontSize: "12px", color: "#444" }}>
                           {item.school_time_start} — {item.school_time_end}
                         </Typography>
 
-                        <Typography sx={{ fontSize: "11px", color: "#777", textTransform: "uppercase" }}>
+                        <Typography
+                          sx={{
+                            fontSize: "11px",
+                            color: "#777",
+                            textTransform: "uppercase",
+                          }}
+                        >
                           {item.room_description}
                         </Typography>
                       </Box>
                     ))
                 )}
               </Box>
-
             </CardContent>
           </Card>
         </Box>
       </Box>
-
     </Box>
   );
 };

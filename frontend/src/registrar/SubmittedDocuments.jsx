@@ -17,6 +17,7 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
+    Grid,
     TableRow,
     MenuItem
 } from '@mui/material';
@@ -37,103 +38,17 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import Unauthorized from "../components/Unauthorized";
 import LoadingOverlay from "../components/LoadingOverlay";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import GradeIcon from "@mui/icons-material/Grade";
 
 
 const tabs1 = [
-    { label: "Medical Student List", to: "/medical_Student_list", icon: <ListAltIcon /> },
-    { label: "Student Form", to: "/medical_dashboard1", icon: <HowToRegIcon /> },
-    { label: "Submitted Documents", to: "/medical_requirements", icon: <UploadFileIcon /> }, // updated icon
-    { label: "Medical History", to: "/medical_requirements_form", icon: <PersonIcon /> },
-    { label: "Dental Assessment", to: "/dental_assessment", icon: <DescriptionIcon /> },
-    { label: "Physical and Neurological Examination", to: "/physical_neuro_exam", icon: <SchoolIcon /> },
-];
-
-
-const remarksOptions = [
-    "75% OF ATTENDANCE IS NEEDED FOR TRANSFEREE",
-    "Attachments were blurry",
-    "Birth Certificate with Sarical Surname",
-    "Card No Name/Details of the Student",
-    "Conflict of Lastname with birth certificate",
-    "Conflict of Lastname with birth certificate. Please Check",
-    "Conflict of name on the document submitted",
-    "Did not meet the requirements",
-    "Documents did not match with the Requirement",
-    "Duplicate Application",
-    "FORM 138 IS NOT COMPLETE",
-    "Good Moral is outdated must be 2022",
-    "GWA did not meet the Requirements",
-    "Have failed and incomplete grades",
-    "Have failing Grades",
-    "Kindly submit your vaccine card and good moral certificate to complete your evaluation",
-    "Kindly wait for verification of your credentials (ALS)",
-    "Multiple Accounts",
-    "NO COURSE APPLIED AND NO DOCUMENTS UPLOADED",
-    "NO DOCUMENT UPLOADED",
-    "NO FORM 138 UPLOADED",
-    "NO TOR UPLOADED",
-    "NOT QUALIFIED BASE ON YOUR STRAND",
-    "Please post your form 138 for approval",
-    "Please prepare your birth certificate reflecting the serrano surname",
-    "Please re-submit documents",
-    "Please resolve the lastname (conflict) appeared in your birth certificate",
-    "Please resubmit all documents. They are not clear",
-    "Please resubmit clear copy",
-    "Please resubmit the complete view of your document",
-    "Please submit clear copy of form 138",
-    "Please submit complete documents",
-    "Please submit first page of your TOR",
-    "Please submit full copy of report card with (front page, 1st, 2nd semester)",
-    "Please submit letter of intent or permit to study",
-    "Please submit NSO or PSA Birth certificate",
-    "Please submit NSO/PSA Birth certificate and vaccine card.",
-    "Please submit PSA, form 138, Vaccine card and Good moral",
-    "Please submit the full view of your f138 1st and 2nd semester front and back with name on both for verification",
-    "Please submit the required documents",
-    "Please submit vaccination card with name",
-    "Please upload Form 138, NSO/PSA Birth certificate and good moral",
-    "Please upload official Transcript of Records",
-    "Please upload the whole picture of your form 138",
-    "Please upload your form 138, NSO/PSA Birth certificate and vaccine card",
-    "Please upload your NSO/PSA",
-    "Please upload your photo",
-    "Please submit clear copy",
-    "Re-submit all copy of TOR w/ remarks: Graduated with a Degree of.... signed by key officials of the school and the registrar",
-    "Re-submit photo",
-    "REQUIRED TO SUBMIT COMPLETE GRADES FOR TRANSFEREE",
-    "Re-submit clear copy",
-    "Re-submit clear fill image of form 138",
-    "Re-submit form 138 for 2nd semester",
-    "Re-submit with complete name",
-    "SUBJECTS WERE ALL DROPPED FROM PREVIOUS SCHOOL",
-    "Submit good moral year 2022",
-    "Submit 1st and 2nd semester report card grade 12",
-    "Submit 1st and 2nd semester report card, together with front page",
-    "Submit form 138",
-    "Submit form 138 with name",
-    "Submit form 138 with name and submit photo",
-    "Submit Good Moral",
-    "Submit Good Moral and Vaccine Card",
-    "Submit Goof Moral year 2022",
-    "Submit the course descriptions of all the subjects taken from another school to the EARIST registrar for crediting.",
-    "Submit updated copy of your good moral",
-    "Submit updated Vaccine Card (1st and 2nd dose)",
-    "Submit your document",
-    "Teacher Certificate Program is a Graduate Program",
-    "Temporarily accepted. Please Submit PSA copy of birth certificate",
-    "Temporarily accepted. Submit original document upon enrollment.",
-    "The file cannot be opened",
-    "The form 138 document did not contain the name of the Student",
-    "The uploaded did not match the name and gender of the Student (Abela, Mary Jane)",
-    "The uploaded file did not match with the name of Student (Shane Bamba)",
-    "The uploaded file did not match with the required document",
-    "The Vaccine Card you uploaded does not show your name.",
-    "TOR should be based in the new curriculum for transferee",
-    "Upload clear copy of PSA Birth Certificate in PDF. JPEG. format in full image",
-    "Upload your NSO/PSA Birth Certificate",
-    "Upload your Photo",
-    "You did not meet the grade required for the course",
-    "You have a lower grade"
+    { label: "Student Records", to: "/student_list", icon: ListAltIcon },
+    { label: "Applicant Form", to: "/readmission_dashboard1", icon: PersonAddIcon },
+    { label: "Submitted Documents", to: "/submitted_documents", icon: UploadFileIcon },
+    { label: "Search Certificate of Registration", to: "/search_cor", icon: ListAltIcon },
+    { label: "Report of Grades", to: "/report_of_grades", icon: GradeIcon },
+    { label: "Transcript of Records", to: "/transcript_of_records", icon: SchoolIcon },
 ];
 
 
@@ -221,15 +136,11 @@ const MedicalRequirements = () => {
                 await fetchUploadsByStudentNumber(res.data.student_number);
             }
         } catch (err) {
-            console.error("❌ person_with_Student failed:", err);
+            console.error("❌ person_with_student failed:", err);
         }
     };
 
 
-    const handleStepClick = (index, path) => {
-        setActiveStep(index);
-        navigate(path);
-    };
 
     const location = useLocation();
     const [uploads, setUploads] = useState([]);
@@ -257,7 +168,53 @@ const MedicalRequirements = () => {
     const [newRemarkMode, setNewRemarkMode] = useState({}); // { [upload_id]: true|false }
     const [documentStatus, setDocumentStatus] = useState("");
 
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const personIdFromUrl = queryParams.get("person_id");
 
+        if (!personIdFromUrl) return;
+
+        // fetch info of that person
+        axios
+            .get(`http://localhost:5000/api/person_with_applicant/${personIdFromUrl}`)
+            .then((res) => {
+                if (res.data?.applicant_number) {
+
+                    // AUTO-INSERT applicant_number into search bar
+                    setSearchQuery(res.data.applicant_number);
+
+                    // If you have a fetchUploads() or fetchExamScore() — call it
+                    if (typeof fetchUploadsByApplicantNumber === "function") {
+                        fetchUploadsByApplicantNumber(res.data.applicant_number);
+                    }
+
+                    if (typeof fetchApplicants === "function") {
+                        fetchApplicants();
+                    }
+                }
+            })
+            .catch((err) => console.error("Auto search failed:", err));
+    }, [location.search]);
+
+    const handleStepClick = (index, to) => {
+        setActiveStep(index);
+
+        const pid = localStorage.getItem("student_data_id");
+        console.log(pid);
+        if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
+            navigate(`${to}?student_number=${pid}`);
+        } else {
+            navigate(to);
+        }
+    };
+
+    useEffect(() => {
+        const storedId = localStorage.getItem("student_data_id");
+
+        if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
+            setSearchQuery(storedId);
+        }
+    }, []);
 
     const [hasAccess, setHasAccess] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -534,14 +491,13 @@ const MedicalRequirements = () => {
 
     const fetchPersons = async () => {
         try {
-          const res = await axios.get(`${API_BASE_URL}/api/student_upload_documents_data`);
+            const res = await axios.get(`${API_BASE_URL}/api/student_upload_documents_data`);
 
             setPersons(res.data);
         } catch (err) {
             console.error('Error fetching persons:', err);
         }
     };
-
 
     const handleStatusChange = async (uploadId, remarkValue) => {
         const remarks = remarksMap[uploadId] || "";
@@ -679,83 +635,86 @@ const MedicalRequirements = () => {
                 <TableCell sx={{ fontWeight: 'bold', width: '20%', border: `2px solid ${borderColor}` }}>{doc.label}</TableCell>
 
                 <TableCell sx={{ width: '20%', border: `2px solid ${borderColor}` }}>
-                                 {uploadId && editingRemarkId === uploadId ? (
-                                     // 🔥 TEXTFIELD ONLY
-                                     <TextField
-                                         disabled
-                                         size="small"
-                                         fullWidth
-                                         autoFocus
-                                         placeholder="Enter remarks"
-                                         value={remarksMap[uploadId] ?? uploaded?.remarks ?? ""}
-                                         onChange={(e) =>
-                                             setRemarksMap((prev) => ({ ...prev, [uploadId]: e.target.value }))
-                                         }
-                                         onBlur={async () => {
-                                             const finalRemark = (remarksMap[uploadId] || "").trim();
-             
-                                             await axios.put(`http://localhost:5000/uploads/remarks/${uploadId}`, {
-                                                 remarks: finalRemark,
-                                                 status: uploads.find((u) => u.upload_id === uploadId)?.status || "0",
-                                                 user_id: userID,
-                                             });
-             
-                                             if (selectedPerson?.applicant_number) {
-                                                 await fetchUploadsByApplicantNumber(selectedPerson.applicant_number);
-                                             }
-             
-                                             setEditingRemarkId(null);
-                                         }}
-                                         onKeyDown={async (e) => {
-                                             if (e.key === "Enter") {
-                                                 e.preventDefault();
-                                                 const finalRemark = (remarksMap[uploadId] || "").trim();
-             
-                                                 await axios.put(`http://localhost:5000/uploads/remarks/${uploadId}`, {
-                                                     remarks: finalRemark,
-                                                     status: uploads.find((u) => u.upload_id === uploadId)?.status || "0",
-                                                     user_id: userID,
-                                                 });
-             
-                                                 if (selectedPerson?.applicant_number) {
-                                                     await fetchUploadsByApplicantNumber(selectedPerson.applicant_number);
-                                                 }
-             
-                                                 setEditingRemarkId(null);
-                                             }
-                                         }}
-                                     />
-                                 ) : (
-                                     // 📌 DISPLAY MODE with GRAY BORDER (click to edit)
-                                     <Box
-                                         onClick={() => {
-                                             if (!uploadId) return;
-                                             setEditingRemarkId(uploadId);
-                                             setRemarksMap((prev) => ({
-                                                 ...prev,
-                                                 [uploadId]: uploaded?.remarks ?? "",
-                                             }));
-                                         }}
-                                         sx={{
-                                             cursor: uploadId ? "pointer" : "default",
-                                             fontStyle: uploaded?.remarks ? "normal" : "italic",
-                                             color: uploaded?.remarks ? "inherit" : "#888",
-                                             minHeight: "40px",
-                                             display: "flex",
-                                             alignItems: "center",
-                                             px: 1,
-             
-                                             // ⭐ Added border here
-                                             border: "1px solid #bdbdbd",
-                                             borderRadius: "4px",
-                                             backgroundColor: "#fafafa",
-                                         }}
-                                     >
-                                         {uploaded?.remarks || "Click to add remarks"}
-                                     </Box>
-                                 )}
-                             </TableCell>
-             
+                    {uploadId && editingRemarkId === uploadId ? (
+                        // 🔥 TEXTFIELD ONLY
+                        <TextField
+                            disabled
+                            size="small"
+                            fullWidth
+                            autoFocus
+                            placeholder="Enter remarks"
+                            value={remarksMap[uploadId] ?? uploaded?.remarks ?? ""}
+                            onChange={(e) =>
+                                setRemarksMap((prev) => ({ ...prev, [uploadId]: e.target.value }))
+                            }
+                            onBlur={async () => {
+                                const finalRemark = (remarksMap[uploadId] || "").trim();
+
+                                await axios.put(`http://localhost:5000/uploads/remarks/${uploadId}`, {
+                                    remarks: finalRemark,
+                                    status: uploads.find((u) => u.upload_id === uploadId)?.status || "0",
+                                    user_id: userID,
+                                });
+
+                                if (selectedPerson?.applicant_number) {
+                                    await fetchUploadsByApplicantNumber(selectedPerson.applicant_number);
+                                }
+
+                                setEditingRemarkId(null);
+                            }}
+                            onKeyDown={async (e) => {
+                                if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    const finalRemark = (remarksMap[uploadId] || "").trim();
+
+                                    await axios.put(`http://localhost:5000/uploads/remarks/${uploadId}`, {
+                                        remarks: finalRemark,
+                                        status: uploads.find((u) => u.upload_id === uploadId)?.status || "0",
+                                        user_id: userID,
+                                    });
+
+                                    if (selectedPerson?.applicant_number) {
+                                        await fetchUploadsByApplicantNumber(selectedPerson.applicant_number);
+                                    }
+
+                                    setEditingRemarkId(null);
+                                }
+                            }}
+                        />
+                    ) : (
+                        // 📌 DISPLAY MODE with GRAY BORDER (click to edit)
+                        <Box
+                            onClick={() => {
+                                if (!uploadId) return;
+                                setEditingRemarkId(uploadId);
+                                setRemarksMap((prev) => ({
+                                    ...prev,
+                                    [uploadId]: uploaded?.remarks ?? "",
+                                }));
+                            }}
+                            sx={{
+                                cursor: uploadId ? "pointer" : "default",
+                                fontStyle: uploaded?.remarks ? "normal" : "italic",
+                                color: uploaded?.remarks ? "inherit" : "#888",
+                                minHeight: "40px",
+                                display: "flex",
+                                alignItems: "center",
+                                px: 1,
+
+                                // ⭐ Added border here
+                                border: "1px solid #bdbdbd",
+                                borderRadius: "4px",
+                                backgroundColor: "#fafafa",
+                            }}
+                        >
+                            {uploaded?.remarks || "Click to add remarks"}
+                        </Box>
+                    )}
+                </TableCell>
+
+
+
+
                 <TableCell align="center" sx={{ width: '15%', border: `2px solid ${borderColor}` }}>
                     {uploaded ? (
                         uploaded.status === 1 ? (
@@ -867,7 +826,7 @@ const MedicalRequirements = () => {
                                 </Button>
 
                                 <Button
-                                disabled
+                                    disabled
                                     onClick={() => handleConfirmDelete(uploaded)}
                                     sx={{
                                         backgroundColor: uploaded.canDelete ? 'maroon' : 'lightgray',
@@ -960,7 +919,7 @@ const MedicalRequirements = () => {
                             onClick={() => handleStepClick(index, tab.to)}
                             sx={{
                                 flex: `1 1 ${100 / tabs1.length}%`, // evenly divide row
-                                height: 120,
+                                height: 140,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -980,7 +939,10 @@ const MedicalRequirements = () => {
                             }}
                         >
                             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                <Box sx={{ fontSize: 40, mb: 1 }}>{tab.icon}</Box>
+                                <Grid>
+                                    <tab.icon sx={{ fontSize: 40 }} />
+                                </Grid>
+
                                 <Typography sx={{ fontSize: 14, fontWeight: "bold", textAlign: "center" }}>
                                     {tab.label}
                                 </Typography>
@@ -997,7 +959,7 @@ const MedicalRequirements = () => {
                             <TableRow>
                                 {/* Left cell: Student ID */}
                                 <TableCell sx={{ color: 'white', fontSize: '20px', fontFamily: 'Arial Black', border: 'none' }}>
-                                    Student ID:&nbsp;
+                                    Student Number:&nbsp;
                                     <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
                                         {selectedPerson?.student_number || person?.student_number || "N/A"}
                                     </span>

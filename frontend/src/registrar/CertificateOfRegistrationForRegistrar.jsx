@@ -682,7 +682,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
           fontWeight: "bold",
           position: "absolute",
           right: "17rem",
-          top: "14rem",
+          top: "21rem",
           transition: "background-color 0.3s, transform 0.2s",
         }}
         onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
@@ -711,7 +711,7 @@ const CertificateOfRegistration = forwardRef(({ student_number }, divToPrintRef)
           cursor: "pointer",
           position: "absolute",
           right: "1.8rem",
-          top: "14rem",
+          top: "21rem",
           fontSize: "16px",
           fontWeight: "bold",
           transition: "background-color 0.3s, transform 0.2s",

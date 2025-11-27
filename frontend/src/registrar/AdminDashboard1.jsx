@@ -1927,21 +1927,22 @@ const AdminDashboard1 = () => {
                 />
               </Box>
             </Box>
-            <Box display="flex" gap={4} mb={2}>
+            
+
+   <Box display="flex" gap={4} mb={2}>
               {/* Height Field */}
-              <Box display="flex" flexDirection="column" flex="0 0 24%">
+              <Box display="flex" flexDirection="column" flex="0 0 26%">
                 <Box display="flex" alignItems="center" gap={1}>
                   <Typography fontWeight="medium" minWidth="60px">
                     Height:
                   </Typography>
                   <TextField
-                    InputProps={{ readOnly: true }}
-
                     size="small"
+                    type="number"
                     name="height"
-                    value={person.height ?? ""}
+                    value={person.height || ""}
                     onChange={handleChange}
-                    onBlur={handleBlur}
+                    onBlur={() => handleUpdate(person)}
                     placeholder="Enter your Height"
                     error={!!errors.height}
                     fullWidth
@@ -1956,23 +1957,23 @@ const AdminDashboard1 = () => {
               </Box>
 
               {/* Weight Field */}
-              <Box display="flex" flexDirection="column" flex="0 0 24%">
+              <Box display="flex" flexDirection="column" flex="0 0 26%">
                 <Box display="flex" alignItems="center" gap={1}>
                   <Typography fontWeight="medium" minWidth="60px">
                     Weight:
                   </Typography>
                   <TextField
-                    InputProps={{ readOnly: true }}
-
                     size="small"
+                    type="number"
                     name="weight"
-                    value={person.weight ?? ""}
+                    value={person.weight || ""}
                     onChange={handleChange}
-                    onBlur={handleBlur}
+                    onBlur={() => handleUpdate(person)}
                     placeholder="Enter your Weight"
                     error={!!errors.weight}
                     fullWidth
                   />
+
                   <Typography variant="body2">kg</Typography>
                 </Box>
                 {errors.weight && (
@@ -1982,6 +1983,13 @@ const AdminDashboard1 = () => {
                 )}
               </Box>
             </Box>
+
+
+
+
+
+
+
 
             <Box display="flex" alignItems="center" gap={2} flexWrap="nowrap" width="100%" mb={2}>
               {/* LRN Label */}
@@ -2534,49 +2542,76 @@ const AdminDashboard1 = () => {
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
 
-            <Box display="flex" gap={2} mb={2}>
-
-              <Box flex={1} display="flex" alignItems="center" gap={2}>
-                <Typography sx={{ width: 180 }} fontWeight="medium">
-                  Cellphone Number:
-                </Typography>
-                <TextField
-                  InputProps={{ readOnly: true }}
-
-                  fullWidth
-                  size="small"
-                  name="cellphoneNumber"
-                  placeholder="Enter your Cellphone Number +63"
-                  required
-                  value={person.cellphoneNumber ?? ""}
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  error={!!errors.cellphoneNumber}
-                  helperText={errors.cellphoneNumber && "This field is required."}
-                />
-              </Box>
-
-
-              <Box flex={1} display="flex" alignItems="center" gap={2}>
-                <Typography sx={{ width: 180 }} fontWeight="medium">
-                  Email Address:
-                </Typography>
-                <TextField
-                  InputProps={{ readOnly: true }}
-
-                  fullWidth
-                  size="small"
-                  name="emailAddress"
-                  required
-                  value={person.emailAddress ?? ""}
-                  placeholder="Enter your Email Address (e.g., username@gmail.com)"
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  error={!!errors.emailAddress}
-                  helperText={errors.emailAddress && "This field is required."}
-                />
-              </Box>
-            </Box>
+           <Box display="flex" gap={2} mb={2}>
+          
+                        <Box flex={1} display="flex" alignItems="center" gap={2}>
+                          <Typography sx={{ width: 180 }} fontWeight="medium">
+                            Contact Number:
+                          </Typography>
+          
+                          <TextField
+                            fullWidth
+                          
+                            size="small"
+                            name="cellphoneNumber"
+                            placeholder="9XXXXXXXXX"
+                            value={person.cellphoneNumber || ""}
+                            onBlur={() => handleUpdate(person)}
+                            onChange={(e) => {
+                              const onlyNumbers = e.target.value.replace(/\D/g, ""); // remove letters
+                              handleChange({
+                                target: {
+                                  name: "cellphoneNumber",
+                                  value: onlyNumbers,
+                                },
+                              });
+                            }}
+                            error={!!errors.cellphoneNumber}
+                            helperText={errors.cellphoneNumber && "This field is required."}
+                            InputProps={{readOnly: true,
+                              startAdornment: (
+                                <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                              ),
+                            }}
+                          />
+                        </Box>
+          
+          
+                        <Box flex={1} display="flex" alignItems="center" gap={2}>
+                          <Typography sx={{ width: 180 }} fontWeight="medium">
+                            Email Address:
+                          </Typography>
+          
+                          <TextField
+                          InputProps={{ readOnly: true }}
+                            fullWidth
+                            size="small"
+                            name="emailAddress"
+                            required
+                            value={person.emailAddress || ""}
+                            placeholder="Enter your Gmail address"
+                            onBlur={() => handleUpdate(person)}
+                            error={!!errors.emailAddress}
+                            helperText={errors.emailAddress ? "This field is required." : ""}
+                            onChange={(e) => {
+                              let value = e.target.value.replace(/\s/g, "");
+          
+                              value = value.replace(/@.*/, "");
+          
+                              const finalValue = value === "" ? "" : value + "@gmail.com";
+          
+                              handleChange({
+                                target: {
+                                  name: "emailAddress",
+                                  value: finalValue
+                                }
+                              });
+                            }}
+                          />
+          
+          
+                        </Box>
+                      </Box>
 
 
 

@@ -151,7 +151,6 @@ const StudentNumbering = () => {
     const tabs1 = [
         { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
         { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
-        { label: "Class List", to: "/class_roster", icon: <ClassIcon /> },
         { label: "Search Certificate of Registration", to: "/search_cor", icon: <SearchIcon /> },
         { label: "Student Numbering", to: "/student_numbering", icon: <ConfirmationNumberIcon /> },
         { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },

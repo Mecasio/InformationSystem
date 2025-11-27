@@ -237,7 +237,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
 
 
   const [monthlyApplicants, setMonthlyApplicants] = useState([]);
-
+  const [months, setMonths] = useState("January");
 
   // After fetching monthlyApplicants from API
   useEffect(() => {
@@ -320,6 +320,16 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
       console.error("❌ Upload failed:", err);
     }
   };
+
+  const [years, setYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("");
+
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/year_table/`)
+      .then((res) => setYears(res.data))
+      .catch((err) => console.error(err));
+  }, [])
 
 
   return (
@@ -443,9 +453,6 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
         </Grid>
       </Grid>
 
-
-
-
       {/* ✅ Stats Section (4 in 1 row) */}
       <Grid container spacing={2} justifyContent="center">
         {stats.map((stat, i) => (
@@ -503,16 +510,6 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
 
       {/* Department Section */}
       <Grid container spacing={3} sx={{ mt: 6 }}>
-        {/* Department Overview Title */}
-        <Grid item xs={12}>
-          <Typography
-            variant="h5"
-            mb={2}
-            sx={{ color: subtitleColor, fontWeight: "bold", textAlign: "center", marginLeft: "-210px", marginTop: "-50px" }}
-          >
-            Department Overview
-          </Typography>
-        </Grid>
 
         {/* Calendar Card */}
         <Grid item xs={12} md={4}>
@@ -522,9 +519,9 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               marginLeft: "10px",
               boxShadow: 3,
               p: 2,
-              width: 480,
+              width: 385,
               height: 400,
-              marginTop: "-70px",
+              marginTop: "-50px",
               display: "flex",
               borderRadius: "10px",
               transition: "transform 0.2s ease",
@@ -672,7 +669,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 marginLeft: "10px",
                 marginTop: "-20px",
                 borderRadius: 3,
-                width: 480,
+                width: 385,
                 height: 290,
                 border: `2px solid ${borderColor}`,
                 transition: "transform 0.2s ease",
@@ -692,7 +689,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 </Typography>
 
                 {/* Chart takes the rest of card height */}
-                <Box sx={{ height: "calc(100% - 40px)", px: 2, pb: 2 }}>
+                <Box sx={{ height: "calc(100% - 40px)" }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={monthlyApplicants}
@@ -730,123 +727,279 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               </CardContent>
             </Card>
           </Grid>
-
-
         </Grid>
 
-
-        {/* Department Select */}
         <Grid item xs={12} md={4}>
           <Card
             sx={{
-              p: 1,
+              width: 600,
+              height: 700,
+              p: 3,
               borderRadius: 3,
-              border: `2px solid ${borderColor}`,
-              height: 660,
-              backgroundColor: "#f1f1f1",
-              marginTop: "-30px",
-              transition: "transform 0.2s ease",
+              marginTop: "-45px",
+              marginLeft: "-8rem",
               boxShadow: 3,
-              "&:hover": { transform: "scale(1.03)" },
+              border: `1px solid ${borderColor}`,
+              background: "#ffffff",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            <CardContent>
-              <Typography fontWeight="bold" mb={2}>
-                Select Department
-              </Typography>
-              <FormControl
-                style={{ border: `2px solid ${borderColor}`, borderRadius: "5px", backgroundColor: "white" }}
-                fullWidth
+            {/* Title */}
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              color={subtitleColor}
+              sx={{ textAlign: "center", mb: 1 }}
+            >
+              Enrollment Statistics
+            </Typography>
+          
+            {/* Year Select */}
+            <FormControl fullWidth size="small" sx={{ mb: 3, width: 550 }}>
+              <InputLabel>School Year</InputLabel>
+              <Select
+                value={selectedYear}
+                label="School Year"
+                onChange={(e) => setSelectedYear(e.target.value)}
               >
-                <InputLabel>Select Department</InputLabel>
-                <Select
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                  label="Select Department"
-                >
-                  <MenuItem value="">
-                    <em>- Select -</em>
+                {years.map((yr) => (
+                  <MenuItem key={yr.year_id} value={yr.year_id}>
+                    {yr.year_description}
                   </MenuItem>
-                  {departments.map((dept) => (
-                    <MenuItem key={dept.dprtmnt_id} value={dept.dprtmnt_id}>
-                      {dept.dprtmnt_name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Student Summary */}
-        {/* Student Summary */}
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              p: 1,
-              borderRadius: 3,
-              border: `2px solid ${borderColor}`,
-              height: 660,
-              backgroundColor: "#f1f1f1",
-              marginTop: "-30px",
-              transition: "transform 0.2s ease",
-              boxShadow: 3,
-              "&:hover": { transform: "scale(1.03)" },
-            }}
-          >
-            <CardContent>
-              <Typography fontWeight="bold" mb={2}>
-                Student Summary
-              </Typography>
-
-              {/* Styled like a TextField */}
+                ))}
+              </Select>
+            </FormControl>
+            {/* Main Content: PIE + Stats */}
+            <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, gap: 2 }}>
+              {/* PIE Graph */}
               <Box
                 sx={{
-                  border: `2px solid ${borderColor}`,
-                  borderRadius: "5px",
-                  height: "58px",
-                  display: "flex",              // flexbox for alignment
-                  alignItems: "center",         // vertical center
-                  px: 2,                        // padding left/right
-                  mb: 2,
-                  bgcolor: "white",             // same as TextField background
+                  minWidth: 500,
+                  minHeight: 440,
+                  flex: 1,
+                  background: "#f1f3f4",
+                  borderRadius: 3,
+                  border: "1px dashed #bfc4cc",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  fontSize: 14,
+                  color: "#6c6c6c",
                 }}
               >
-                <Typography variant="body1">
-                  Total Enrolled Students:{" "}
-                  <Typography component="span" fontWeight="bold" color="primary">
-                    {selectedDepartment ? studentCount : "—"}
-                  </Typography>
-                </Typography>
+                PIE GRAPH HERE
               </Box>
-
-              {yearLevelCounts.length > 0 ? (
-                yearLevelCounts.map((item) => (
-                  <Typography key={item.year_level_id} variant="body2" mb={1}>
-                    {item.year_level_description}:{" "}
-                    <Typography component="span" fontWeight="bold" color="maroon">
-                      {item.student_count}
-                    </Typography>
+        
+              {/* Column Stats */}
+              <Box sx={{ flex: 1, display: "flex", gap: 2 }}>
+                <Box
+                  sx={{
+                    width: 125,
+                    height: 90,
+                    p: 2,
+                    background: "#f5f7fa",
+                    borderRadius: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" fontWeight="bold">
+                    521
                   </Typography>
-                ))
-              ) : (
-                <Typography variant="body2" color="textSecondary">
-                  No year level data available.
-                </Typography>
+                  <Typography fontSize={14}>Regular</Typography>
+                </Box>
+        
+                <Box
+                  sx={{
+                    width: 125,
+                    height: 90,
+                    p: 2,
+                    background: "#f5f7fa",
+                    borderRadius: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" fontWeight="bold">
+                    62
+                  </Typography>
+                  <Typography fontSize={14}>Irregular</Typography>
+                </Box>
+          
+                <Box
+                  sx={{
+                    width: 125,
+                    height: 90,
+                    p: 2,
+                    background: "#f5f7fa",
+                    borderRadius: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" fontWeight="bold">
+                    32
+                  </Typography>
+                  <Typography fontSize={14}>Transferee</Typography>
+                </Box>
 
-
-              )}
-              <Typography variant="body2" color="textSecondary">
-                Regular Students:
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Irregular Students:
-              </Typography>
-
-            </CardContent>
+                <Box
+                  sx={{
+                    width: 125,
+                    height: 90,
+                    p: 2,
+                    background: "#f5f7fa",
+                    borderRadius: 2,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h5" fontWeight="bold">
+                    7
+                  </Typography>
+                  <Typography fontSize={14}>Shiftee</Typography>
+                </Box>
+              </Box>
+            </Box>
           </Card>
         </Grid>
 
+        <Grid item xs={12} md={4}>
+          <Card
+            sx={{
+              marginTop: "-45px",
+              marginLeft: "-3.5rem",
+              width: 580,
+              height: 700,
+              p: 3,
+              borderRadius: 3,
+              boxShadow: 3,
+              display: "flex",
+              flexDirection: "column",
+              background: "#ffffff",
+              border: `1px solid ${borderColor}`
+            }}
+          >
+                {/* Header Row: Title + Filters */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+                    <Typography variant="h6" fontWeight="bold" color={subtitleColor}>
+                    Applicant Overview
+                    </Typography>
+
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                    {/* Year Dropdown */}
+                    <FormControl size="small" sx={{ width: 130 }}>
+                        <InputLabel>School Year</InputLabel>
+                        <Select
+                          value={selectedYear}
+                          label="School Year"
+                          onChange={(e) => setSelectedYear(e.target.value)}
+                        >
+                          {years.map((yr) => (
+                            <MenuItem key={yr.year_id} value={yr.year_id}>
+                              {yr.year_description}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                    </FormControl>
+
+                    {/* Month Dropdown */}
+                    <FormControl size="small" sx={{ width: 130 }}>
+                        <InputLabel>Select Month</InputLabel>
+                        <Select
+                        label="Select Month"
+                        value={months}
+                        onChange={(e) => setMonths(e.target.value)}
+                        >
+                        <MenuItem value="January">January</MenuItem>
+                        <MenuItem value="February">February</MenuItem>
+                        <MenuItem value="March">March</MenuItem>
+                        <MenuItem value="April">April</MenuItem>
+                        <MenuItem value="May">May</MenuItem>
+                        <MenuItem value="June">June</MenuItem>
+                        <MenuItem value="July">July</MenuItem>
+                        <MenuItem value="August">August</MenuItem>
+                        <MenuItem value="September">September</MenuItem>
+                        <MenuItem value="October">October</MenuItem>
+                        <MenuItem value="November">November</MenuItem>
+                        <MenuItem value="December">December</MenuItem>
+                        </Select>
+                    </FormControl>
+                    </Box>
+                </Box>
+
+                {/* Stats Boxes */}
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid item xs={4}>
+                    <Box
+                        sx={{
+                            p: 2,
+                            background: "#f5f7fa",
+                            borderRadius: 2,
+                            textAlign: "center",
+                            height: 90,
+                        }}
+                    >
+                        <Typography variant="h5" fontWeight="bold">521</Typography>
+                        <Typography fontSize={14}>Total Applicants</Typography>
+                    </Box>
+                    </Grid>
+
+                    <Grid item xs={4}>
+                    <Box
+                        sx={{
+                        p: 2,
+                        background: "#f5f7fa",
+                        borderRadius: 2,
+                        textAlign: "center",
+                        height: 90,
+                        }}
+                    >
+                        <Typography variant="h5" fontWeight="bold">73</Typography>
+                        <Typography fontSize={14}>This Week</Typography>
+                    </Box>
+                    </Grid>
+
+                    <Grid item xs={4}>
+                    <Box
+                        sx={{
+                        p: 2,
+                        background: "#f5f7fa",
+                        borderRadius: 2,
+                        textAlign: "center",
+                        height: 90,
+                        }}
+                    >
+                        <Typography variant="h5" fontWeight="bold">234</Typography>
+                        <Typography fontSize={14}>This Month</Typography>
+                    </Box>
+                    </Grid>
+                </Grid>
+
+                {/* Bar Graph Label */}
+                <Typography
+                    variant="subtitle1"
+                    fontWeight={600}
+                    sx={{ mb: 1 }}
+                >
+                    Applicants By Status:
+                </Typography>
+
+            {/* Bar Graph Placeholder */}
+            <Box
+              sx={{
+                flexGrow: 1,
+                background: "#f1f3f4",
+                borderRadius: 3,
+                border: "1px dashed #bfc4cc",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                fontSize: 14,
+                color: "#6c6c6c",
+              }}
+            >
+              BAR GRAPH HERE
+            </Box>
+          </Card>  
+        </Grid>
       </Grid>
 
     </Box>

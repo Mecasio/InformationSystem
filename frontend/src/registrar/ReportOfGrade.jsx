@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { FcPrint } from "react-icons/fc";
 import API_BASE_URL from "../apiConfig";
 
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 const ReportOfGrade = () => {
     const settings = useContext(SettingsContext);
@@ -91,29 +92,67 @@ const ReportOfGrade = () => {
 
     const navigate = useNavigate();
 
-    const [activeStep, setActiveStep] = useState(5);
+    const [activeStep, setActiveStep] = useState(4);
     const [clickedSteps, setClickedSteps] = useState([]);
 
     const tabs1 = [
-        { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
+        { label: "Student Records", to: "/student_list", icon: <ListAltIcon /> },
         { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
-        { label: "Class List", to: "/class_roster", icon: <ClassIcon /> },
-        { label: "Search Certificate of Registration", to: "/search_cor", icon: <SearchIcon /> },
-        { label: "Student Numbering", to: "/student_numbering", icon: <ConfirmationNumberIcon /> },
+        { label: "Submitted Documents", to: "/submitted_documents", icon: <UploadFileIcon /> },
+        { label: "Search Certificate of Registration", to: "/search_cor", icon: <ListAltIcon /> },
         { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },
         { label: "Transcript of Records", to: "/transcript_of_records", icon: <SchoolIcon /> },
     ];
+
+
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const personIdFromUrl = queryParams.get("person_id");
+
+        if (!personIdFromUrl) return;
+
+        // fetch info of that person
+        axios
+            .get(`http://localhost:5000/api/person_with_applicant/${personIdFromUrl}`)
+            .then((res) => {
+                if (res.data?.applicant_number) {
+
+                    // AUTO-INSERT applicant_number into search bar
+                    setSearchQuery(res.data.applicant_number);
+
+                    // If you have a fetchUploads() or fetchExamScore() — call it
+                    if (typeof fetchUploadsByApplicantNumber === "function") {
+                        fetchUploadsByApplicantNumber(res.data.applicant_number);
+                    }
+
+                    if (typeof fetchApplicants === "function") {
+                        fetchApplicants();
+                    }
+                }
+            })
+            .catch((err) => console.error("Auto search failed:", err));
+    }, [location.search]);
 
     const handleStepClick = (index, to) => {
         setActiveStep(index);
 
         const pid = localStorage.getItem("student_data_id");
-        if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9)  {
-        navigate(`${to}?student_number=${pid}`);
+        console.log(pid);
+        if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
+            navigate(`${to}?student_number=${pid}`);
         } else {
-        navigate(to);
+            navigate(to);
         }
     };
+
+    useEffect(() => {
+        const storedId = localStorage.getItem("student_data_id");
+
+        if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
+            setSearchQuery(storedId);
+        }
+    }, []);
 
     useEffect(() => {
         const storedId = localStorage.getItem("student_data_id");
@@ -447,8 +486,8 @@ const ReportOfGrade = () => {
             </Box>
 
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
-            <br/>
-            <TableContainer component={Paper} sx={{ width: '100%'}}>
+            <br />
+            <TableContainer component={Paper} sx={{ width: '100%' }}>
                 <Table>
                     <TableHead sx={{ backgroundColor: settings?.header_color || "#1976d2", border: `2px solid ${borderColor}`, }}>
                         <TableRow>
@@ -469,8 +508,8 @@ const ReportOfGrade = () => {
                                 Student Name:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
                                     {studentData && studentData.last_name
-                                    ? `${studentData.last_name.toUpperCase()}, ${studentData.first_name.toUpperCase()} ${studentData.middle_name.toUpperCase()}`
-                                    : "N/A"}
+                                        ? `${studentData.last_name.toUpperCase()}, ${studentData.first_name.toUpperCase()} ${studentData.middle_name.toUpperCase()}`
+                                        : "N/A"}
                                 </span>
                             </TableCell>
                         </TableRow>
@@ -495,7 +534,7 @@ const ReportOfGrade = () => {
                             sx={{
                                 flex: 1,
                                 maxWidth: `${100 / tabs1.length}%`, // evenly fit 100%
-                                height: 100,
+                                     height: 140,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -656,7 +695,7 @@ const ReportOfGrade = () => {
                     marginTop: "2rem",
                     marginBottom: "10%",
                     paddingBottom: "1.5rem",
-                    minWidth: "215.9mm", 
+                    minWidth: "215.9mm",
                     maxWidth: "215.9mm",
                     minHeight: "165mm",
                     maxHeight: "165mm"
@@ -767,14 +806,14 @@ const ReportOfGrade = () => {
                 </table>
 
                 {filteredStudents.length > 0 && (
-                    <Box style={{marginTop: "-1rem"}}>
+                    <Box style={{ marginTop: "-1rem" }}>
                         <Typography style={{ marginLeft: "1rem", textAlign: "center", width: "80rem", fontSize: "1.6rem", letterSpacing: "-1px", fontWeight: "500", textDecoration: "underline", textUnderlineOffset: "0.4rem", }}>REPORT OF GRADES</Typography>
                         <Typography style={{ marginLeft: "1rem", marginTop: "-0.2rem", width: "80rem", textAlign: "center", letterSpacing: "-1px" }}>{filteredStudents[0]?.semester_description},  School Year {filteredStudents[0]?.current_year} - {filteredStudents[0]?.next_year}</Typography>
                     </Box>
                 )}
 
                 <Box style={{ display: "flex" }}>
-                    <Box style={{marginTop: "-1rem"}}>
+                    <Box style={{ marginTop: "-1rem" }}>
                         <Box sx={{ padding: "1rem", marginLeft: "1rem", width: "70rem" }}>
                             <Box sx={{ display: "flex" }}>
                                 <Box style={{ display: "flex", width: "38rem" }}>
@@ -795,7 +834,7 @@ const ReportOfGrade = () => {
                                     <Typography style={{ width: "9rem", fontSize: "1.05rem", letterSpacing: "-1px" }}>Academic Year:</Typography>
                                     {filteredStudents.length > 0 && (
                                         <>
-                                            <Typography style={{ fontSize: "1.06rem", fontWeight: "500"}}>{getShortTerm(filteredStudents[0]?.semester_description)} , {filteredStudents[0]?.current_year} - {filteredStudents[0]?.next_year}</Typography>
+                                            <Typography style={{ fontSize: "1.06rem", fontWeight: "500" }}>{getShortTerm(filteredStudents[0]?.semester_description)} , {filteredStudents[0]?.current_year} - {filteredStudents[0]?.next_year}</Typography>
                                         </>
                                     )}
                                 </Box>
@@ -863,7 +902,7 @@ const ReportOfGrade = () => {
                                     <tbody>
                                         {filteredStudents.map((p) => (
                                             <tr style={{ display: "flex", height: "25px", alignItems: "start" }} key={p.enrolled_id}>
-                                                <td style={{ display: "flex", alignItems: "center", justifyContent: "left", fontSize: "14px",width: "8rem" }}>
+                                                <td style={{ display: "flex", alignItems: "center", justifyContent: "left", fontSize: "14px", width: "8rem" }}>
                                                     <span style={{ paddingLeft: "5px" }}>{p.course_code}</span>
                                                 </td>
                                                 <td style={{ display: "flex", width: "26rem" }}>

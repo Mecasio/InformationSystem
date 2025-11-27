@@ -339,8 +339,7 @@ const Dashboard5 = (props) => {
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
 
       <br />
-
-      <Box
+ <Box
         sx={{
           display: "flex",
           justifyContent: "center",
@@ -390,12 +389,16 @@ const Dashboard5 = (props) => {
             }}
           >
             <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' or N/A in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
             <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
 
           </Typography>
         </Box>
       </Box>
+
+
+
+
 
       <h1
         style={{

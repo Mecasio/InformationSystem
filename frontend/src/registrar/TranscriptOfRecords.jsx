@@ -1,4 +1,4 @@
-import { Box, Typography, TextField, Snackbar, Alert, Avatar, Card, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Checkbox} from "@mui/material";
+import { Box, Typography, TextField, Snackbar, Alert, Avatar, Card, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Checkbox } from "@mui/material";
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { SettingsContext } from "../App";
 import EaristLogo from "../assets/EaristLogo.png";
@@ -18,46 +18,47 @@ import { useNavigate } from "react-router-dom";
 import { FcPrint } from "react-icons/fc";
 import API_BASE_URL from "../apiConfig";
 
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 const TOR = () => {
 
-    
-const settings = useContext(SettingsContext);
 
-  const [titleColor, setTitleColor] = useState("#000000");
-  const [subtitleColor, setSubtitleColor] = useState("#555555");
-  const [borderColor, setBorderColor] = useState("#000000");
-  const [mainButtonColor, setMainButtonColor] = useState("#1976d2");
-  const [subButtonColor, setSubButtonColor] = useState("#ffffff");   // ✅ NEW
-  const [stepperColor, setStepperColor] = useState("#000000");       // ✅ NEW
+    const settings = useContext(SettingsContext);
 
-  const [fetchedLogo, setFetchedLogo] = useState(null);
-  const [companyName, setCompanyName] = useState("");
-  const [shortTerm, setShortTerm] = useState("");
+    const [titleColor, setTitleColor] = useState("#000000");
+    const [subtitleColor, setSubtitleColor] = useState("#555555");
+    const [borderColor, setBorderColor] = useState("#000000");
+    const [mainButtonColor, setMainButtonColor] = useState("#1976d2");
+    const [subButtonColor, setSubButtonColor] = useState("#ffffff");   // ✅ NEW
+    const [stepperColor, setStepperColor] = useState("#000000");       // ✅ NEW
 
-  useEffect(() => {
-    if (!settings) return;
+    const [fetchedLogo, setFetchedLogo] = useState(null);
+    const [companyName, setCompanyName] = useState("");
+    const [shortTerm, setShortTerm] = useState("");
 
-    // 🎨 Colors
-    if (settings.title_color) setTitleColor(settings.title_color);
-    if (settings.subtitle_color) setSubtitleColor(settings.subtitle_color);
-    if (settings.border_color) setBorderColor(settings.border_color);
-    if (settings.main_button_color) setMainButtonColor(settings.main_button_color);
-    if (settings.sub_button_color) setSubButtonColor(settings.sub_button_color);   // ✅ NEW
-    if (settings.stepper_color) setStepperColor(settings.stepper_color);           // ✅ NEW
+    useEffect(() => {
+        if (!settings) return;
 
-    // 🏫 Logo
-    if (settings.logo_url) {
-      setFetchedLogo(`${API_BASE_URL}${settings.logo_url}`);
-    } else {
-      setFetchedLogo(EaristLogo);
-    }
+        // 🎨 Colors
+        if (settings.title_color) setTitleColor(settings.title_color);
+        if (settings.subtitle_color) setSubtitleColor(settings.subtitle_color);
+        if (settings.border_color) setBorderColor(settings.border_color);
+        if (settings.main_button_color) setMainButtonColor(settings.main_button_color);
+        if (settings.sub_button_color) setSubButtonColor(settings.sub_button_color);   // ✅ NEW
+        if (settings.stepper_color) setStepperColor(settings.stepper_color);           // ✅ NEW
 
-    // 🏷️ School Information
-    if (settings.company_name) setCompanyName(settings.company_name);
-    if (settings.short_term) setShortTerm(settings.short_term);
-    if (settings.campus_address) setCampusAddress(settings.campus_address);
+        // 🏫 Logo
+        if (settings.logo_url) {
+            setFetchedLogo(`${API_BASE_URL}${settings.logo_url}`);
+        } else {
+            setFetchedLogo(EaristLogo);
+        }
 
-  }, [settings]); 
+        // 🏷️ School Information
+        if (settings.company_name) setCompanyName(settings.company_name);
+        if (settings.short_term) setShortTerm(settings.short_term);
+        if (settings.campus_address) setCampusAddress(settings.campus_address);
+
+    }, [settings]);
 
 
 
@@ -178,31 +179,59 @@ const settings = useContext(SettingsContext);
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
 
-    const [activeStep, setActiveStep] = useState(6);
+    const [activeStep, setActiveStep] = useState(5);
     const [clickedSteps, setClickedSteps] = useState([]);
 
     const navigate = useNavigate();
 
     const tabs1 = [
-        { label: "Applicant List", to: "/super_admin_applicant_list", icon: <ListAltIcon /> },
+        { label: "Student Records", to: "/student_list", icon: <ListAltIcon /> },
         { label: "Applicant Form", to: "/readmission_dashboard1", icon: <PersonAddIcon /> },
-        { label: "Class List", to: "/class_roster", icon: <ClassIcon /> },
-        { label: "Search Certificate of Registration", to: "/search_cor", icon: <SearchIcon /> },
-        { label: "Student Numbering", to: "/student_numbering", icon: <ConfirmationNumberIcon /> },
+        { label: "Submitted Documents", to: "/submitted_documents", icon: <UploadFileIcon /> },
+        { label: "Search Certificate of Registration", to: "/search_cor", icon: <ListAltIcon /> },
         { label: "Report of Grades", to: "/report_of_grades", icon: <GradeIcon /> },
         { label: "Transcript of Records", to: "/transcript_of_records", icon: <SchoolIcon /> },
     ];
 
+
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const personIdFromUrl = queryParams.get("person_id");
+
+        if (!personIdFromUrl) return;
+
+        // fetch info of that person
+        axios
+            .get(`http://localhost:5000/api/person_with_applicant/${personIdFromUrl}`)
+            .then((res) => {
+                if (res.data?.applicant_number) {
+
+                    // AUTO-INSERT applicant_number into search bar
+                    setSearchQuery(res.data.applicant_number);
+
+                    // If you have a fetchUploads() or fetchExamScore() — call it
+                    if (typeof fetchUploadsByApplicantNumber === "function") {
+                        fetchUploadsByApplicantNumber(res.data.applicant_number);
+                    }
+
+                    if (typeof fetchApplicants === "function") {
+                        fetchApplicants();
+                    }
+                }
+            })
+            .catch((err) => console.error("Auto search failed:", err));
+    }, [location.search]);
 
     const handleStepClick = (index, to) => {
         setActiveStep(index);
 
         const pid = localStorage.getItem("student_data_id");
         console.log(pid);
-        if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9)  {
-        navigate(`${to}?student_number=${pid}`);
+        if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
+            navigate(`${to}?student_number=${pid}`);
         } else {
-        navigate(to);
+            navigate(to);
         }
     };
 
@@ -275,12 +304,12 @@ const settings = useContext(SettingsContext);
             try {
                 const res = await fetch(`${API_BASE_URL}/api/program_evaluation/${searchQuery}`);
                 const data = await res.json();
-                
+
 
                 if (data) {
                     setSelectedStudent(data);
                     setStudentData(data);
-                
+
                     if (searchQuery) {
                         localStorage.setItem("student_data_id", searchQuery);
                     }
@@ -314,12 +343,12 @@ const settings = useContext(SettingsContext);
 
     useEffect(() => {
         const fetchRegistrars = async () => {
-        try {
-            const res = await axios.get(`${API_BASE_URL}/registrar-users`);
-            setRegistrars(res.data.registrars);
-        } catch (err) {
-            console.error(err);
-        }
+            try {
+                const res = await axios.get(`${API_BASE_URL}/registrar-users`);
+                setRegistrars(res.data.registrars);
+            } catch (err) {
+                console.error(err);
+            }
         };
         fetchRegistrars();
     }, []);
@@ -348,15 +377,15 @@ const settings = useContext(SettingsContext);
 
         switch (normalized) {
             case "FIRSTSEMESTER":
-            return "1st Semester";
+                return "1st Semester";
             case "SECONDSEMESTER":
-            return "2nd Semester";
+                return "2nd Semester";
             case "THIRDSEMESTER":
-            return "3rd Semester";
+                return "3rd Semester";
             case "FOURTHSEMESTER":
-            return "4th Semester";
+                return "4th Semester";
             default:
-            return semester;
+                return semester;
         }
     }
 
@@ -388,10 +417,10 @@ const settings = useContext(SettingsContext);
 
                 if (remainingSubjects.length <= availableSpace) {
                     // All subjects fit on this page
-                    currentPage.push({ 
-                        ...group, 
-                        subjects: remainingSubjects, 
-                        isContinuation 
+                    currentPage.push({
+                        ...group,
+                        subjects: remainingSubjects,
+                        isContinuation
                     });
                     currentCount += remainingSubjects.length;
                     remainingSubjects = [];
@@ -400,10 +429,10 @@ const settings = useContext(SettingsContext);
                     const fitSubjects = remainingSubjects.slice(0, availableSpace);
                     const overflowSubjects = remainingSubjects.slice(availableSpace);
 
-                    currentPage.push({ 
-                        ...group, 
-                        subjects: fitSubjects, 
-                        isContinuation 
+                    currentPage.push({
+                        ...group,
+                        subjects: fitSubjects,
+                        isContinuation
                     });
                     result.push(currentPage);
 
@@ -489,7 +518,7 @@ const settings = useContext(SettingsContext);
                     variant="h4"
                     sx={{
                         fontWeight: "bold",
-                         color: titleColor,
+                        color: titleColor,
                         fontSize: "36px",
                         background: "white",
                         display: "flex",
@@ -524,46 +553,46 @@ const settings = useContext(SettingsContext);
                         }}
                     />
 
-                     <button
-                    onClick={printDiv}
-                    style={{
-                        width: "300px",
-                        padding: "10px 20px",
-                        border: "2px solid black",
-                        backgroundColor: "#f0f0f0",
-                        color: "black",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                        fontSize: "16px",
-                        fontWeight: "bold",
-                        transition: "background-color 0.3s, transform 0.2s",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                    onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-                    onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-                    onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-                    onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
-                >
-                    <span
+                    <button
+                        onClick={printDiv}
                         style={{
+                            width: "300px",
+                            padding: "10px 20px",
+                            border: "2px solid black",
+                            backgroundColor: "#f0f0f0",
+                            color: "black",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "16px",
+                            fontWeight: "bold",
+                            transition: "background-color 0.3s, transform 0.2s",
                             display: "flex",
                             alignItems: "center",
-                            gap: "8px",
+                            justifyContent: "center",
                         }}
+                        onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+                        onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+                        onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+                        onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
                     >
-                        <FcPrint size={20} />
-                        Print TOR
-                    </span>
-                </button>
+                        <span
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                            }}
+                        >
+                            <FcPrint size={20} />
+                            Print TOR
+                        </span>
+                    </button>
 
                 </Box>
             </Box>
 
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
-            <br/>
-            <TableContainer component={Paper} sx={{ width: '100%'}}>
+            <br />
+            <TableContainer component={Paper} sx={{ width: '100%' }}>
                 <Table>
                     <TableHead sx={{ backgroundColor: settings?.header_color || "#1976d2", border: `2px solid ${borderColor}`, }}>
                         <TableRow>
@@ -584,8 +613,8 @@ const settings = useContext(SettingsContext);
                                 Student Name:&nbsp;
                                 <span style={{ fontFamily: "Arial", fontWeight: "normal", textDecoration: "underline" }}>
                                     {studentData && studentData.last_name
-                                    ? `${studentData.last_name.toUpperCase()}, ${studentData.first_name.toUpperCase()} ${studentData.middle_name.toUpperCase()}`
-                                    : "N/A"}
+                                        ? `${studentData.last_name.toUpperCase()}, ${studentData.first_name.toUpperCase()} ${studentData.middle_name.toUpperCase()}`
+                                        : "N/A"}
                                 </span>
                             </TableCell>
                         </TableRow>
@@ -609,7 +638,7 @@ const settings = useContext(SettingsContext);
                             sx={{
                                 flex: 1,
                                 maxWidth: `${100 / tabs1.length}%`, // evenly fit 100%
-                                height: 100,
+                              height: 140,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -746,61 +775,61 @@ const settings = useContext(SettingsContext);
                     }
                 `}
             </style>
-            <Box style={{display: "flex", alignItems: "center", justifyContent: "center"}}>
-                <Box style={{background: "white", height: "12rem"}}>
+            <Box style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box style={{ background: "white", height: "12rem" }}>
                     <TableContainer component={Paper} elevation={3}>
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell colSpan={5} align="center" style={{ fontSize: "15px", color: "white", background: mainButtonColor, border: `1px solid ${borderColor}`}}><strong>REGISTRAR USERS</strong></TableCell>
+                                    <TableCell colSpan={5} align="center" style={{ fontSize: "15px", color: "white", background: mainButtonColor, border: `1px solid ${borderColor}` }}><strong>REGISTRAR USERS</strong></TableCell>
                                 </TableRow>
                                 <TableRow>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor}}>#</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor}}>Employee ID</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor}} align="center">Fullname</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor}} align="center">Role</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor}} align="center">Action</TableCell>
+                                    <TableCell style={{ border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor }}>#</TableCell>
+                                    <TableCell style={{ border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor }}>Employee ID</TableCell>
+                                    <TableCell style={{ border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor }} align="center">Fullname</TableCell>
+                                    <TableCell style={{ border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor }} align="center">Role</TableCell>
+                                    <TableCell style={{ border: `2px solid ${borderColor}`, fontWeight: "600", color: titleColor }} align="center">Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {registrars.map((user, index) => (
-                                <TableRow key={user.employee_id}>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "14px", color: titleColor}}>{index + 1}</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "14px", color: titleColor}}>{user.employee_id}</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, color: titleColor}}>{`${user.first_name} ${user.middle_name || ""} ${user.last_name}`}</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, textAlign: "center", color: titleColor}}>{user.role}</TableCell>
-                                    <TableCell style={{border: `2px solid ${borderColor}`, textAlign: "center", color: titleColor}}>
-                                        <Box display="flex" alignItems="center">
-                                            <Box display="flex" alignItems="center" mb={0.5}>
-                                                <Checkbox
-                                                    color="primary"
-                                                    checked={selectedPreparedBy?.employee_id === user.employee_id}
-                                                    onChange={() => handlePreparedByChange(user)}
-                                                    disabled={selectedCheckedBy?.employee_id === user.employee_id}
-                                                /> Prepared By
-                                            </Box>
+                                    <TableRow key={user.employee_id}>
+                                        <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "14px", color: titleColor }}>{index + 1}</TableCell>
+                                        <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "14px", color: titleColor }}>{user.employee_id}</TableCell>
+                                        <TableCell style={{ border: `2px solid ${borderColor}`, color: titleColor }}>{`${user.first_name} ${user.middle_name || ""} ${user.last_name}`}</TableCell>
+                                        <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center", color: titleColor }}>{user.role}</TableCell>
+                                        <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center", color: titleColor }}>
                                             <Box display="flex" alignItems="center">
-                                                <Checkbox
-                                                    color="secondary"
-                                                    checked={selectedCheckedBy?.employee_id === user.employee_id}
-                                                    onChange={() => handleCheckedByChange(user)}
-                                                    disabled={selectedPreparedBy?.employee_id === user.employee_id}
-                                                />
-                                                Check By
+                                                <Box display="flex" alignItems="center" mb={0.5}>
+                                                    <Checkbox
+                                                        color="primary"
+                                                        checked={selectedPreparedBy?.employee_id === user.employee_id}
+                                                        onChange={() => handlePreparedByChange(user)}
+                                                        disabled={selectedCheckedBy?.employee_id === user.employee_id}
+                                                    /> Prepared By
+                                                </Box>
+                                                <Box display="flex" alignItems="center">
+                                                    <Checkbox
+                                                        color="secondary"
+                                                        checked={selectedCheckedBy?.employee_id === user.employee_id}
+                                                        onChange={() => handleCheckedByChange(user)}
+                                                        disabled={selectedPreparedBy?.employee_id === user.employee_id}
+                                                    />
+                                                    Check By
+                                                </Box>
                                             </Box>
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
+                                        </TableCell>
+                                    </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     </TableContainer>
                 </Box>
             </Box>
-            <Box style={{width: "100%", display: "flex", justifyContent: "center"}} className="page-container">
-                <Box ref={divToPrintRef} className="page" style={{minWidth: "215.9mm", minHeight: "356mm"}}>
+            <Box style={{ width: "100%", display: "flex", justifyContent: "center" }} className="page-container">
+                <Box ref={divToPrintRef} className="page" style={{ minWidth: "215.9mm", minHeight: "356mm" }}>
                     {paginatedSubjects.map((pageGroups, pageIndex) => (
-                        <Box key={pageIndex} className={`print-container print-container-${pageIndex + 1}`} style={{ pageBreakAfter: "always", breakAfter: "page", paddingRight: "1.5rem", marginTop: "3rem", paddingBottom: "1.5rem"}}>
+                        <Box key={pageIndex} className={`print-container print-container-${pageIndex + 1}`} style={{ pageBreakAfter: "always", breakAfter: "page", paddingRight: "1.5rem", marginTop: "3rem", paddingBottom: "1.5rem" }}>
                             {/* Start Of Header */}
                             <Box className="page-header" style={{ display: "flex", alignItems: "center", height: "10rem", width: "80rem", justifyContent: "center" }}>
                                 <Box style={{ paddingTop: "1.5rem", marginLeft: "-10rem", paddingRight: "3rem" }}>
@@ -855,8 +884,8 @@ const settings = useContext(SettingsContext);
                                 </Box>
 
                             </Box>
-                            <Typography style={{height: "1.5rem", marginLeft: "1rem", textAlign: "center", width: "80rem", fontSize: "1.6rem", letterSpacing: "-1px", fontWeight: "500" }}>OFFICE OF THE REGISTRAR</Typography>
-                            <Typography style={{height: "2.5rem", marginLeft: "1rem", marginTop: "-0.5rem", width: "80rem", textAlign: "center", fontSize: "2.75rem", letterSpacing: "-1px", fontWeight: "600" }}>OFFICIAL TRANSCRIPT OF RECORDS</Typography>
+                            <Typography style={{ height: "1.5rem", marginLeft: "1rem", textAlign: "center", width: "80rem", fontSize: "1.6rem", letterSpacing: "-1px", fontWeight: "500" }}>OFFICE OF THE REGISTRAR</Typography>
+                            <Typography style={{ height: "2.5rem", marginLeft: "1rem", marginTop: "-0.5rem", width: "80rem", textAlign: "center", fontSize: "2.75rem", letterSpacing: "-1px", fontWeight: "600" }}>OFFICIAL TRANSCRIPT OF RECORDS</Typography>
                             <Box style={{ display: "flex", marginTop: "1rem" }}>
                                 <Box>
                                     <Box style={{ display: "flex", height: "17.5rem", }}>
@@ -915,7 +944,7 @@ const settings = useContext(SettingsContext);
                                                         <span>:</span>
                                                     </Typography>
                                                     <Typography style={{ fontSize: "22px", marginTop: "-5px", marginLeft: "2.3rem", fontWeight: "400", letterSpacing: "-1.5px", wordSpacing: "5px" }}>
-                                                       {studentData.previous_year} - {studentData.yearGraduated}
+                                                        {studentData.previous_year} - {studentData.yearGraduated}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -988,151 +1017,151 @@ const settings = useContext(SettingsContext);
                                     </Box>
                                     {/* End of Header */}
                                     {/* Start of Main Content */}
-                                        <Box style={{ display: "flex", marginLeft: "1rem", marginTop: "0.5rem", flexWrap: "wrap", borderTop: "solid black 1px", overflow: "hidden" }}>
-                                            <Box style={{ flex: "0 0 50%", marginBottom: "1rem", boxSizing: "border-box" }}>
-                                                <table className="table" style={{minHeight: "67rem"}}>
-                                                    <thead>
-                                                        <tr style={{ display: "flex", height: "65px", borderBottom: "solid 1px black" }}>
-                                                            <td style={{ fontWeight: "600", fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: "0.8px", width: "13rem" }}>
-                                                                <span>TERM</span>
-                                                            </td>
-                                                            <td style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "38rem" }}>
-                                                                <div style={{ margin: "-1px", fontWeight: "600", fontSize: "20px", textAlign: "center", letterSpacing: "-1px", width: "28rem" }}>SUBJECTS</div>
-                                                                <div style={{ margin: "-1px", fontWeight: "600", fontSize: "20px", textAlign: "center", letterSpacing: "-1px", width: "28rem", wordSpacing: "3px" }}>CODE NUMBER WITH DESCRIPTIVE TITLE</div>
-                                                            </td>
-                                                            <td>
-                                                                <div style={{ fontWeight: "600", textAlign: "center", fontSize: "20px", letterSpacing: "-1px", width: "13rem" }}>
-                                                                    <span style={{ marginLeft: "-1.6rem" }}>GRADES</span>
+                                    <Box style={{ display: "flex", marginLeft: "1rem", marginTop: "0.5rem", flexWrap: "wrap", borderTop: "solid black 1px", overflow: "hidden" }}>
+                                        <Box style={{ flex: "0 0 50%", marginBottom: "1rem", boxSizing: "border-box" }}>
+                                            <table className="table" style={{ minHeight: "67rem" }}>
+                                                <thead>
+                                                    <tr style={{ display: "flex", height: "65px", borderBottom: "solid 1px black" }}>
+                                                        <td style={{ fontWeight: "600", fontSize: "20px", display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: "0.8px", width: "13rem" }}>
+                                                            <span>TERM</span>
+                                                        </td>
+                                                        <td style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "38rem" }}>
+                                                            <div style={{ margin: "-1px", fontWeight: "600", fontSize: "20px", textAlign: "center", letterSpacing: "-1px", width: "28rem" }}>SUBJECTS</div>
+                                                            <div style={{ margin: "-1px", fontWeight: "600", fontSize: "20px", textAlign: "center", letterSpacing: "-1px", width: "28rem", wordSpacing: "3px" }}>CODE NUMBER WITH DESCRIPTIVE TITLE</div>
+                                                        </td>
+                                                        <td>
+                                                            <div style={{ fontWeight: "600", textAlign: "center", fontSize: "20px", letterSpacing: "-1px", width: "13rem" }}>
+                                                                <span style={{ marginLeft: "-1.6rem" }}>GRADES</span>
+                                                            </div>
+                                                            <div style={{ display: "flex", alignItems: "center" }}>
+                                                                <div style={{ fontWeight: "600", fontSize: "20px", textAlign: "center", letterSpacing: "-1px", width: "6rem" }}>
+                                                                    <span>FINAL</span>
                                                                 </div>
-                                                                <div style={{ display: "flex", alignItems: "center" }}>
-                                                                    <div style={{ fontWeight: "600", fontSize: "20px", textAlign: "center", letterSpacing: "-1px", width: "6rem" }}>
-                                                                        <span>FINAL</span>
-                                                                    </div>
-                                                                    <div style={{ textAlign: "center", fontWeight: "600", fontSize: "20px", marginLeft: "-2rem", letterSpacing: "-1px", width: "7rem" }}>
-                                                                        <span>RE-EXAM</span>
-                                                                    </div>
+                                                                <div style={{ textAlign: "center", fontWeight: "600", fontSize: "20px", marginLeft: "-2rem", letterSpacing: "-1px", width: "7rem" }}>
+                                                                    <span>RE-EXAM</span>
                                                                 </div>
-                                                            </td>
-                                                            <td style={{ fontWeight: "600", display: "flex", fontSize: "20px", alignItems: "center", justifyContent: "center", letterSpacing: "-1px", width: "7rem" }}>
-                                                                <span>CREDITS</span>
-                                                            </td>
-                                                            <td style={{ fontWeight: "600", display: "flex", fontSize: "20px", alignItems: "center", justifyContent: "center", letterSpacing: "-1px", width: "8.9rem" }}>
-                                                                <span>REMARKS</span>
-                                                            </td>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody style={{ maxWidth: "650px", overflowY: "hidden" }}>
-                                                        <tr>
-                                                            <td style={{ fontWeight: "500", textUnderlineOffset: "3px", textDecoration: "underline", letterSpacing: "-1px", paddingLeft: "1.5rem", fontSize: "20px" }}>
-                                                                {studentData && studentData.program_description
-                                                            ? `${studentData.program_description.toUpperCase()}`
-                                                            : ""}
-                                                            </td>
-                                                        </tr>
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ fontWeight: "600", display: "flex", fontSize: "20px", alignItems: "center", justifyContent: "center", letterSpacing: "-1px", width: "7rem" }}>
+                                                            <span>CREDITS</span>
+                                                        </td>
+                                                        <td style={{ fontWeight: "600", display: "flex", fontSize: "20px", alignItems: "center", justifyContent: "center", letterSpacing: "-1px", width: "8.9rem" }}>
+                                                            <span>REMARKS</span>
+                                                        </td>
+                                                    </tr>
+                                                </thead>
+                                                <tbody style={{ maxWidth: "650px", overflowY: "hidden" }}>
+                                                    <tr>
+                                                        <td style={{ fontWeight: "500", textUnderlineOffset: "3px", textDecoration: "underline", letterSpacing: "-1px", paddingLeft: "1.5rem", fontSize: "20px" }}>
+                                                            {studentData && studentData.program_description
+                                                                ? `${studentData.program_description.toUpperCase()}`
+                                                                : ""}
+                                                        </td>
+                                                    </tr>
 
-                                                        {pageGroups.map(group => (
-                                                            <React.Fragment key={group.termKey}>
-                                                                {group.subjects.map((p, index) => (
-                                                                    <tr style={{ display: "flex" }} key={p.enrolled_id}>
-                                                                        <td
-                                                                            style={{
-                                                                                width: "13rem",
-                                                                                fontWeight: "400",
-                                                                                display: "flex",
-                                                                                flexDirection: "column",
-                                                                                justifyContent: "center",
-                                                                                alignItems: "flex-start",
-                                                                                position: "relative",
-                                                                                paddingTop: index === 0 ? "0" : "0",
-                                                                            }}
-                                                                        >
-                                                                            {!group.isContinuation && index === 0 && (
-                                                                                <>
-                                                                                    <span style={{ fontSize: "18px", textAlign: "center", width: "14rem", fontWeight: "500" }}>
+                                                    {pageGroups.map(group => (
+                                                        <React.Fragment key={group.termKey}>
+                                                            {group.subjects.map((p, index) => (
+                                                                <tr style={{ display: "flex" }} key={p.enrolled_id}>
+                                                                    <td
+                                                                        style={{
+                                                                            width: "13rem",
+                                                                            fontWeight: "400",
+                                                                            display: "flex",
+                                                                            flexDirection: "column",
+                                                                            justifyContent: "center",
+                                                                            alignItems: "flex-start",
+                                                                            position: "relative",
+                                                                            paddingTop: index === 0 ? "0" : "0",
+                                                                        }}
+                                                                    >
+                                                                        {!group.isContinuation && index === 0 && (
+                                                                            <>
+                                                                                <span style={{ fontSize: "18px", textAlign: "center", width: "14rem", fontWeight: "500" }}>
                                                                                     {convertSemester(p.semester_description)}
-                                                                                    </span>
-                                                                                    <span
+                                                                                </span>
+                                                                                <span
                                                                                     style={{
                                                                                         fontSize: "17px",
                                                                                         marginTop: "3rem",
                                                                                         position: "absolute",
                                                                                         textAlign: "center",
-                                                                                        width: "13.5rem", 
+                                                                                        width: "13.5rem",
                                                                                         fontWeight: "500"
                                                                                     }}
-                                                                                    >
+                                                                                >
                                                                                     {p.current_year} - {p.next_year}
-                                                                                    </span>
-                                                                                </>
-                                                                            )}
-                                                                                                                                        </td>
-                                                                        <td style={{ display: "flex", width: "38rem" }}>
-                                                                            <span style={{ width: "90px", margin: "0", padding: "0", fontSize: "18px", letterSpacing: "-0.5px" }}>{p.course_code}</span>
-                                                                            <span style={{ marginLeft: "30px", padding: "0", fontSize: "18px", letterSpacing: "-0.5px" }}>{p.course_description.toUpperCase()}</span>
-                                                                        </td>
-                                                                        <td>
-                                                                            <div style={{ display: "flex", alignItems: "center" }}>
-                                                                                <div style={{ fontSize: "18px", width: "6rem", textAlign: "center" }}>
-                                                                                    <span>{p.final_grade}</span>
-                                                                                </div>
-                                                                                <div style={{ fontSize: "18px", textAlign: "center", width: "7rem", marginLeft: "-2rem" }}>
-                                                                                    <span></span>
-                                                                                </div>
+                                                                                </span>
+                                                                            </>
+                                                                        )}
+                                                                    </td>
+                                                                    <td style={{ display: "flex", width: "38rem" }}>
+                                                                        <span style={{ width: "90px", margin: "0", padding: "0", fontSize: "18px", letterSpacing: "-0.5px" }}>{p.course_code}</span>
+                                                                        <span style={{ marginLeft: "30px", padding: "0", fontSize: "18px", letterSpacing: "-0.5px" }}>{p.course_description.toUpperCase()}</span>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div style={{ display: "flex", alignItems: "center" }}>
+                                                                            <div style={{ fontSize: "18px", width: "6rem", textAlign: "center" }}>
+                                                                                <span>{p.final_grade}</span>
                                                                             </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            <div style={{ display: "flex", fontSize: "18px", alignItems: "center", width: "7rem", marginLeft: "1.7rem", justifyContent: "center" }}>
-                                                                                {totalUnitPerSubject(p.course_unit, p.lab_unit)}
+                                                                            <div style={{ fontSize: "18px", textAlign: "center", width: "7rem", marginLeft: "-2rem" }}>
+                                                                                <span></span>
                                                                             </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            <div style={{ display: "flex", alignItems: "center", width: "8.9rem", fontSize: "18px", justifyContent: "center" }}>
-                                                                                {p.en_remarks === 0 ? "Incomplete" :
-                                                                                    p.en_remarks === 1 ? "Passed" :
-                                                                                        p.en_remarks === 2 ? "Failed" :
-                                                                                            p.en_remarks === 3 ? "Incomplete" :
-                                                                                                p.en_remarks === 4 ? "Dropped" :
-                                                                                                    ""
-                                                                                }
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div style={{ display: "flex", fontSize: "18px", alignItems: "center", width: "7rem", marginLeft: "1.7rem", justifyContent: "center" }}>
+                                                                            {totalUnitPerSubject(p.course_unit, p.lab_unit)}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div style={{ display: "flex", alignItems: "center", width: "8.9rem", fontSize: "18px", justifyContent: "center" }}>
+                                                                            {p.en_remarks === 0 ? "Incomplete" :
+                                                                                p.en_remarks === 1 ? "Passed" :
+                                                                                    p.en_remarks === 2 ? "Failed" :
+                                                                                        p.en_remarks === 3 ? "Incomplete" :
+                                                                                            p.en_remarks === 4 ? "Dropped" :
+                                                                                                ""
+                                                                            }
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
 
-                                                                {group.isContinuation && (
-                                                                    <tr style={{ display: "flex", marginTop: "-6px" }}>
-                                                                        <td style={{ width: "12.8rem" }}></td>
-                                                                        <td style={{ width: "37.2rem" }}></td>
-                                                                        <td style={{ fontWeight: "600", fontSize: "18px" }}>
-                                                                            GWA: {(group.subjects.reduce((total, subj) => total + (Number(subj.final_grade) || 0), 0) / 8).toFixed(3)}
-                                                                        </td>
-                                                                        <td></td>
-                                                                    </tr>
-                                                                )}
+                                                            {group.isContinuation && (
+                                                                <tr style={{ display: "flex", marginTop: "-6px" }}>
+                                                                    <td style={{ width: "12.8rem" }}></td>
+                                                                    <td style={{ width: "37.2rem" }}></td>
+                                                                    <td style={{ fontWeight: "600", fontSize: "18px" }}>
+                                                                        GWA: {(group.subjects.reduce((total, subj) => total + (Number(subj.final_grade) || 0), 0) / 8).toFixed(3)}
+                                                                    </td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            )}
 
-                                                            </React.Fragment>
-                                                        ))}
+                                                        </React.Fragment>
+                                                    ))}
 
-                                                        <tr style={{ height: "30px" }}>
-                                                            {pageIndex === paginatedSubjects.length - 1 ? (
-                                                                <td className="table-cell-padding" style={{ textAlign: "center", marginTop: "2rem",  paddingTop: "1rem"}}>
-                                                                <span style={{ fontSize: "17px", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", maxWidth: "100px", width: "100%"}}>
-                                                                    <span style={{fontSize: "14px", marginRight: "2px"}}>{"earist".repeat(13)} xxx </span>NOTHING FOLLOWS
-                                                                    <span style={{fontSize: "14px", marginLeft: "2px"}}> xxx {"earist".repeat(13)}</span>
+                                                    <tr style={{ height: "30px" }}>
+                                                        {pageIndex === paginatedSubjects.length - 1 ? (
+                                                            <td className="table-cell-padding" style={{ textAlign: "center", marginTop: "2rem", paddingTop: "1rem" }}>
+                                                                <span style={{ fontSize: "17px", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", maxWidth: "100px", width: "100%" }}>
+                                                                    <span style={{ fontSize: "14px", marginRight: "2px" }}>{"earist".repeat(13)} xxx </span>NOTHING FOLLOWS
+                                                                    <span style={{ fontSize: "14px", marginLeft: "2px" }}> xxx {"earist".repeat(13)}</span>
                                                                 </span>
-                                                                </td>
-                                                            ) : (
-                                                                <td style={{ textAlign: "center", borderTop: "dashed 1px black" }}>
+                                                            </td>
+                                                        ) : (
+                                                            <td style={{ textAlign: "center", borderTop: "dashed 1px black" }}>
                                                                 <span style={{ fontSize: "17px", fontWeight: "600" }}>
                                                                     - continue on next page -
                                                                 </span>
-                                                                </td>
-                                                            )}
-                                                            </tr>
-                                                    </tbody>
-                                                </table>
-                                            </Box>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </Box>
+                                    </Box>
                                     {/* End of Main Content */}
                                     {/* Start Of Footer */}
                                     <Box className="page-footer" style={{ display: "flex", marginLeft: "1rem", marginTop: "-1rem", flexWrap: "wrap" }}>
@@ -1246,7 +1275,7 @@ const settings = useContext(SettingsContext);
                                                             <span style={{ fontSize: "18px", fontWeight: "400", marginRight: "2.4rem", letterSpacing: "-0.8px", wordSpacing: "1px" }}>
                                                                 PREPARED BY:
                                                             </span>
-                                                            <div style={{marginTop: "2.3rem",}}>
+                                                            <div style={{ marginTop: "2.3rem", }}>
                                                                 <span style={{ fontSize: "24px", fontWeight: "500", letterSpacing: "-1px", wordSpacing: "3px" }}>
                                                                     {selectedPreparedBy
                                                                         ? `${selectedPreparedBy.first_name} 
@@ -1263,13 +1292,13 @@ const settings = useContext(SettingsContext);
                                                             <span style={{ fontSize: "18px", fontWeight: "400", marginRight: "2.4rem", letterSpacing: "-0.8px", wordSpacing: "1px" }}>
                                                                 CHECKED BY:
                                                             </span>
-                                                            <div style={{marginTop: "2.3rem",}}>
-                                                                <span style={{ fontSize: "24px", fontWeight: "500",  letterSpacing: "-1px", wordSpacing: "3px"}}>
+                                                            <div style={{ marginTop: "2.3rem", }}>
+                                                                <span style={{ fontSize: "24px", fontWeight: "500", letterSpacing: "-1px", wordSpacing: "3px" }}>
                                                                     {selectedCheckedBy
                                                                         ? `${selectedCheckedBy.first_name} 
                                                                         ${selectedCheckedBy.middle_name ? selectedCheckedBy.middle_name[0] + "." : ""} 
                                                                         ${selectedCheckedBy.last_name}`.toUpperCase()
-                                                                    : ""}
+                                                                        : ""}
                                                                 </span>
                                                                 <span>
                                                                 </span>

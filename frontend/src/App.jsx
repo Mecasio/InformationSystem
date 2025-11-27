@@ -42,6 +42,7 @@ import ApplicantDashboard from './pages/ApplicantDashboard';
 import AccountDashboard from './pages/AccountDashboard';
 import ScheduleFilterer from './pages/SchedulePlottingFilter';
 import HistoryLogs from './pages/HistoryLogs';
+import EnrollmentOfficerDashboard from './pages/EnrollmentOfficerDashboard';
 
 // FACULTY FOLDER
 import GradingSheet from './faculty/GradingSheet';
@@ -129,6 +130,11 @@ import ReadmissionDashboard3 from './registrar/ReadmissionDashboard3';
 import ReadmissionDashboard4 from './registrar/ReadmissionDashboard4';
 import ReadmissionDashboard5 from './registrar/ReadmissionDashboard5';
 import AnnouncementForAdmission from './registrar/AnnouncementForAdmission';
+import StudentList from './registrar/StudentList';
+import SubmittedDocuments from './registrar/SubmittedDocuments';
+
+import GradingEvaluationForRegistrar from './registrar/GradingEvaluationForRegistrar';
+
 
 // APPLICANT FOLDER
 import Dashboard1 from './applicant/Dashboard1';
@@ -356,6 +362,9 @@ function App() {
                     <Route path="/school_year_panel" element={<ProtectedRoute><SchoolYearPanel /></ProtectedRoute>} />
                     <Route path="/school_year_activator_panel" element={<ProtectedRoute><SchoolYearActivatorPanel /></ProtectedRoute>} />
                     <Route path="/history_logs" element={<ProtectedRoute><HistoryLogs /></ProtectedRoute>} />
+                    <Route path="/enrollment_officer_dashboard" element={<ProtectedRoute><EnrollmentOfficerDashboard /></ProtectedRoute>} />
+                    <Route path="/grading_evaluation_for_registrar" element={<ProtectedRoute><GradingEvaluationForRegistrar /></ProtectedRoute>} />
+                    <Route path="/submitted_documents" element={<ProtectedRoute><SubmittedDocuments /></ProtectedRoute>} />
                     <Route path="/requirements_form" element={<ProtectedRoute><RequirementsForm /></ProtectedRoute>} />
                     <Route path="/admission_dashboard" element={<ProtectedRoute><AdmissionDashboardPanel /></ProtectedRoute>} />
                     <Route path="/department_dashboard" element={<ProtectedRoute><DepartmentManagement /></ProtectedRoute>} />
@@ -383,6 +392,7 @@ function App() {
 
 
                     <Route path="/grading_sheet" element={<ProtectedRoute><GradingSheet /></ProtectedRoute>} />
+                    <Route path="/student_list" element={<ProtectedRoute><StudentList /></ProtectedRoute>} />
                     <Route path="/faculty_workload" element={<ProtectedRoute><FacultyWorkload /></ProtectedRoute>} />
                     <Route path="/faculty_evaluation" element={<ProtectedRoute><FacultyEvaluation /></ProtectedRoute>} />
                     <Route path="/faculty_masterlist" element={<ProtectedRoute><FacultyMasterList /></ProtectedRoute>} />
