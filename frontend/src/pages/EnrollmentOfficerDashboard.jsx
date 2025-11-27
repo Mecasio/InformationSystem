@@ -96,6 +96,31 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
 
     const pageId = 102; // SYSTEM MANAGEMENT
 
+
+
+    // Load user & access
+    useEffect(() => {
+        const email = localStorage.getItem("email");
+        const role = localStorage.getItem("role");
+        const id = localStorage.getItem("person_id");
+        const empID = localStorage.getItem("employee_id");
+
+        if (email && role && id && empID) {
+            setUserRole(role);
+            setUserID(id);
+            setEmployeeID(empID);
+
+            if (role === "registrar") {
+                checkAccess(empID);
+                fetchUserAccessList(empID);
+            } else {
+                window.location.href = "/login";
+            }
+        } else {
+            window.location.href = "/login";
+        }
+    }, []);
+
     const checkAccess = async (employeeID) => {
         try {
             setLoading(true);
@@ -109,6 +134,28 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
             setLoading(false);
         }
     };
+
+    // ✅ SAME access list logic as Admission
+    const fetchUserAccessList = async (employeeID) => {
+        try {
+            const { data } = await axios.get(
+                `${API_BASE_URL}/api/page_access/${employeeID}`
+            );
+
+            const accessMap = data.reduce((acc, item) => {
+                acc[item.page_id] = item.page_privilege === 1;
+                return acc;
+            }, {});
+
+            setUserAccessList(accessMap);
+        } catch (err) {
+            console.error("Access list failed:", err);
+        }
+    };
+
+
+
+
 
 
     const formattedDate = new Date().toLocaleDateString("en-US", {
@@ -368,6 +415,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
         { name: "Section G", students: 22 },
     ];
 
+
     if (loading || hasAccess === null)
         return <LoadingOverlay open={loading} message="Checking Access..." />;
 
@@ -393,6 +441,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                             height: "140px",
                             marginLeft: "10px",
                             p: 2,
+                            width: "99%",
                             borderRadius: 3,
                             transition: "transform 0.3s ease, box-shadow 0.3s ease",
                             "&:hover": {
@@ -499,7 +548,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
             <Box style={{ display: "flex" }}>
                 <Card
                     sx={{
-                        width: 685,
+                        width: 600,
                         height: 610,
                         p: 3,
                         borderRadius: 3,
@@ -523,7 +572,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                     </Typography>
 
                     {/* Year Select */}
-                    <FormControl fullWidth size="small" sx={{ mb: 3, width: 635 }}>
+                    <FormControl fullWidth size="small" sx={{ mb: 3, width: 550 }}>
                         <InputLabel>School Year</InputLabel>
                         <Select
                             value={selectedYear}
@@ -543,7 +592,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                         {/* PIE Graph */}
                         <Box
                             sx={{
-                                minWidth: 500,
+                                minWidth: 425,
                                 flex: 1,
                                 background: "#f1f3f4",
                                 borderRadius: 3,

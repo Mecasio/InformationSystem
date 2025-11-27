@@ -90,7 +90,7 @@ const AnnouncementPanel = () => {
     ];
 
     const navigate = useNavigate();
-    const [activeStep, setActiveStep] = useState(9);
+    const [activeStep, setActiveStep] = useState(5);
     const [clickedSteps, setClickedSteps] = useState(Array(tabs.length).fill(false));
 
 

@@ -137,7 +137,7 @@ const ReportOfGrade = () => {
     const handleStepClick = (index, to) => {
         setActiveStep(index);
 
-        const pid = localStorage.getItem("student_data_id");
+        const pid = localStorage.getItem("admin_edit_person_id");
         console.log(pid);
         if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
             navigate(`${to}?student_number=${pid}`);
@@ -147,7 +147,7 @@ const ReportOfGrade = () => {
     };
 
     useEffect(() => {
-        const storedId = localStorage.getItem("student_data_id");
+        const storedId = localStorage.getItem("admin_edit_person_id");
 
         if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
             setSearchQuery(storedId);
@@ -155,7 +155,7 @@ const ReportOfGrade = () => {
     }, []);
 
     useEffect(() => {
-        const storedId = localStorage.getItem("student_data_id");
+        const storedId = localStorage.getItem("admin_edit_person_id");
 
         if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
             setSearchQuery(storedId);
@@ -253,11 +253,13 @@ const ReportOfGrade = () => {
                     setStudentData(data);
 
                     if (data[0]?.student_number) {
-                        localStorage.setItem("student_data_id", data[0].student_number);
+                        localStorage.setItem("admin_edit_person_id", data[0].student_number);
+                        setSearchQuery(data[0].student_number);
                     }
 
                     const detailsRes = await fetch(`${API_BASE_URL}/api/program_evaluation/details/${searchQuery}`);
                     const detailsData = await detailsRes.json();
+                    
                     if (Array.isArray(detailsData) && detailsData.length > 0) {
                         setStudentDetails(detailsData);
                     } else {

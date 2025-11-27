@@ -143,7 +143,7 @@ const RoomRegistration = () => {
 
 
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState(3);
+  const [activeStep, setActiveStep] = useState(0);
   const [clickedSteps, setClickedSteps] = useState(Array(tabs.length).fill(false));
 
 

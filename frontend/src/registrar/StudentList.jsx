@@ -287,7 +287,6 @@ const handleRowClick = (person) => {
             }, []);
 
             setPersons(mergedData);
-            setPerson(mergedData[0] || {});
         } catch (err) {
             console.error("Error fetching students:", err);
         } finally {
@@ -868,7 +867,7 @@ const handleRowClick = (person) => {
                                 id="campus-select"
                                 name="Campus"
                                 label="Campus"
-                                value={person.campus ?? ""}
+                                value={person.campus}
                                 onChange={(e) => {
                                     setPerson(prev => ({ ...prev, campus: e.target.value }));
                                     setCurrentPage(1);

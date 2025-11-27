@@ -77,7 +77,7 @@ const AssignEntranceExam = () => {
 
 
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState(4);
+  const [activeStep, setActiveStep] = useState(1);
   const [clickedSteps, setClickedSteps] = useState(Array(tabs.length).fill(false));
 
 

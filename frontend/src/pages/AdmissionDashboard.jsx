@@ -181,15 +181,16 @@ const AdmissionDashboardPanel = () => {
       label: "REGISTRAR'S OFFICE",
       items: [
         { title: "APPLICANT LIST", link: "/super_admin_applicant_list", icon: ListAltOutlined, page_id: 80 },
+        { title: "STUDENT NUMBERING PANEL", link: "/student_numbering", icon: Numbers, page_id: 59 },
+
         { title: "STUDENT LIST", link: "/student_list", icon: ListAltOutlined, page_id: 104 },
         { title: "APPLICANT FORM", link: "/readmission_dashboard1", icon: AccountCircle, page_id: 38 },
         { title: "SUBMITTED DOCUMENTS", link: "/submitted_documents", icon: Description, page_id: 30 },
-        { title: "GRADING EVALUATION FOR REGISTRAR", link: "/grading_evaluation_for_registrar", icon: AccountCircle, page_id: 105 },
         { title: "CLASS LIST", link: "/class_roster", icon: Class, page_id: 15 },
         { title: "SEARCH CERTIFICATE OF REGISTRATION", link: "/search_cor", icon: Search, page_id: 56 },
         { title: "REPORT OF GRADES", link: "/report_of_grades", icon: Assessment, page_id: 50 },
         { title: "TRANSCRIPT OF RECORDS", link: "/transcript_of_records", icon: HistoryEdu, page_id: 62 },
-        { title: "STUDENT NUMBERING PANEL", link: "/student_numbering", icon: Numbers, page_id: 59 },
+        { title: "GRADING EVALUATION FOR REGISTRAR", link: "/grading_evaluation_for_registrar", icon: AccountCircle, page_id: 105 },
       ],
     },
   ];

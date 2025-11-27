@@ -226,6 +226,17 @@ const StudentDashboard3 = () => {
         }
     };
 
+    // Real-time save on every character typed
+    const handleChange = (e) => {
+        const { name, type, checked, value } = e.target;
+        const updatedPerson = {
+            ...person,
+            [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+        };
+        setPerson(updatedPerson);
+        handleUpdate(updatedPerson); // No delay, real-time save
+    };
+
 
     const handleBlur = async () => {
         try {
@@ -325,7 +336,7 @@ const StudentDashboard3 = () => {
 
     ];
 
-   
+
 
 
     return (
@@ -363,74 +374,74 @@ const StudentDashboard3 = () => {
 
 
 
-  <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          width: "100%",
-          mt: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            p: 2,
-            borderRadius: "10px",
-            backgroundColor: "#fffaf5",
-            border: "1px solid #6D2323",
-            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-            width: "100%",
-            overflow: "hidden",
-          }}
-        >
-          {/* Icon */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#800000",
-              borderRadius: "8px",
-              width: 60,
-              height: 60,
-              flexShrink: 0,
-            }}
-          >
-            <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
-          </Box>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: "10px",
+                        backgroundColor: "#fffaf5",
+                        border: "1px solid #6D2323",
+                        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+                        width: "100%",
+                        overflow: "hidden",
+                    }}
+                >
+                    {/* Icon */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#800000",
+                            borderRadius: "8px",
+                            width: 60,
+                            height: 60,
+                            flexShrink: 0,
+                        }}
+                    >
+                        <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
+                    </Box>
 
-          {/* Text */}
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontFamily: "Arial",
-              color: "#3e3e3e",
-              lineHeight: 1.3, // slightly tighter to fit in fewer rows
-              whiteSpace: "normal",
-              overflow: "hidden",
-            }}
-          >
-            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
-            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+                    {/* Text */}
+                    <Typography
+                        sx={{
+                            fontSize: "20px",
+                            fontFamily: "Arial",
+                            color: "#3e3e3e",
+                            lineHeight: 1.3, // slightly tighter to fit in fewer rows
+                            whiteSpace: "normal",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
 
-          </Typography>
-        </Box>
-      </Box>
+                    </Typography>
+                </Box>
+            </Box>
 
-      <h1
-        style={{
-          fontSize: "30px",
-          fontWeight: "bold",
-          textAlign: "center",
-          color: "black",
-          marginTop: "25px",
-        }}
-      >
-        LISTS OF ALL PRINTABLE FILES
-      </h1>
+            <h1
+                style={{
+                    fontSize: "30px",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    color: "black",
+                    marginTop: "25px",
+                }}
+            >
+                LISTS OF ALL PRINTABLE FILES
+            </h1>
 
 
 
@@ -635,96 +646,103 @@ const StudentDashboard3 = () => {
                         <Box
                             sx={{
                                 display: "flex",
-                                gap: 2, // space between fields
+                                flexWrap: "nowrap",   // 🔥 forces one row only
+                                gap: 2,
                                 mb: 2,
                             }}
                         >
-                            {/* Each Box here is one input container */}
-                            <Box sx={{ flex: "1 1 25%" }}>
-                                <Typography variant="subtitle1" mb={1}>
+                            {/* Educational Attainment */}
+                            <Box sx={{ flex: "1" }}>
+                                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                                     Educational Attainment
                                 </Typography>
-                                <Box sx={{ flex: "1 1 25%" }}>
-                                    <FormControl fullWidth size="small" required error={!!errors.schoolLevel}>
-                                        <InputLabel id="schoolLevel-label">  Educational Attainment</InputLabel>
-                                        <Select
-                                            labelId="schoolLevel-label"
-                                            id="schoolLevel"
-                                            readOnly
-                                            name="schoolLevel"
-                                            value={person.schoolLevel ?? ""}
-                                            label="School Level"
 
-                                        >
-                                            <MenuItem value="">
-                                                <em>Select School Level</em>
-                                            </MenuItem>
-                                            <MenuItem value="High School/Junior High School">High School/Junior High School</MenuItem>
-                                            <MenuItem value="ALS">ALS</MenuItem>
-                                            <MenuItem value="Vocational/Trade Course">Vocational/Trade Course</MenuItem>
-                                        </Select>
-                                        {errors.schoolLevel && (
-                                            <FormHelperText>This field is required.</FormHelperText>
-                                        )}
-                                    </FormControl>
-                                </Box>
-
+                                <FormControl fullWidth size="small" required error={!!errors.schoolLevel}>
+                                    <InputLabel id="schoolLevel-label">Educational Attainment</InputLabel>
+                                    <Select
+                                        labelId="schoolLevel-label"
+                                        id="schoolLevel"
+                                        name="schoolLevel"
+                                        value={person.schoolLevel ?? ""}
+                                        label="Educational Attainment"
+                                        onChange={handleChange}
+                                        onBlur={() => handleUpdate(person)}
+                                    >
+                                        <MenuItem value="">
+                                            <em>Select School Level</em>
+                                        </MenuItem>
+                                        <MenuItem value="High School/Junior High School">
+                                            High School/Junior High School
+                                        </MenuItem>
+                                        <MenuItem value="ALS">ALS</MenuItem>
+                                    </Select>
+                                    {errors.schoolLevel && (
+                                        <FormHelperText>This field is required.</FormHelperText>
+                                    )}
+                                </FormControl>
                             </Box>
 
-
-                            <Box sx={{ flex: "1 1 25%" }}>
-                                <Typography variant="subtitle1" mb={1}>
+                            {/* School Last Attended */}
+                            <Box sx={{ flex: "1" }}>
+                                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                                     School Last Attended
                                 </Typography>
+
                                 <TextField
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     required
                                     name="schoolLastAttended"
                                     placeholder="Enter School Last Attended"
-                                    value={person.schoolLastAttended}
-
+                                    value={person.schoolLastAttended || ""}
+                                    onChange={handleChange}
+                                    onBlur={() => handleUpdate(person)}
                                     error={errors.schoolLastAttended}
-                                    helperText={errors.schoolLastAttended ? "This field is required." : ""}
+                                    helperText={
+                                        errors.schoolLastAttended ? "This field is required." : ""
+                                    }
                                 />
                             </Box>
 
-                            <Box sx={{ flex: "1 1 25%" }}>
-                                <Typography variant="subtitle1" mb={1}>
-                                    School Address
+                            {/* School Address */}
+                            <Box sx={{ flex: "1" }}>
+                                <Typography
+                                    variant="subtitle1"
+                                    mb={1}
+                                    sx={{ minHeight: "32px", fontSize: "12.5px" }}
+                                >
+                                    School Full Address (Street / BRGY / City)
                                 </Typography>
+
                                 <TextField
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     required
                                     name="schoolAddress"
-                                    value={person.schoolAddress}
-
                                     placeholder="Enter your School Address"
-
+                                    value={person.schoolAddress || ""}
+                                    onChange={handleChange}
+                                    onBlur={() => handleUpdate(person)}
                                     error={errors.schoolAddress}
                                     helperText={errors.schoolAddress ? "This field is required." : ""}
                                 />
                             </Box>
 
-                            <Box sx={{ flex: "1 1 25%" }}>
-                                <Typography variant="subtitle1" mb={1}>
+                            {/* Course Program */}
+                            <Box sx={{ flex: "1" }}>
+                                <Typography variant="subtitle1" mb={1} sx={{ minHeight: "32px" }}>
                                     Course Program
                                 </Typography>
+
                                 <TextField
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
-                                    name="courseProgram"
                                     required
-                                    value={person.courseProgram}
+                                    name="courseProgram"
                                     placeholder="Enter your Course Program"
-
+                                    value={person.courseProgram || ""}
+                                    onChange={handleChange}
+                                    onBlur={() => handleUpdate(person)}
                                     error={errors.courseProgram}
                                     helperText={errors.courseProgram ? "This field is required." : ""}
                                 />
@@ -745,12 +763,12 @@ const StudentDashboard3 = () => {
                                 <TextField
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     name="honor"
                                     required
-                                    value={person.honor}
-                                    placeholder="Enter your Recognition / Awards"
+                                    value={person.honor || ""}
+                                    placeholder="Enter your Honor"
+                                    onChange={handleChange}
+                                    onBlur={() => handleUpdate(person)}
 
                                     error={errors.honor}
                                     helperText={errors.honor ? "This field is required." : ""}
@@ -764,12 +782,12 @@ const StudentDashboard3 = () => {
                                 <TextField
                                     fullWidth
                                     size="small"
-                                    InputProps={{ readOnly: true }}
-
                                     required
                                     name="generalAverage"
-                                    value={person.generalAverage}
+                                    value={person.generalAverage || ""}
                                     placeholder="Enter your General Average"
+                                    onChange={handleChange}
+                                    onBlur={() => handleUpdate(person)}
 
                                     error={errors.generalAverage}
                                     helperText={errors.generalAverage ? "This field is required." : ""}
@@ -784,18 +802,17 @@ const StudentDashboard3 = () => {
                                     fullWidth
                                     size="small"
                                     required
-                                    InputProps={{ readOnly: true }}
-
                                     name="yearGraduated"
                                     placeholder="Enter your Year Graduated"
-                                    value={person.yearGraduated}
+                                    value={person.yearGraduated || ""}
+                                    onChange={handleChange}
+                                    onBlur={() => handleUpdate(person)}
 
                                     error={errors.yearGraduated}
                                     helperText={errors.yearGraduated ? "This field is required." : ""}
                                 />
                             </Box>
                         </Box>
-
 
 
 

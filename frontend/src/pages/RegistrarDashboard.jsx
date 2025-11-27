@@ -29,6 +29,11 @@ import ExaminationProfile from "../registrar/ExaminationProfile";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import API_BASE_URL from "../apiConfig";
 import EaristLogo from "../assets/EaristLogo.png";
+import Unauthorized from "../components/Unauthorized";
+import LoadingOverlay from "../components/LoadingOverlay";
+
+
+
 const Dashboard = ({ profileImage, setProfileImage }) => {
 
   const settings = useContext(SettingsContext);
@@ -79,6 +84,77 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [studentCount, setStudentCount] = useState(0);
   const [yearLevelCounts, setYearLevelCounts] = useState([]);
+
+
+  const [employeeID, setEmployeeID] = useState("");
+  const [hasAccess, setHasAccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ NEW access map
+  const [userAccessList, setUserAccessList] = useState({});
+
+  const pageId = 107; // SYSTEM MANAGEMENT
+
+
+
+// Load user & access
+  useEffect(() => {
+    const email = localStorage.getItem("email");
+    const role = localStorage.getItem("role");
+    const id = localStorage.getItem("person_id");
+    const empID = localStorage.getItem("employee_id");
+
+    if (email && role && id && empID) {
+      setUserRole(role);
+      setUserID(id);
+      setEmployeeID(empID);
+
+      if (role === "registrar") {
+        checkAccess(empID);
+        fetchUserAccessList(empID);
+      } else {
+        window.location.href = "/login";
+      }
+    } else {
+      window.location.href = "/login";
+    }
+  }, []);
+
+  const checkAccess = async (employeeID) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/page_access/${employeeID}/${pageId}`
+      );
+      setHasAccess(response.data?.page_privilege === 1);
+    } catch (error) {
+      setHasAccess(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ SAME access list logic as Admission
+  const fetchUserAccessList = async (employeeID) => {
+    try {
+      const { data } = await axios.get(
+        `${API_BASE_URL}/api/page_access/${employeeID}`
+      );
+
+      const accessMap = data.reduce((acc, item) => {
+        acc[item.page_id] = item.page_privilege === 1;
+        return acc;
+      }, {});
+
+      setUserAccessList(accessMap);
+    } catch (err) {
+      console.error("Access list failed:", err);
+    }
+  };
+
+
+
+
 
   const formattedDate = new Date().toLocaleDateString("en-US", {
     weekday: "short",
@@ -342,6 +418,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
         overflowY: "auto",
       }}
     >
+      
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Card
@@ -732,12 +809,12 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
         <Grid item xs={12} md={4}>
           <Card
             sx={{
-              width: 600,
+              width: 550,
               height: 700,
               p: 3,
               borderRadius: 3,
               marginTop: "-45px",
-              marginLeft: "-8rem",
+              marginLeft: "-5.5rem",
               boxShadow: 3,
               border: `1px solid ${borderColor}`,
               background: "#ffffff",
@@ -754,9 +831,9 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
             >
               Enrollment Statistics
             </Typography>
-          
+
             {/* Year Select */}
-            <FormControl fullWidth size="small" sx={{ mb: 3, width: 550 }}>
+            <FormControl fullWidth size="small" sx={{ mb: 3, width: 500 }}>
               <InputLabel>School Year</InputLabel>
               <Select
                 value={selectedYear}
@@ -775,7 +852,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               {/* PIE Graph */}
               <Box
                 sx={{
-                  minWidth: 500,
+                  minWidth: 450,
                   minHeight: 440,
                   flex: 1,
                   background: "#f1f3f4",
@@ -790,7 +867,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               >
                 PIE GRAPH HERE
               </Box>
-        
+
               {/* Column Stats */}
               <Box sx={{ flex: 1, display: "flex", gap: 2 }}>
                 <Box
@@ -808,7 +885,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                   </Typography>
                   <Typography fontSize={14}>Regular</Typography>
                 </Box>
-        
+
                 <Box
                   sx={{
                     width: 125,
@@ -824,7 +901,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                   </Typography>
                   <Typography fontSize={14}>Irregular</Typography>
                 </Box>
-          
+
                 <Box
                   sx={{
                     width: 125,
@@ -865,8 +942,8 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
           <Card
             sx={{
               marginTop: "-45px",
-              marginLeft: "-3.5rem",
-              width: 580,
+              marginLeft: "-2rem",
+              width: 520,
               height: 700,
               p: 3,
               borderRadius: 3,
@@ -877,110 +954,110 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               border: `1px solid ${borderColor}`
             }}
           >
-                {/* Header Row: Title + Filters */}
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-                    <Typography variant="h6" fontWeight="bold" color={subtitleColor}>
-                    Applicant Overview
-                    </Typography>
+            {/* Header Row: Title + Filters */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+              <Typography variant="h6" fontWeight="bold" color={subtitleColor}>
+                Applicant Overview
+              </Typography>
 
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                    {/* Year Dropdown */}
-                    <FormControl size="small" sx={{ width: 130 }}>
-                        <InputLabel>School Year</InputLabel>
-                        <Select
-                          value={selectedYear}
-                          label="School Year"
-                          onChange={(e) => setSelectedYear(e.target.value)}
-                        >
-                          {years.map((yr) => (
-                            <MenuItem key={yr.year_id} value={yr.year_id}>
-                              {yr.year_description}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                    </FormControl>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                {/* Year Dropdown */}
+                <FormControl size="small" sx={{ width: 130 }}>
+                  <InputLabel>School Year</InputLabel>
+                  <Select
+                    value={selectedYear}
+                    label="School Year"
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                  >
+                    {years.map((yr) => (
+                      <MenuItem key={yr.year_id} value={yr.year_id}>
+                        {yr.year_description}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-                    {/* Month Dropdown */}
-                    <FormControl size="small" sx={{ width: 130 }}>
-                        <InputLabel>Select Month</InputLabel>
-                        <Select
-                        label="Select Month"
-                        value={months}
-                        onChange={(e) => setMonths(e.target.value)}
-                        >
-                        <MenuItem value="January">January</MenuItem>
-                        <MenuItem value="February">February</MenuItem>
-                        <MenuItem value="March">March</MenuItem>
-                        <MenuItem value="April">April</MenuItem>
-                        <MenuItem value="May">May</MenuItem>
-                        <MenuItem value="June">June</MenuItem>
-                        <MenuItem value="July">July</MenuItem>
-                        <MenuItem value="August">August</MenuItem>
-                        <MenuItem value="September">September</MenuItem>
-                        <MenuItem value="October">October</MenuItem>
-                        <MenuItem value="November">November</MenuItem>
-                        <MenuItem value="December">December</MenuItem>
-                        </Select>
-                    </FormControl>
-                    </Box>
-                </Box>
+                {/* Month Dropdown */}
+                <FormControl size="small" sx={{ width: 130 }}>
+                  <InputLabel>Select Month</InputLabel>
+                  <Select
+                    label="Select Month"
+                    value={months}
+                    onChange={(e) => setMonths(e.target.value)}
+                  >
+                    <MenuItem value="January">January</MenuItem>
+                    <MenuItem value="February">February</MenuItem>
+                    <MenuItem value="March">March</MenuItem>
+                    <MenuItem value="April">April</MenuItem>
+                    <MenuItem value="May">May</MenuItem>
+                    <MenuItem value="June">June</MenuItem>
+                    <MenuItem value="July">July</MenuItem>
+                    <MenuItem value="August">August</MenuItem>
+                    <MenuItem value="September">September</MenuItem>
+                    <MenuItem value="October">October</MenuItem>
+                    <MenuItem value="November">November</MenuItem>
+                    <MenuItem value="December">December</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
 
-                {/* Stats Boxes */}
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                    <Grid item xs={4}>
-                    <Box
-                        sx={{
-                            p: 2,
-                            background: "#f5f7fa",
-                            borderRadius: 2,
-                            textAlign: "center",
-                            height: 90,
-                        }}
-                    >
-                        <Typography variant="h5" fontWeight="bold">521</Typography>
-                        <Typography fontSize={14}>Total Applicants</Typography>
-                    </Box>
-                    </Grid>
-
-                    <Grid item xs={4}>
-                    <Box
-                        sx={{
-                        p: 2,
-                        background: "#f5f7fa",
-                        borderRadius: 2,
-                        textAlign: "center",
-                        height: 90,
-                        }}
-                    >
-                        <Typography variant="h5" fontWeight="bold">73</Typography>
-                        <Typography fontSize={14}>This Week</Typography>
-                    </Box>
-                    </Grid>
-
-                    <Grid item xs={4}>
-                    <Box
-                        sx={{
-                        p: 2,
-                        background: "#f5f7fa",
-                        borderRadius: 2,
-                        textAlign: "center",
-                        height: 90,
-                        }}
-                    >
-                        <Typography variant="h5" fontWeight="bold">234</Typography>
-                        <Typography fontSize={14}>This Month</Typography>
-                    </Box>
-                    </Grid>
-                </Grid>
-
-                {/* Bar Graph Label */}
-                <Typography
-                    variant="subtitle1"
-                    fontWeight={600}
-                    sx={{ mb: 1 }}
+            {/* Stats Boxes */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    background: "#f5f7fa",
+                    borderRadius: 2,
+                    textAlign: "center",
+                    height: 90,
+                  }}
                 >
-                    Applicants By Status:
-                </Typography>
+                  <Typography variant="h5" fontWeight="bold">521</Typography>
+                  <Typography fontSize={14}>Total Applicants</Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    background: "#f5f7fa",
+                    borderRadius: 2,
+                    textAlign: "center",
+                    height: 90,
+                  }}
+                >
+                  <Typography variant="h5" fontWeight="bold">73</Typography>
+                  <Typography fontSize={14}>This Week</Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={4}>
+                <Box
+                  sx={{
+                    p: 2,
+                    background: "#f5f7fa",
+                    borderRadius: 2,
+                    textAlign: "center",
+                    height: 90,
+                  }}
+                >
+                  <Typography variant="h5" fontWeight="bold">234</Typography>
+                  <Typography fontSize={14}>This Month</Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Bar Graph Label */}
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              sx={{ mb: 1 }}
+            >
+              Applicants By Status:
+            </Typography>
 
             {/* Bar Graph Placeholder */}
             <Box
@@ -998,7 +1075,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
             >
               BAR GRAPH HERE
             </Box>
-          </Card>  
+          </Card>
         </Grid>
       </Grid>
 

@@ -129,7 +129,7 @@ const SuperAdminApplicantList = () => {
         sessionStorage.setItem("admin_edit_person_id_ts", String(Date.now()));
 
         // ✅ Always pass person_id in the URL
-        navigate(`/admin_dashboard1?person_id=${person_id}`);
+        navigate(`/readmission_dashboard1?person_id=${person_id}`);
     };
 
    

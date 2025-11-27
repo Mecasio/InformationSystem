@@ -159,7 +159,7 @@ const SearchCertificateOfRegistration = () => {
           setStudentData(data);
 
           if (searchQuery) {
-            localStorage.setItem("student_data_id", searchQuery);
+            localStorage.setItem("admin_edit_person_id", searchQuery);
           }
 
           const detailsRes = await fetch(`${API_BASE_URL}/api/program_evaluation/details/${searchQuery}`);
@@ -181,7 +181,7 @@ const SearchCertificateOfRegistration = () => {
       } catch (err) {
         console.error("Error fetching student", err);
         setSnackbarMessage("Server error. Please try again.");
-        localStorage.removeItem("student_data_id");
+        localStorage.removeItem("admin_edit_person_id");
         setOpenSnackbar(true);
       }
     };
@@ -193,7 +193,7 @@ const SearchCertificateOfRegistration = () => {
   const handleStepClick = (index, to) => {
     setActiveStep(index);
 
-    const pid = localStorage.getItem("student_data_id");
+    const pid = localStorage.getItem("admin_edit_person_id");
     console.log(pid);
     if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
       navigate(`${to}?student_number=${pid}`);
@@ -203,7 +203,7 @@ const SearchCertificateOfRegistration = () => {
   };
 
   useEffect(() => {
-    const storedId = localStorage.getItem("student_data_id");
+    const storedId = localStorage.getItem("admin_edit_person_id");
 
     if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
       setSearchQuery(storedId);
@@ -213,7 +213,7 @@ const SearchCertificateOfRegistration = () => {
 
 
   const [studentNumber, setStudentNumber] = useState(() => {
-    return localStorage.getItem("studentNumberForCOR") || localStorage.getItem("student_data_id") || "";
+    return localStorage.getItem("studentNumberForCOR") || localStorage.getItem("admin_edit_person_id") || "";
   });
   const [debouncedStudentNumber, setDebouncedStudentNumber] = useState("");
 

@@ -75,6 +75,29 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
     ? `${API_BASE_URL}${settings.logo_url}`
     : Logo;
 
+
+
+
+
+
+
+
+  function getRegistrarHomePage(userAccessList) {
+    // PRIORITY LIST → reorder as you want
+    if (userAccessList[107]) return "/registrar_dashboard";             // Registrar Dashboard
+    if (userAccessList[102]) return "/enrollment_officer_dashboard";    // Enrollment Dashboard
+    if (userAccessList[104]) return "/some_other_registrar_page";       // optional
+
+    // Default fallback if NONE found
+    return "/registrar_dashboard";
+  }
+
+
+
+
+
+
+
   const handleLogin = async () => {
     if (!email || !password) {
       setSnack({
@@ -152,13 +175,14 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
 
         setIsAuthenticated(true);
 
-        navigate(
-          res.data.role === "registrar"
-            ? "/registrar_dashboard"
-            : res.data.role === "faculty"
-              ? "/faculty_dashboard"
-              : "/student_dashboard"
-        );
+        if (res.data.role === "registrar") {
+          const home = getRegistrarHomePage(res.data.accessList || {});
+          navigate(home);
+        } else if (res.data.role === "faculty") {
+          navigate("/faculty_dashboard");
+        } else {
+          navigate("/student_dashboard");
+        }
 
         return;
       }
@@ -207,13 +231,15 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
       setTimeout(() => {
         setLoading3(false);
         setShowOtpModal(false);
-        navigate(
-          tempLoginData.role === "registrar"
-            ? "/registrar_dashboard"
-            : tempLoginData.role === "faculty"
-              ? "/faculty_dashboard"
-              : "/student_dashboard"
-        );
+        if (tempLoginData.role === "registrar") {
+          const home = getRegistrarHomePage(tempLoginData.accessList || {});
+          navigate(home);
+        } else if (tempLoginData.role === "faculty") {
+          navigate("/faculty_dashboard");
+        } else {
+          navigate("/student_dashboard");
+        }
+
       }, 2000);
     } catch (err) {
       setSnack({

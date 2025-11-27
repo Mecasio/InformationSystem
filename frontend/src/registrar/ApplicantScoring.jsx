@@ -91,6 +91,7 @@ const ApplicantScoring = () => {
     const queryParams = new URLSearchParams(location.search);
     const queryPersonId = (queryParams.get("person_id") || "").trim();
 
+
     const handleRowClick = (person_id) => {
         if (!person_id) return;
 
@@ -104,13 +105,13 @@ const ApplicantScoring = () => {
     const tabs = [
 
         { label: "Room Registration", to: "/room_registration", icon: <KeyIcon fontSize="large" /> },
-           { label: "Entrance Exam Room Assignment", to: "/assign_entrance_exam", icon: <MeetingRoomIcon fontSize="large" /> },
-           { label: "Entrance Exam Schedule Management", to: "/assign_schedule_applicant", icon: <ScheduleIcon fontSize="large" /> },
-           { label: "Proctor's Applicant List", to: "/proctor_applicant_list", icon: <PeopleIcon fontSize="large" /> },
-           { label: "Entrance Examination Scores", to: "/applicant_scoring", icon: <FactCheckIcon fontSize="large" /> },
-           { label: "Announcement", to: "/announcement_for_admission", icon: <CampaignIcon fontSize="large" /> },
-       
-       
+        { label: "Entrance Exam Room Assignment", to: "/assign_entrance_exam", icon: <MeetingRoomIcon fontSize="large" /> },
+        { label: "Entrance Exam Schedule Management", to: "/assign_schedule_applicant", icon: <ScheduleIcon fontSize="large" /> },
+        { label: "Proctor's Applicant List", to: "/proctor_applicant_list", icon: <PeopleIcon fontSize="large" /> },
+        { label: "Entrance Examination Scores", to: "/applicant_scoring", icon: <FactCheckIcon fontSize="large" /> },
+        { label: "Announcement", to: "/announcement_for_admission", icon: <CampaignIcon fontSize="large" /> },
+
+
 
 
     ];
@@ -168,7 +169,7 @@ const ApplicantScoring = () => {
 
 
     const navigate = useNavigate();
-    const [activeStep, setActiveStep] = useState(8);
+    const [activeStep, setActiveStep] = useState(4);
     const [clickedSteps, setClickedSteps] = useState(Array(tabs.length).fill(false));
 
 
@@ -921,23 +922,6 @@ th, td {
         await autoSaveScore(payload);
     };
 
-    // 🔒 Disable right-click
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    // 🔒 Block DevTools shortcuts + Ctrl+P silently
-    document.addEventListener('keydown', (e) => {
-        const isBlockedKey =
-            e.key === 'F12' || // DevTools
-            e.key === 'F11' || // Fullscreen
-            (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'i' || e.key.toLowerCase() === 'j')) || // Ctrl+Shift+I/J
-            (e.ctrlKey && e.key.toLowerCase() === 'u') || // Ctrl+U (View Source)
-            (e.ctrlKey && e.key.toLowerCase() === 'p');   // Ctrl+P (Print)
-
-        if (isBlockedKey) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    });
 
 
 
@@ -1585,11 +1569,9 @@ th, td {
                                     {/* Applicant Number */}
                                     <TableCell
                                         sx={{
-                                            color: "blue",
                                             textAlign: "center",
                                             border: `2px solid ${borderColor}`,
-                                            py: 0.5,
-                                            fontSize: "12px",
+                                            color: "blue",
                                             cursor: "pointer",
                                         }}
                                         onClick={() => handleRowClick(person.person_id)}
@@ -1600,17 +1582,14 @@ th, td {
                                     {/* Applicant Name */}
                                     <TableCell
                                         sx={{
-                                            color: "blue",
                                             textAlign: "left",
                                             border: `2px solid ${borderColor}`,
-                                            py: 0.5,
-                                            fontSize: "12px",
+                                            color: "blue",
                                             cursor: "pointer",
                                         }}
                                         onClick={() => handleRowClick(person.person_id)}
                                     >
-                                        {`${person.last_name}, ${person.first_name} ${person.middle_name ?? ""
-                                            } ${person.extension ?? ""}`}
+                                        {`${person.last_name}, ${person.first_name} ${person.middle_name ?? ""} ${person.extension ?? ""}`}
                                     </TableCell>
 
                                     {/* Program */}

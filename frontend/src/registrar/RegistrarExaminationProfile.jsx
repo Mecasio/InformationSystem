@@ -141,7 +141,7 @@ const ExaminationProfile = ({ personId }) => {
     }, [location.search]);
 
     const navigate = useNavigate();
-    const [activeStep, setActiveStep] = useState(6);
+    const [activeStep, setActiveStep] = useState(3);
     const [clickedSteps, setClickedSteps] = useState(Array(tabs.length).fill(false));
 
     const handleStepClick = (index, to) => {

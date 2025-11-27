@@ -107,7 +107,7 @@ const AssignScheduleToApplicants = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeStep, setActiveStep] = useState(5);
+  const [activeStep, setActiveStep] = useState(2);
   const [clickedSteps, setClickedSteps] = useState(Array(tabs.length).fill(false));
 
 

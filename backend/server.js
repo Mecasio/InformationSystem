@@ -17,14 +17,14 @@ const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:5173", "http://192.168.1.3:5173"],
+    origin: ["http://localhost:5173", "http://192.168.86.73:5173"],
     methods: ["GET", "POST"]
   }
 });
 
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.1.3:5173"],  // ✅ Explicitly allow Vite dev server
+  origin: ["http://localhost:5173", "http://192.168.86.73:5173"],  // ✅ Explicitly allow Vite dev server
   credentials: true                  // ✅ Allow credentials (cookies, auth)
 }));
 
@@ -602,9 +602,9 @@ app.post("/register", async (req, res) => {
 
 const ROLE_PAGE_ACCESS = {
   admission: [92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98],
-  enrollment: [92, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60,],
-  clinic: [92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
-  registrar: [92, 96, 13, 73, 15, 80, 38, 39, 40, 41, 42, 44, 56, 59, 50, 62, 100],
+  enrollment: [102, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60,],
+  clinic: [107, 92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
+  registrar: [80, 104, 38, 39, 40, 41, 42, 30, 56, 13, 50, 62, 96, 92, 59, 105, 15, 107],
   superadmin: "ALL"
 };
 

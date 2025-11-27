@@ -178,14 +178,14 @@ const MedicalRequirements = () => {
         axios
             .get(`http://localhost:5000/api/person_with_applicant/${personIdFromUrl}`)
             .then((res) => {
-                if (res.data?.applicant_number) {
+                if (res.data?.student_number) {
 
                     // AUTO-INSERT applicant_number into search bar
-                    setSearchQuery(res.data.applicant_number);
+                    setSearchQuery(res.data.student_number);
 
                     // If you have a fetchUploads() or fetchExamScore() — call it
                     if (typeof fetchUploadsByApplicantNumber === "function") {
-                        fetchUploadsByApplicantNumber(res.data.applicant_number);
+                        fetchUploadsByApplicantNumber(res.data.student_number);
                     }
 
                     if (typeof fetchApplicants === "function") {
@@ -199,7 +199,7 @@ const MedicalRequirements = () => {
     const handleStepClick = (index, to) => {
         setActiveStep(index);
 
-        const pid = localStorage.getItem("student_data_id");
+        const pid = localStorage.getItem("admin_edit_person_id");
         console.log(pid);
         if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
             navigate(`${to}?student_number=${pid}`);
@@ -209,7 +209,7 @@ const MedicalRequirements = () => {
     };
 
     useEffect(() => {
-        const storedId = localStorage.getItem("student_data_id");
+        const storedId = localStorage.getItem("admin_edit_person_id");
 
         if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
             setSearchQuery(storedId);
