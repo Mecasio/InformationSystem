@@ -17,14 +17,14 @@ const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:5173", "http://192.168.86.73:5173"],
+    origin: ["http://localhost:5173", "http://192.168.1.3:5173"],
     methods: ["GET", "POST"]
   }
 });
 
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.86.73:5173"],  // ✅ Explicitly allow Vite dev server
+  origin: ["http://localhost:5173", "http://192.168.1.3:5173"],  // ✅ Explicitly allow Vite dev server
   credentials: true                  // ✅ Allow credentials (cookies, auth)
 }));
 
@@ -601,14 +601,16 @@ app.post("/register", async (req, res) => {
 });
 
 const ROLE_PAGE_ACCESS = {
-  admission: [108, 92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98],
+  admission: [103, 92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98],
   enrollment: [102, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60,],
   clinic: [107, 92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
   registrar: [80, 104, 38, 39, 40, 41, 42, 30, 56, 13, 50, 62, 96, 92, 59, 105, 15, 107],
   superadmin: "ALL"
 };
-
-app.post("/register_registrar", upload.single("profile_picture"), async (req, res) => {
+// ===================================================================
+//  ✅ ADD REGISTRAR  (profile picture + email validation FIXED)
+// ===================================================================
+app.post("/register_registrar", profileUpload.single("profile_picture"), async (req, res) => {
   try {
     const {
       employee_id,
@@ -621,44 +623,66 @@ app.post("/register_registrar", upload.single("profile_picture"), async (req, re
       status,
       dprtmnt_id
     } = req.body;
+
     const file = req.file;
 
-    // 🧩 Validate required fields
-    if (!employee_id || !last_name || !first_name || !role || !email || !password || !dprtmnt_id) {
+    // ===========================================================
+    // ✅ REQUIRED FIELDS — DEPARTMENT OPTIONAL NOW
+    // ===========================================================
+    if (!employee_id || !last_name || !first_name || !role || !email || !password) {
       return res.status(400).json({ message: "All required fields must be filled" });
     }
 
-    // 🧠 Normalize email before checking duplicates
+    // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
 
-    // 🧩 Check for duplicate email
+    // 🔍 Check duplicate email
     const [existing] = await db3.query(
       "SELECT * FROM user_accounts WHERE LOWER(email) = ?",
       [normalizedEmail]
     );
+
     if (existing.length > 0) {
-      console.warn("⚠️ Duplicate email detected:", normalizedEmail);
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    // 🔒 Hash password
+    // 🔒 Password hashed
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 👤 Create person record first
+    // ➕ Insert person record
     const [personInsert] = await db3.query("INSERT INTO person_table () VALUES ()");
     const person_id = personInsert.insertId;
 
-    // 🖼️ Handle file upload
+    // ===========================================================
+    // 📌 DEPARTMENT OPTIONAL — CONVERT EMPTY → NULL
+    // ===========================================================
+    const finalDept =
+      dprtmnt_id === "" || dprtmnt_id === undefined || dprtmnt_id === null
+        ? null
+        : Number(dprtmnt_id);
+
+    // ===========================================================
+    // 📌 FIXED FILE UPLOAD HANDLING FOR ADD
+    // ===========================================================
     let profilePicName = null;
+
     if (file) {
-      profilePicName = `${employee_id}_${Date.now()}${path.extname(file.originalname)}`;
-      fs.writeFileSync(path.join(__dirname, "uploads", profilePicName), file.buffer);
+      const uploadDir = path.join(__dirname, "uploads");
+      const ext = path.extname(file.originalname);
+      profilePicName = `${employee_id}_profile_image_${Date.now()}${ext}`;
+
+      const tempPath = path.join(uploadDir, file.filename);
+      const finalPath = path.join(uploadDir, profilePicName);
+
+      fs.renameSync(tempPath, finalPath);
     }
 
-    // 💾 Save registrar record
+    // ===========================================================
+    // ➕ Insert registrar user record
+    // ===========================================================
     await db3.query(
       `INSERT INTO user_accounts 
-       (person_id, employee_id, last_name, middle_name, first_name, role, email, password, status, dprtmnt_id, profile_picture) 
+        (person_id, employee_id, last_name, middle_name, first_name, role, email, password, status, dprtmnt_id, profile_picture)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         person_id,
@@ -666,33 +690,17 @@ app.post("/register_registrar", upload.single("profile_picture"), async (req, re
         last_name,
         middle_name,
         first_name,
-        "registrar",
+        role,
         normalizedEmail,
         hashedPassword,
         status || 1,
-        dprtmnt_id,
-        profilePicName,
+        finalDept,      // ✅ optional department
+        profilePicName
       ]
     );
 
-    let pageIds = ROLE_PAGE_ACCESS[role];
-
-    if (role === "superadmin") {
-      pageIds = Array.from({ length: 100 }, (_, i) => i + 1);
-    }
-
-    if (!pageIds) {
-      return res.status(400).json({ message: "Role not found in page access mapping." });
-    }
-
-    const values = pageIds.map(pageId => [1, pageId, employee_id]);
-
-    await db3.query(
-      "INSERT INTO page_access (page_privilege, page_id, user_id) VALUES ?",
-      [values]
-    );
-
     res.status(201).json({ message: "Registrar account created successfully!" });
+
   } catch (error) {
     console.error("❌ Error creating registrar account:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
@@ -701,6 +709,9 @@ app.post("/register_registrar", upload.single("profile_picture"), async (req, re
 
 
 
+// ===================================================================
+//  GET REGISTRARS
+// ===================================================================
 app.get("/api/registrars", async (req, res) => {
   try {
     const sql = `
@@ -721,10 +732,8 @@ app.get("/api/registrars", async (req, res) => {
       WHERE ua.role IN ('registrar', 'admission', 'enrollment', 'clinic', 'superadmin')
       ORDER BY ua.id DESC;
     `;
-
     const [results] = await db3.query(sql);
     res.json(results);
-
   } catch (error) {
     console.error("❌ Server error:", error);
     res.status(500).json({ error: "Server error" });
@@ -732,7 +741,9 @@ app.get("/api/registrars", async (req, res) => {
 });
 
 
-// ✅ Actual upload + database update route
+// ===================================================================
+//  ✅ UPDATE REGISTRAR (email + profile picture FIXED)
+// ===================================================================
 app.put("/update_registrar/:id", profileUpload.single("profile_picture"), async (req, res) => {
 
   const { id } = req.params;
@@ -745,117 +756,99 @@ app.put("/update_registrar/:id", profileUpload.single("profile_picture"), async 
 
     const current = existing[0];
 
-    let finalFilename = current.profile_picture; // fallback to existing if no new file
+    // ===========================================================
+    //  📌 FIXED EMAIL UPDATE LOGIC + DUPLICATE CHECK
+    // ===========================================================
+    const newEmail =
+      data.email && data.email.trim() !== ""
+        ? data.email.trim().toLowerCase()
+        : current.email.toLowerCase();
+
+    if (newEmail !== current.email.toLowerCase()) {
+      const [emailExists] = await db3.query(
+        "SELECT id FROM user_accounts WHERE LOWER(email) = ? AND id != ?",
+        [newEmail, id]
+      );
+
+      if (emailExists.length > 0) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+    }
+
+    // ===========================================================
+    //  📌 FIXED PROFILE PICTURE UPDATE HANDLING
+    // ===========================================================
+
+    let finalFilename = current.profile_picture;
 
     if (file) {
-      // ✅ Get employee_id for filename
-      const employee_id = current.employee_id || "unknown";
+      const uploadDir = path.join(__dirname, "uploads");
 
-      // ✅ Get current Philippine year
       const philTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" });
       const year = new Date(philTime).getFullYear();
+      const ext = path.extname(file.originalname);
 
-      // ✅ Build final filename
-      const ext = path.extname(file.originalname).toLowerCase();
-      finalFilename = `${employee_id}_profile_image_${year}${ext}`;
+      finalFilename = `${current.employee_id}_profile_image_${year}${ext}`;
 
-      // ✅ Paths
-      const uploadDir = path.join(__dirname, "uploads");
       const tempPath = path.join(uploadDir, file.filename);
       const newPath = path.join(uploadDir, finalFilename);
 
-      // ✅ Delete old image if exists
+      // Delete old image
       if (current.profile_picture) {
         const oldPath = path.join(uploadDir, current.profile_picture);
         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
 
-      // ✅ Rename temp file to proper name
       fs.renameSync(tempPath, newPath);
     }
 
-    // ✅ Update registrar data in DB
-    // Update registrar
-    const updated = {
-      employee_id: data.employee_id || current.employee_id,
-      last_name: data.last_name || current.last_name,
-      middle_name: data.middle_name || current.middle_name,
-      first_name: data.first_name || current.first_name,
-      role: data.role || current.role,
-      email: data.email || current.email,
-      // Fix: only update dprtmnt_id if provided, else keep current
-      dprtmnt_id:
-        data.dprtmnt_id === "" || data.dprtmnt_id === undefined
+    // ===========================================================
+    //  UPDATE USER
+    // ===========================================================
+    await db3.query(
+      `UPDATE user_accounts 
+   SET employee_id=?, last_name=?, middle_name=?, first_name=?, role=?, email=?, status=?, dprtmnt_id=?, profile_picture=?
+   WHERE id=?`,
+      [
+        data.employee_id || current.employee_id,
+        data.last_name || current.last_name,
+        data.middle_name || current.middle_name,
+        data.first_name || current.first_name,
+        data.role || current.role,
+        newEmail,
+        Number(data.status ?? current.status),
+        data.dprtmnt_id === "" || data.dprtmnt_id === null
           ? null
-          : data.dprtmnt_id,
-      profile_picture: finalFilename,
-      status:
-        data.status === "0" || data.status === 0
-          ? 0
-          : data.status === "1" || data.status === 1
-            ? 1
-            : current.status,
-    };
+          : Number(data.dprtmnt_id),
+        finalFilename,
+        id
+      ]
+    );
 
 
-    const sql = `
-      UPDATE user_accounts 
-      SET employee_id=?, last_name=?, middle_name=?, first_name=?, role=?, email=?, status=?, dprtmnt_id=?, profile_picture=?
-      WHERE id=?`;
-    const values = [
-      updated.employee_id,
-      updated.last_name,
-      updated.middle_name,
-      updated.first_name,
-      updated.role,
-      updated.email.toLowerCase(),
-      updated.status,
-      updated.dprtmnt_id,
-      updated.profile_picture,
-      id,
-    ];
-
-    // ======================================================
-    //  🚀 UPDATE PAGE ACCESS IF ROLE CHANGED
-    // ======================================================
-    if (updated.role !== current.role) {
-      console.log("🔄 Role changed! Updating page access...");
-
-      // 1️⃣ Delete all previous page permissions
-      await db3.query("DELETE FROM page_access WHERE user_id = ?", [current.employee_id]);
-
-      const newPages = ROLE_PAGE_ACCESS[updated.role];
-
-      if (newPages === "ALL") {
-        // 2️⃣ Insert ALL pages for superadmin
-        const [allPages] = await db3.query("SELECT id FROM page_table");
-        for (const row of allPages) {
-          await db3.query(
-            "INSERT INTO page_access (page_privilege, page_id, user_id) VALUES (1, ?, ?)",
-            [row.id, updated.employee_id]
-          );
-        }
-      } else if (Array.isArray(newPages)) {
-        // 3️⃣ Insert pages for normal roles
-        for (const pageId of newPages) {
-          await db3.query(
-            "INSERT INTO page_access (page_privilege, page_id, user_id) VALUES (1, ?, ?)",
-            [pageId, updated.employee_id]
-          );
-        }
-      }
-
-      console.log("✅ Page access updated based on new role!");
-    }
 
     res.json({
       success: true,
       message: "Registrar updated successfully!",
-      updated,
+      updated: { ...data, email: newEmail, profile_picture: finalFilename }
     });
+
   } catch (error) {
     console.error("❌ Error updating registrar:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.put("/update_registrar_status/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    await db3.query("UPDATE user_accounts SET status=? WHERE id=?", [Number(status), id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update status" });
   }
 });
 
@@ -15782,6 +15775,70 @@ app.get("/api/:employeeID", async (req, res) => {
   } catch (err) {
     console.error("Error fetching access list:", err);
     res.status(500).json({ error: "Database error" });
+  }
+});
+
+
+app.get("/api/applicant-stats", async (req, res) => {
+  try {
+    // TOTAL
+    const [totalRows] = await db.query(`
+      SELECT COUNT(*) AS total FROM person_table
+    `);
+
+    // GENDER (0 = Male, 1 = Female, NULL → Unknown)
+    const [rawGender] = await db.query(`
+      SELECT gender, COUNT(*) AS total
+      FROM person_table
+      GROUP BY gender
+    `);
+
+    const genderCounts = rawGender.map(row => ({
+      gender:
+        row.gender === 0 ? "Male" :
+        row.gender === 1 ? "Female" :
+        "Unknown",
+      total: row.total
+    }));
+
+    // TERMS OF AGREEMENT
+    const [agreementRows] = await db.query(`
+      SELECT 
+        COALESCE(termsOfAgreement, 0) AS termsOfAgreement,
+        COUNT(*) AS total
+      FROM person_table
+      GROUP BY COALESCE(termsOfAgreement, 0)
+    `);
+
+    res.json({
+      totalApplicants: totalRows[0]?.total || 0,
+      genderCounts,
+      statusCounts: agreementRows
+    });
+
+  } catch (err) {
+    console.error("ERROR /api/applicant-stats:", err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
+app.get("/api/applicants-per-month", async (req, res) => {
+  try {
+    const sql = `
+      SELECT 
+        DATE_FORMAT(created_at, '%Y-%m') AS month,
+        COUNT(*) AS total
+      FROM person_table
+      GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+      ORDER BY month ASC
+    `;
+
+    const [rows] = await db.query(sql);
+    res.json(rows);
+
+  } catch (error) {
+    console.error("Error in /api/applicants-per-month:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

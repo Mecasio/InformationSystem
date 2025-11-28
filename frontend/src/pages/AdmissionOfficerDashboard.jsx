@@ -91,7 +91,7 @@ const AdmissionOfficerDashboard = ({ profileImage, setProfileImage }) => {
   // ✅ NEW access map
   const [userAccessList, setUserAccessList] = useState({});
 
-  const pageId = 108; // SYSTEM MANAGEMENT
+  const pageId = 103; // SYSTEM MANAGEMENT
 
 
 

@@ -23,7 +23,7 @@ import GroupIcon from "@mui/icons-material/Groups";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Legend } from "recharts";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import ExaminationProfile from "../registrar/ExaminationProfile";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -225,6 +225,40 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
     fetchRegistrarCount();
   }, []);
 
+
+  const [applicant, setApplicant] = useState({
+    totalApplicants: 0,
+    male: 0,
+    female: 0,
+    statusCounts: []
+  });
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/api/applicant-stats`)
+      .then(res => {
+        const data = res.data;
+
+        const male = data.genderCounts.find(g => g.gender === "Male")?.total || 0;
+        const female = data.genderCounts.find(g => g.gender === "Female")?.total || 0;
+
+        const statusCounts = data.statusCounts.map(s => ({
+          termsOfAgreement: s.termsOfAgreement === 1 ? "Agreed" : "Not Agreed",
+          total: s.total
+        }));
+
+        setApplicant({
+          totalApplicants: data.totalApplicants,
+          male,
+          female,
+          statusCounts
+        });
+      })
+      .catch(err => console.error("Applicant stats fetch error:", err));
+  }, []);
+
+
+
+
   const stats = [
     {
       label: "Total Applicants",
@@ -340,6 +374,8 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
         console.error("Failed to fetch applicants per month", err)
       );
   }, []);
+
+
 
 
   const [personData, setPersonData] = useState(null);
@@ -742,6 +778,8 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
           <Grid item xs={12} md={12} sx={{ mt: 5 }}>
             <Card
               sx={{
+                overflow: "visible",   // 🔥 allow tooltips to appear
+                position: "relative",  // required for tooltip placement
                 p: 2,
                 marginLeft: "10px",
                 marginTop: "-20px",
@@ -749,9 +787,6 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 width: 385,
                 height: 290,
                 border: `2px solid ${borderColor}`,
-                transition: "transform 0.2s ease",
-                boxShadow: 3,
-                "&:hover": { transform: "scale(1.03)" },
                 boxShadow: 3,
               }}
             >
@@ -765,14 +800,14 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                   Applicants Per Month
                 </Typography>
 
-                {/* Chart takes the rest of card height */}
-                <Box sx={{ height: "calc(100% - 40px)" }}>
+                <Box sx={{ height: "calc(100% - 40px)", overflow: "visible" }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={monthlyApplicants}
                       margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
+
                       <XAxis
                         dataKey="month"
                         tickFormatter={(month) => {
@@ -782,24 +817,32 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                           });
                         }}
                       />
+
                       <YAxis allowDecimals={false} />
-                      <Tooltip />
+
+                      <Tooltip
+                        wrapperStyle={{ zIndex: 99999 }}  // 🔥 forces tooltip to show
+                        labelFormatter={(month) => {
+                          const [year, m] = month.split("-");
+                          return new Date(`${year}-${m}-01`).toLocaleString("default", {
+                            month: "long",
+                            year: "numeric",
+                          });
+                        }}
+                        formatter={(value) => [`${value} applicants`, "Total"]}
+                      />
+
                       <Bar dataKey="total">
                         {monthlyApplicants.map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
-                            fill={[
-                              "#FF0000",
-                              "#00C853",
-                              "#2196F3",
-                              "#FFD600",
-                              "#FF6D00",
-                            ][index % 5]}
+                            fill={["#FF0000", "#00C853", "#2196F3", "#FFD600", "#FF6D00"][index % 5]}
                           />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
+
                 </Box>
               </CardContent>
             </Card>
@@ -1002,7 +1045,6 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               </Box>
             </Box>
 
-            {/* Stats Boxes */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={4}>
                 <Box
@@ -1014,7 +1056,9 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                     height: 90,
                   }}
                 >
-                  <Typography variant="h5" fontWeight="bold">521</Typography>
+                  <Typography variant="h5" fontWeight="bold">
+                    {applicant.totalApplicants}
+                  </Typography>
                   <Typography fontSize={14}>Total Applicants</Typography>
                 </Box>
               </Grid>
@@ -1029,8 +1073,10 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                     height: 90,
                   }}
                 >
-                  <Typography variant="h5" fontWeight="bold">73</Typography>
-                  <Typography fontSize={14}>This Week</Typography>
+                  <Typography variant="h5" fontWeight="bold">
+                    {applicant.male}
+                  </Typography>
+                  <Typography fontSize={14}>Male</Typography>
                 </Box>
               </Grid>
 
@@ -1044,22 +1090,18 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                     height: 90,
                   }}
                 >
-                  <Typography variant="h5" fontWeight="bold">234</Typography>
-                  <Typography fontSize={14}>This Month</Typography>
+                  <Typography variant="h5" fontWeight="bold">
+                    {applicant.female}
+                  </Typography>
+                  <Typography fontSize={14}>Female</Typography>
                 </Box>
               </Grid>
             </Grid>
 
-            {/* Bar Graph Label */}
-            <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              sx={{ mb: 1 }}
-            >
-              Applicants By Status:
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+              Applicants By Terms of Agreement:
             </Typography>
 
-            {/* Bar Graph Placeholder */}
             <Box
               sx={{
                 flexGrow: 1,
@@ -1071,9 +1113,23 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 alignItems: "center",
                 fontSize: 14,
                 color: "#6c6c6c",
+                height: 300, // <-- important to make chart visible
               }}
             >
-              BAR GRAPH HERE
+              {applicant.statusCounts.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={applicant.statusCounts}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="termsOfAgreement" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="total" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <Typography>Loading chart...</Typography>
+              )}
             </Box>
           </Card>
         </Grid>

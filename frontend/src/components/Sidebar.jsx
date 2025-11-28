@@ -96,7 +96,6 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
     return "/registrar_dashboard";
   }
 
-  // 2️⃣ Then place the useEffect that uses it
   useEffect(() => {
     const token = localStorage.getItem("token");
     const savedRole = localStorage.getItem("role");
@@ -111,27 +110,43 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
         localStorage.clear();
         setIsAuthenticated(false);
         navigate("/");
-      } else {
-        setRole(savedRole);
-        fetchPersonData(storedID, savedRole);
-        setIsAuthenticated(true);
-
-        if (savedRole === "registrar" && accessListStored) {
-          const accessMap = JSON.parse(accessListStored);
-          const home = getRegistrarHomePage(accessMap);
-          navigate(home);
-        } else if (savedRole === "faculty") {
-          navigate("/faculty_dashboard");
-        } else if (savedRole === "student") {
-          navigate("/student_dashboard");
-        } else if (savedRole === "applicant") {
-          navigate("/applicant_dashboard");
-        }
+        return;
       }
+
+      setRole(savedRole);
+      fetchPersonData(storedID, savedRole);
+      setIsAuthenticated(true);
+
+      // ⭐ FIXED: Determine correct dashboard for registrar-type accounts
+      if (savedRole === "registrar" && accessListStored) {
+        const accessMap = JSON.parse(accessListStored);
+
+        if (accessMap[107]) navigate("/registrar_dashboard");
+        else if (accessMap[102]) navigate("/enrollment_officer_dashboard");
+        else if (accessMap[103]) navigate("/admission_officer_dashboard");
+        return;
+      }
+
+      if (savedRole === "faculty") {
+        navigate("/faculty_dashboard");
+        return;
+      }
+
+      if (savedRole === "student") {
+        navigate("/student_dashboard");
+        return;
+      }
+
+      if (savedRole === "applicant") {
+        navigate("/applicant_dashboard");
+        return;
+      }
+
     } else {
       navigate("/");
     }
   }, []);
+
 
 
 
@@ -266,25 +281,6 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
     superadmin: ALL
   };
 
-
-  function determineRoleFromPageAccess(accessList, ROLE_PAGE_ACCESS) {
-    // Sort arrays to ensure order doesn't affect comparison
-    const sortedAccess = [...accessList].sort((a, b) => a - b);
-
-    for (let role in ROLE_PAGE_ACCESS) {
-      const allowedPages = [...ROLE_PAGE_ACCESS[role]].sort((a, b) => a - b);
-
-      // Strict match: lengths must match and all elements must match
-      if (
-        sortedAccess.length === allowedPages.length &&
-        sortedAccess.every((pageId, idx) => pageId === allowedPages[idx])
-      ) {
-        return ROLE_LABEL[role];
-      }
-    }
-
-    return "Administrator"; // No exact match
-  }
 
 
   const [determinedRole, setDeterminedRole] = useState("");
