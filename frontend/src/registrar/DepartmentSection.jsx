@@ -71,6 +71,12 @@ const DepartmentSection = () => {
   const [userRole, setUserRole] = useState("");
   const [hasAccess, setHasAccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [sectionSearch, setSectionSearch] = useState("");
+
+  const filteredSectionsList = sectionsList.filter((section) =>
+    section.description.toLowerCase().includes(sectionSearch.toLowerCase())
+  );
+
 
   // ✅ Snackbar state
   const [snackbar, setSnackbar] = useState({
@@ -133,12 +139,13 @@ const DepartmentSection = () => {
 
   const fetchCurriculum = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/get_curriculum`);
-      setCurriculumList(response.data);
+      const res = await axios.get(`${API_BASE_URL}/get_active_curriculum`);
+      setCurriculumList(res.data);
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   };
+
 
   const fetchSections = async () => {
     try {
@@ -215,8 +222,8 @@ const DepartmentSection = () => {
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
+          gap: 4,
+          alignItems: 'stretch',
           mb: 2,
 
         }}
@@ -246,22 +253,19 @@ const DepartmentSection = () => {
           flexDirection: { xs: 'column', md: 'row' },
           gap: 4,
           ml: 7,
-          width: "1400px",
           mt: 4,
-
         }}
       >
         {/* Form Section */}
         <Box
           sx={{
-            flex: 1,
+            flex: 1,        // <-- make it take more space
             p: 3,
             borderRadius: 2,
-
             boxShadow: 2,
             border: `2px solid ${borderColor}`,
             bgcolor: 'white',
-
+            minWidth: 300,  // ensures it doesn’t shrink too much
           }}
         >
           <Typography variant="h6" gutterBottom textAlign="center" style={{ color: "maroon", fontWeight: "bold" }} >
@@ -282,14 +286,33 @@ const DepartmentSection = () => {
               <MenuItem value="">Select Curriculum</MenuItem>
               {curriculumList.map((curr) => (
                 <MenuItem key={`curr-${curr.curriculum_id}`} value={curr.curriculum_id}>
-                  {curr.year_description} - {curr.program_description}  {curr.major} | {curr.curriculum_id}
+                  {curr.year_description} ({curr.program_code}) - {curr.program_description}  {curr.major}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-          <label style={{ fontWeight: 'bold', marginBottom: 4 }} htmlFor="curriculum_id">
+          <label style={{ fontWeight: 'bold', marginBottom: 4 }} htmlFor="section_id">
+            Search:
+          </label>
+
+          {/* Search input for dropdown */}
+          <input
+            type="text"
+            placeholder="Search section..."
+            value={sectionSearch}
+            onChange={(e) => setSectionSearch(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px",
+              marginBottom: "8px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+            }}
+          />
+          <label style={{ fontWeight: 'bold', marginBottom: 4 }} htmlFor="section_id">
             Section:
           </label>
+
           <FormControl fullWidth sx={{ mb: 3 }} variant="outlined">
             <InputLabel id="section-label">Section</InputLabel>
             <Select
@@ -300,13 +323,14 @@ const DepartmentSection = () => {
               label="Section"
             >
               <MenuItem value="">Select Section</MenuItem>
-              {sectionsList.map((section) => (
+              {filteredSectionsList.map((section) => (
                 <MenuItem key={section.id} value={section.id}>
                   {section.description}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+
 
 
           <Button
@@ -322,14 +346,15 @@ const DepartmentSection = () => {
         {/* Display Section */}
         <Box
           sx={{
-            flex: 1,
+            flex: 2,        // <-- smaller
             p: 3,
             borderRadius: 2,
             boxShadow: 2,
             bgcolor: 'white',
             border: `2px solid ${borderColor}`,
             overflowY: 'auto',
-            maxHeight: 500,
+            maxHeight: 900,
+            minWidth: 700,
           }}
         >
           <Typography variant="h6" gutterBottom textAlign="center" style={{ color: "maroon", fontWeight: "bold" }}>
@@ -388,10 +413,11 @@ const DepartmentSection = () => {
                       style={{
                         border: `2px solid ${borderColor}`,
                         padding: "8px",
-                        textAlign: "center",
+
                       }}
                     >
-                      {section.program_code}-{section.year_description}
+                      {section.year_description} - ({section.program_code}) {section.program_description} {section.major}
+
                     </td>
                     <td
                       style={{

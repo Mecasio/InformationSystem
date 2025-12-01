@@ -396,10 +396,22 @@ const CurriculumPanel = () => {
                     backgroundColor: settings?.header_color || "#1976d2",
                     color: "#fff",
                     width: "55%",
-                    textAlign: "left",
+
+                    textAlign: "center",
                   }}
                 >
                   Program
+                </th>
+                <th
+                  style={{
+                    border: `2px solid ${borderColor}`,
+                    backgroundColor: settings?.header_color || "#1976d2",
+                    color: "#fff",
+                    width: "20%",
+                    textAlign: "center",
+                  }}
+                >
+                  Action
                 </th>
                 <th
                   style={{
@@ -468,9 +480,22 @@ const CurriculumPanel = () => {
                       {item.lock_status === 1 ? "Active" : "Inactive"}
                     </button>
                   </td>
+                  <td
+                    style={{
+                      border: `2px solid ${borderColor}`,
+                      textAlign: "center",
+                      fontSize: "14px",
+                      color: item.lock_status === 1 ? "green" : "red",
+                    }}
+                  >
+                    {item.lock_status === 1
+                      ? "This Curriculum is Active"
+                      : "This Curriculum is Deactivated"}
+                  </td>
                 </tr>
               ))}
             </tbody>
+
           </table>
 
         </div>

@@ -119,10 +119,11 @@ const ProgramTagging = () => {
   const [courseSearch, setCourseSearch] = useState("");
 
   const filteredCourses = courseList.filter((course) => {
-    const text = courseSearch.toLowerCase();
-    return (
-      course.course_code.toLowerCase().includes(text) ||
-      course.course_description.toLowerCase().includes(text)
+    const words = courseSearch.toLowerCase().split(" ");
+
+    return words.every((word) =>
+      course.course_code.toLowerCase().includes(word) ||
+      course.course_description.toLowerCase().includes(word)
     );
   });
 
@@ -155,21 +156,30 @@ const ProgramTagging = () => {
 
   const fetchCurriculum = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/get_curriculum`);
+      const res = await axios.get(`${API_BASE_URL}/get_active_curriculum`);
       setCurriculumList(res.data);
     } catch (err) {
       console.log(err);
     }
   };
 
+
   const fetchCourse = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/course_list`);
-      setCourseList(res.data);
+
+      // 🔽 SORT COURSES alphabetically (course_code)
+      setCourseList(
+        res.data.sort((a, b) =>
+          a.course_code.localeCompare(b.course_code, undefined, { numeric: true })
+        )
+      );
+
     } catch (err) {
       console.log(err);
     }
   };
+
 
   const fetchTaggedPrograms = async () => {
     try {
@@ -190,6 +200,7 @@ const ProgramTagging = () => {
 
   const handleInsertingProgTag = async () => {
     const { curriculum_id, year_level_id, semester_id, course_id } = progTag;
+
     if (!curriculum_id || !year_level_id || !semester_id || !course_id) {
       setSnackbar({
         open: true,
@@ -198,6 +209,26 @@ const ProgramTagging = () => {
       });
       return;
     }
+
+    // 🔍 Prevent duplicate
+    const isDuplicate = taggedPrograms.some(
+      (p) =>
+        p.curriculum_id == curriculum_id &&
+        p.year_level_id == year_level_id &&
+        p.semester_id == semester_id &&
+        p.course_id == course_id &&
+        p.program_tagging_id !== editingId
+    );
+
+    if (isDuplicate) {
+      setSnackbar({
+        open: true,
+        message: "This program tag already exists!",
+        severity: "error",
+      });
+      return;
+    }
+
 
     try {
       if (editingId) {
@@ -239,13 +270,17 @@ const ProgramTagging = () => {
 
   const handleEdit = (program) => {
     setEditingId(program.program_tagging_id);
+
     setProgTag({
       curriculum_id: program.curriculum_id,
       year_level_id: program.year_level_id,
       semester_id: program.semester_id,
       course_id: program.course_id,
     });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
 
   const handleDelete = async (id) => {
     try {
@@ -510,7 +545,12 @@ const ProgramTagging = () => {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(program.program_tagging_id)}
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this tag?")) {
+                              handleDelete(program.program_tagging_id);
+                            }
+                          }}
+
                           style={{
                             backgroundColor: "#9E0000",
                             color: "white",

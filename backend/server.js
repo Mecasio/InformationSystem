@@ -2743,17 +2743,17 @@ app.get("/api/all-students", async (req, res) => {
 });
 
 
-// 📌 Import Excel to person_status_table
-// 📌 Import Excel to person_status_table + status + log notifications
+// 📌 Import Excel to person_status_table + update interview_applicants.status (optimized)
 app.post("/api/qualifying_exam/import", async (req, res) => {
   try {
     const loggedInUserId = req.body.userID;
     const rows = Array.isArray(req.body.data) ? req.body.data : [];
 
-    if (rows.length === 0)
+    if (!rows.length)
       return res.status(400).json({ success: false, error: "No rows found" });
 
-    const applicantNumbers = rows.map(r => r.applicant_number).filter(n => n);
+    // Filter valid applicant numbers
+    const applicantNumbers = rows.map(r => r.applicant_number).filter(Boolean);
     if (!applicantNumbers.length)
       return res.status(400).json({ success: false, error: "No valid applicant numbers" });
 
@@ -2768,7 +2768,9 @@ app.post("/api/qualifying_exam/import", async (req, res) => {
     const applicantMap = {};
     matches.forEach(m => { applicantMap[m.applicant_number] = m.person_id; });
 
-    const values = [];
+    // Prepare person_status_table insert & interview_applicants status update
+    const personStatusValues = [];
+    const statusMap = {}; // applicant_number → status
 
     for (const row of rows) {
       const personId = applicantMap[row.applicant_number];
@@ -2776,49 +2778,53 @@ app.post("/api/qualifying_exam/import", async (req, res) => {
 
       const qExam = Number(row.qualifying_exam_score) || 0;
       const qInterview = Number(row.qualifying_interview_score) || 0;
-      const totalAve = Number(row.total_ave) || (qExam + qInterview) / 2;
-
-      // ⭐ NEW: import status column
       const status = row.status ? row.status.trim() : "Waiting List";
 
-      values.push([personId, qExam, qInterview, totalAve, status]);
+      // person_status_table: only store the two scores
+      personStatusValues.push([personId, qExam, qInterview]);
+
+      // interview_applicants
+      statusMap[row.applicant_number] = status;
     }
 
-    if (!values.length)
+    if (!personStatusValues.length)
       return res.status(400).json({ success: false, error: "No valid data to import" });
 
-    // ⭐ NEW: Insert + update status also
+    // ⭐ 1) Insert / update person_status_table
     await db.query(
       `INSERT INTO person_status_table 
-        (person_id, qualifying_result, interview_result, exam_result, status)
+        (person_id, qualifying_result, interview_result)
        VALUES ?
        ON DUPLICATE KEY UPDATE
          qualifying_result = VALUES(qualifying_result),
-         interview_result = VALUES(interview_result),
-         exam_result = VALUES(exam_result),
-         status = VALUES(status)`,
-      [values]
+         interview_result = VALUES(interview_result)`,
+      [personStatusValues]
     );
 
-    // Update audit field
-    await db.query("UPDATE admission_exam SET user = ?", [loggedInUserId]);
+    // ⭐ 2) Update interview_applicants status in one query
+    const applicantIds = Object.keys(statusMap);
+    if (applicantIds.length > 0) {
+      const cases = applicantIds.map(a => `WHEN '${a}' THEN '${statusMap[a]}'`).join(" ");
+      await db.query(
+        `UPDATE interview_applicants 
+         SET status = CASE applicant_id ${cases} END
+         WHERE applicant_id IN (?)`,
+        [applicantIds]
+      );
+    }
 
     // Registrar Info
     const [registrarRows] = await db3.query(
-      "SELECT last_name, first_name, middle_name, email, employee_id FROM user_accounts WHERE role = 'registrar' LIMIT 1"
+      "SELECT last_name, first_name, middle_name, email FROM user_accounts WHERE role = 'registrar' LIMIT 1"
     );
-
     const registrar = registrarRows[0];
     const registrarEmail = registrar?.email || "earistmis@gmail.com";
     const registrarFullName = registrar
       ? `${registrar.last_name}, ${registrar.first_name} ${registrar.middle_name || ""}`.trim()
       : "Registrar";
 
-    const registrarDisplay = `REGISTRAR (${registrar?.employee_id || "N/A"}) - ${registrarFullName} - ${registrarEmail}`;
-
-    // Log notification
-    const message = `📊 Bulk Qualifying/Interview Exam Scores uploaded by ${registrarDisplay}`;
-
+    // Notification
+    const message = `📊 Bulk Qualifying/Interview Exam Scores uploaded by ${registrarFullName}`;
     await db.query(
       "INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp) VALUES (?, ?, ?, ?, ?, NOW())",
       ["upload", message, null, registrarEmail, registrarFullName]
@@ -8391,6 +8397,25 @@ app.get("/get_courses_by_curriculum/:curriculum_id", async (req, res) => {
   }
 });
 
+app.get("/get_active_curriculum", async (req, res) => {
+  const readQuery = `
+    SELECT ct.*, p.*, y.* 
+    FROM curriculum_table ct 
+    INNER JOIN program_table p ON ct.program_id = p.program_id
+    INNER JOIN year_table y ON ct.year_id = y.year_id
+    WHERE ct.lock_status = 1
+  `;
+
+  try {
+    const [result] = await db3.query(readQuery);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 // COURSE TAGGING LIST (UPDATED!)
 app.get("/get_course", async (req, res) => {
   const getCourseQuery = `
@@ -9080,6 +9105,7 @@ app.get("/department_section", async (req, res) => {
     const query = `
       SELECT 
         pt.program_code,
+        pt.program_description,
         pt.major,  
         yt.year_description,
         st.description AS section_description

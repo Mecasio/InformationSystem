@@ -1986,24 +1986,37 @@ const Dashboard1 = (props) => {
                   required
                   value={person.emailAddress || ""}
                   placeholder="Enter your Gmail address"
-                  onBlur={() => handleUpdate(person)}
                   error={!!errors.emailAddress}
                   helperText={errors.emailAddress ? "This field is required." : ""}
                   onChange={(e) => {
-                    let value = e.target.value.replace(/\s/g, "");
-
-                    value = value.replace(/@.*/, "");
-
-                    const finalValue = value === "" ? "" : value + "@gmail.com";
+                    // remove spaces only (let user type naturally)
+                    const cleaned = e.target.value.replace(/\s/g, "");
 
                     handleChange({
                       target: {
                         name: "emailAddress",
-                        value: finalValue
+                        value: cleaned
                       }
                     });
                   }}
+                  onBlur={(e) => {
+                    let value = e.target.value.trim();
+
+                    if (value && !value.includes("@")) {
+                      value = value + "@gmail.com";
+                    }
+
+                    handleChange({
+                      target: {
+                        name: "emailAddress",
+                        value
+                      }
+                    });
+
+                    handleUpdate(person);
+                  }}
                 />
+
 
 
               </Box>
@@ -2040,10 +2053,40 @@ const Dashboard1 = (props) => {
               </Typography>
             </Box>
 
+            <Box display="flex" gap={2} mb={2}>
+              <Box flex={1}>
+                <Typography mb={1} fontWeight="medium">Present Street</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="presentStreet"
+                  value={person.presentStreet || ""}
+                  onBlur={() => handleUpdate(person)} placeholder="Enter your Present Street"
+                  onChange={handleChange}
+                  error={!!errors.presentStreet}
+                  helperText={errors.presentStreet && "This field is required."}
+                />
+              </Box>
 
+              <Box flex={1}>
+                <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="presentZipCode"
+                  placeholder="Enter your Zip Code"
+                  value={person.presentZipCode || ""}
+                  onBlur={() => handleUpdate(person)} onChange={handleChange}
+                  error={!!errors.presentZipCode}
+                  helperText={errors.presentZipCode && "This field is required."}
+                />
+              </Box>
+            </Box>
 
 
             <Box display="flex" gap={2} mb={2}>
+
+
 
               {/* REGION */}
               <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
@@ -2243,6 +2286,36 @@ const Dashboard1 = (props) => {
             />
 
 
+            <Box display="flex" gap={2} mb={2}>
+              <Box flex={1}>
+                <Typography mb={1} fontWeight="medium">Permanent Street</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="permanentStreet"
+                  placeholder="Enter your Permanent Street"
+                  value={person.permanentStreet || ""}
+                  onBlur={() => handleUpdate(person)} onChange={handleChange}
+                  error={!!errors.permanentStreet}
+                  helperText={errors.permanentStreet && "This field is required."}
+                />
+              </Box>
+
+              <Box flex={1}>
+                <Typography mb={1} fontWeight="medium">Permanent Zip Code</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  name="permanentZipCode"
+                  placeholder="Enter your Permanent Zip Code"
+                  value={person.permanentZipCode || ""}
+                  onBlur={() => handleUpdate(person)} onChange={handleChange}
+                  error={!!errors.permanentZipCode}
+                  helperText={errors.permanentZipCode && "This field is required."}
+                />
+              </Box>
+            </Box>
+
 
 
             {/* Permanent Region & Province */}
@@ -2398,36 +2471,6 @@ const Dashboard1 = (props) => {
 
             </Box>
 
-
-            <Box display="flex" gap={2} mb={2}>
-              <Box flex={1}>
-                <Typography mb={1} fontWeight="medium">Permanent Street</Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  name="permanentStreet"
-                  placeholder="Enter your Permanent Street"
-                  value={person.permanentStreet || ""}
-                  onBlur={() => handleUpdate(person)} onChange={handleChange}
-                  error={!!errors.permanentStreet}
-                  helperText={errors.permanentStreet && "This field is required."}
-                />
-              </Box>
-
-              <Box flex={1}>
-                <Typography mb={1} fontWeight="medium">Permanent Zip Code</Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  name="permanentZipCode"
-                  placeholder="Enter your Permanent Zip Code"
-                  value={person.permanentZipCode || ""}
-                  onBlur={() => handleUpdate(person)} onChange={handleChange}
-                  error={!!errors.permanentZipCode}
-                  helperText={errors.permanentZipCode && "This field is required."}
-                />
-              </Box>
-            </Box>
 
 
 
