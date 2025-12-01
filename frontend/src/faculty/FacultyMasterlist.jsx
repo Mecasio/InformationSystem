@@ -21,6 +21,7 @@ import {
 import axios from "axios";
 import API_BASE_URL from "../apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
+import { FcPrint } from "react-icons/fc";
 
 const FacultyMasterList = () => {
   const navigate = useNavigate();
@@ -152,25 +153,35 @@ const FacultyMasterList = () => {
   }, [course_id, section_id, school_year_id]);
 
   useEffect(() => {
-    if (userID) {
+    if (userID && selectedSchoolYear && selectedSchoolSemester) {
       axios
-        .get(`${API_BASE_URL}/api/section_assigned_to/${userID}`)
+        .get(`${API_BASE_URL}/api/section_assigned_to/${userID}/${selectedSchoolYear}/${selectedSchoolSemester}`)
         .then((res) => {
           setSectionAssignedTo(res.data);
           if (res.data.length > 0) {
-            setSelectedSection(res.data[0].section_id); // ✅ Auto-select first section
+            setSelectedSection(res.data[0].section_id);
+          } else {
+            setSelectedSection("");
           }
         })
         .catch((err) => console.error(err));
     }
-  }, [userID]);
+  }, [userID, selectedSchoolYear, selectedSchoolSemester]);
 
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/get_school_year/`)
-      .then((res) => setSchoolYears(res.data))
-      .catch((err) => console.error(err));
-  }, []);
+  axios
+    .get(`${API_BASE_URL}/get_school_year`)
+    .then((res) => {
+      const currentYear = new Date().getFullYear();
+      const filteredYears = res.data.filter(
+        (yearObj) => Number(yearObj.current_year) <= currentYear
+      );
+
+      setSchoolYears(filteredYears);
+    })
+    .catch((err) => console.error(err));
+}, []);
+
 
   useEffect(() => {
     axios
@@ -272,32 +283,115 @@ const FacultyMasterList = () => {
       }
     });
 
+  const groupedStudents = filteredStudents.reduce((acc, student) => {
+    const key = student.student_number;
+
+    if (!acc[key]) {
+      acc[key] = {
+        ...student,
+        schedules: [],
+      };
+    }
+
+    acc[key].schedules.push({
+      day: student.day,
+      start: student.school_time_start,
+      end: student.school_time_end,
+      room: student.room_description,
+    });
+
+    return acc;
+  }, {});
+
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const groupedList = Object.values(groupedStudents);
 
   const paginatedStudents = filteredStudents.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  
+  const divToPrintRef = useRef();
+  
+  const printDiv = () => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
 
-  // 🔒 Disable right-click
-  document.addEventListener("contextmenu", (e) => e.preventDefault());
+    const doc = iframe.contentWindow.document;
+    doc.open();
 
-  // 🔒 Block DevTools shortcuts + Ctrl+P silently
-  document.addEventListener("keydown", (e) => {
-    const isBlockedKey =
-      e.key === "F12" || // DevTools
-      e.key === "F11" || // Fullscreen
-      (e.ctrlKey &&
-        e.shiftKey &&
-        (e.key.toLowerCase() === "i" || e.key.toLowerCase() === "j")) || // Ctrl+Shift+I/J
-      (e.ctrlKey && e.key.toLowerCase() === "u") || // Ctrl+U (View Source)
-      (e.ctrlKey && e.key.toLowerCase() === "p"); // Ctrl+P (Print)
+    doc.write(`
+      <html>
+        <head>
+          <title>Print</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0.5in; /* 0.5 inch margins */
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 13px;
+            }
+            th, td {
+              border: 1px solid black;
+              padding: 6px;
+              text-align: left;
+            }
+            th {
+              background-color: #f0f0f0;
+            }
+            h2, h3, h4 {
+              text-align: center;
+              margin: 0;
+            }
+            h3 {
+              margin-top: 20px;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+            }
+            @media print {
+              @page { margin: 0.5in; size: auto; }
+            }
+          </style>
+        </head>
+        <body>
+          ${divToPrintRef.current.innerHTML}
+        </body>
+      </html>
+    `);
 
-    if (isBlockedKey) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
+    doc.close();
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    document.body.removeChild(iframe);
+  };
+
+
+  // // 🔒 Disable right-click
+  // document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // // 🔒 Block DevTools shortcuts + Ctrl+P silently
+  // document.addEventListener("keydown", (e) => {
+  //   const isBlockedKey =
+  //     e.key === "F12" || // DevTools
+  //     e.key === "F11" || // Fullscreen
+  //     (e.ctrlKey &&
+  //       e.shiftKey &&
+  //       (e.key.toLowerCase() === "i" || e.key.toLowerCase() === "j")) || // Ctrl+Shift+I/J
+  //     (e.ctrlKey && e.key.toLowerCase() === "u") || // Ctrl+U (View Source)
+  //     (e.ctrlKey && e.key.toLowerCase() === "p"); // Ctrl+P (Print)
+
+  //   if (isBlockedKey) {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+  //   }
+  // });
 
   return (
     <Box
@@ -313,9 +407,9 @@ const FacultyMasterList = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          flexWrap: "wrap",
-
           mb: 2,
+          width: "100%",
+
         }}
       >
         <Typography
@@ -326,7 +420,7 @@ const FacultyMasterList = () => {
             fontSize: "36px",
           }}
         >
-          CLASS LIST
+           CLASS LIST
         </Typography>
       </Box>
       <hr style={{ border: "1px solid #ccc", width: "95%" }} />
@@ -353,7 +447,7 @@ const FacultyMasterList = () => {
                 >
                   {/* Left: Total Count */}
                   <Typography fontSize="14px" fontWeight="bold" color="white">
-                    Total Students: {filteredStudents.length}
+                    Total Students: {groupedList.length}
                   </Typography>
 
                   {/* Right: Pagination Controls */}
@@ -565,7 +659,7 @@ const FacultyMasterList = () => {
                   labelId="demo-simple-select-label"
                   id="demo-simple-select"
                   value={selectedCourse}
-                  style={{ width: "600px" }}
+                  style={{ width: "620px" }}
                   label="Course"
                   onChange={handleSelectCourseChange}
                 >
@@ -584,13 +678,13 @@ const FacultyMasterList = () => {
             <Box
               display="flex"
               gap={2}
-              sx={{ marginTop: "1rem", marginRight: "50px" }}
+              sx={{ marginTop: "1rem" }}
             >
               <Box
                 display="flex"
                 alignItems="center"
                 gap={1}
-                sx={{ minWidth: 550 }}
+                sx={{ minWidth: 400 }}
               >
                 <Typography fontSize={13} sx={{ minWidth: "100px" }}>
                   Section
@@ -650,61 +744,139 @@ const FacultyMasterList = () => {
             gap={2}
             sx={{ minWidth: "450px" }}
           >
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography fontSize={13} sx={{ minWidth: "100px" }}>
-                School Year:
-              </Typography>
-              <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">
-                  School Years
-                </InputLabel>
-                <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  style={{ width: "200px" }}
-                  value={selectedSchoolYear}
-                  label="School Years"
-                  onChange={handleSchoolYearChange}
-                >
-                  {schoolYears.length > 0 ? (
-                    schoolYears.map((sy) => (
-                      <MenuItem value={sy.year_id} key={sy.year_id}>
-                        {sy.current_year} - {sy.next_year}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem disabled>School Year is not found</MenuItem>
-                  )}
-                </Select>
-              </FormControl>
+            <Box
+              display="flex"
+              gap={2}
+              sx={{ minWidth: "450px" }}
+            >
+              <Box display="flex" alignItems="center" gap={1}>
+                <Typography fontSize={13} sx={{ minWidth: "100px" }}>
+                  School Year:
+                </Typography>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-label">
+                    School Years
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    style={{ width: "200px" }}
+                    value={selectedSchoolYear}
+                    label="School Years"
+                    onChange={handleSchoolYearChange}
+                  >
+                    {schoolYears.length > 0 ? (
+                      schoolYears.map((sy) => (
+                        <MenuItem value={sy.year_id} key={sy.year_id}>
+                          {sy.current_year} - {sy.next_year}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>School Year is not found</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Typography fontSize={13} sx={{ minWidth: "100px" }}>
+                  Semester:{" "}
+                </Typography>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-label">
+                    School Semester
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    style={{ width: "200px" }}
+                    value={selectedSchoolSemester}
+                    label="School Semester"
+                    onChange={handleSchoolSemesterChange}
+                  >
+                    {schoolSemester.length > 0 ? (
+                      schoolSemester.map((sem) => (
+                        <MenuItem value={sem.semester_id} key={sem.semester_id}>
+                          {sem.semester_description}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>School Semester is not found</MenuItem>
+                    )}
+                  </Select>
+                </FormControl>
+              </Box>
             </Box>
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography fontSize={13} sx={{ minWidth: "100px" }}>
-                Semester:{" "}
-              </Typography>
-              <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">
-                  School Semester
-                </InputLabel>
-                <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  style={{ width: "200px" }}
-                  value={selectedSchoolSemester}
-                  label="School Semester"
-                  onChange={handleSchoolSemesterChange}
+            <Box sx={{
+              display: "flex",
+              gap: 2,
+              minWidth: "100px",
+            }}>
+              <button
+                onClick={printDiv}
+                style={{
+                  width: "308px",
+                  padding: "10px 20px",
+                  border: "2px solid black",
+                  backgroundColor: "#f0f0f0",
+                  color: "black",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  transition: "background-color 0.3s, transform 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+                onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+                onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
+              >
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
                 >
-                  {schoolSemester.length > 0 ? (
-                    schoolSemester.map((sem) => (
-                      <MenuItem value={sem.semester_id} key={sem.semester_id}>
-                        {sem.semester_description}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem disabled>School Semester is not found</MenuItem>
-                  )}
-                </Select>
-              </FormControl>
+                  <FcPrint size={20} />
+                  Print Evaluation
+                </span>
+              </button>
+              <button
+                onClick={printDiv}
+                style={{
+                  width: "308px",
+                  padding: "10px 20px",
+                  border: "2px solid black",
+                  backgroundColor: "#f0f0f0",
+                  color: "black",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  transition: "background-color 0.3s, transform 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+                onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+                onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
+              >
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <FcPrint size={20} />
+                  Export Excel
+                </span>
+              </button>
             </Box>
           </Box>
         </Box>
@@ -791,8 +963,8 @@ const FacultyMasterList = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student, index) => (
+            {groupedList.length > 0 ? (
+              groupedList.map((student, index) => (
                 <TableRow key={student.student_number}>
                   <TableCell
                     sx={{
@@ -856,8 +1028,11 @@ const FacultyMasterList = () => {
                       border: `2px solid ${borderColor}`,
                     }}
                   >
-                    {student.day} {student.school_time_start} -{" "}
-                    {student.school_time_end}
+                    {student.schedules.map((sch, i) => (
+                      <div key={i}>
+                        {sch.day} {sch.start} - {sch.end}
+                      </div>
+                    ))}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -865,7 +1040,9 @@ const FacultyMasterList = () => {
                       border: `2px solid ${borderColor}`,
                     }}
                   >
-                    {student.room_description}
+                    {[...new Set(student.schedules.map((sch) => sch.room))].map((room, i) => (
+                      <div key={i}>{room}</div>
+                    ))}
                   </TableCell>
                 </TableRow>
               ))
@@ -883,6 +1060,218 @@ const FacultyMasterList = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <div style={{ display: "none" }}>
+        <div ref={divToPrintRef} style={{margin: "0.5in"}}>
+          <style>
+            {`
+              @media print {
+                body {
+                  margin: 0.5in;
+                }
+                table {
+                  page-break-inside: auto;
+                }
+                tr {
+                  page-break-inside: avoid;
+                  page-break-after: auto;
+                }
+              }
+            `}
+          </style>
+          {/* Header Section */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "20px",
+            }}
+          >
+            {/* Logo */}
+            <div>
+            
+                <img
+                  src={fetchedLogo}
+                  alt="Logo"
+                  style={{ width: "80px", height: "80px", objectFit: "contain", marginTop: "-10px" }}
+                />
+            
+            </div>
+
+            {/* School Info */}
+            <div style={{ textAlign: "center", flex: 1, marginLeft: "10px", marginRight: "10px" }}>
+              <span style={{ margin: 0, fontSize: "12px" }}>Republic of the Philippines</span>
+              <h2 style={{ margin: 0, fontSize: "20px", letterSpacing: "-1px"}}>{companyName}</h2>
+              <span style={{ margin: 0, fontSize: "12px" }}>{campusAddress || "Nagtahan St. Sampaloc, Manila"}</span>
+            </div>
+
+            {/* Empty space or right-aligned info */}
+            <div style={{ width: "80px" }}></div>
+          </div>
+
+          {/* Document Title */}
+          <div style={{display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px"}}>
+            <span style={{fontSize: "20px"}}><b>{groupedList[0]?.course_description.toUpperCase() || ""}</b></span>
+            <span style={{fontSize: "15px"}}>{groupedList[0]?.dprtmnt_name || ""}</span>
+          </div>
+
+          <div style={{display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px", marginTop: "2rem", marginBottom: "1rem"}}>
+            <span style={{fontSize: "20px"}}><b>OFFICIAL LIST OF ENROLLED STUDENTS</b></span>
+            <div style={{display: "flex", alignItems: "end", justifyContent: "center"}}>
+              <span style={{marginRight: "0.5rem", fontSize: "15px"}}>Academic Year</span>
+              <span style={{fontSize: "15px"}}>
+                {groupedList[0]?.current_year || ""}- 
+                {groupedList[0]?.next_year || ""},&nbsp;&nbsp;
+
+                {groupedList[0]?.semester_description || ""}
+              </span>
+            </div>
+          </div>
+
+          {/* School Info Table */}
+          <table style={{ borderCollapse: "collapse", fontSize: "12px", lineHeight: "1", padding: 0 }}>
+            <thead>
+              {/* spacer row to remove double borders */}
+              <tr>
+                <td colSpan={1} style={{ width: "80px", borderRight: "none", borderBottom: "none" }}></td>
+                <td colSpan={5} style={{ borderRight: "none", borderBottom: "none" }}></td>
+                <td colSpan={1} style={{ borderLeft: "none", borderBottom: "none" }}></td>
+                <td colSpan={2} style={{ borderLeft: "none", borderBottom: "none" }}></td>
+              </tr>
+
+              {/* Subject Code + Class Section */}
+              <tr>
+                <td colSpan={1} style={{ width: "80px", borderTop: "none", padding: "0px 2px"}}>Subject Code:</td>
+                <td colSpan={5} style={{ borderRight: "none", borderTop: "none" , padding: "0px 2px"}}>
+                  {groupedList[0]?.course_code || ""}
+                </td>
+
+                <td colSpan={1} style={{ borderLeft: "none", borderTop: "none" , padding: "0px 2px"}}>
+                  <div style={{ display: "flex", justifyContent: "end" }}>Class Section:</div>
+                </td>
+
+                <td colSpan={2} style={{ borderTop: "none", padding: "0px 2px" }}>
+                  {groupedList[0]?.program_code || ""}-{groupedList[0]?.section_description || ""}
+                </td>
+              </tr>
+
+              {/* Subject Title + Year Level */}
+              <tr>
+                <td colSpan={1} style={{ width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Subject Title:</td>
+
+                <td colSpan={5} style={{ borderRight: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
+                  {groupedList[0]?.course_description || ""}
+                </td>
+
+                <td colSpan={1} style={{ borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
+                  <div style={{ display: "flex", justifyContent: "end" }}>Year Level:</div>
+                </td>
+
+                <td colSpan={2} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
+                  {groupedList[0]?.year_level || "Third Year"}
+                </td>
+              </tr>
+
+              {/* Academic Units + Lab Units + Schedule */}
+              <tr>
+                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Academic Units:</td>
+
+                <td colSpan={1} style={{paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                  {groupedList[0]?.course_unit || "0"}
+                </td>
+
+                <td colSpan={1} style={{width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>Lab Units:</td>
+
+                <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
+                  {groupedList[0]?.lab_unit || "0"}
+                </td>
+
+                <td colSpan={3} style={{ borderLeft: "none", borderTop: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                  <div style={{ display: "flex", justifyContent: "end" }}>Schedule:</div>
+                </td>
+                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", borderBottom: "none", paddingBottom: "1px", paddingTop: "6px" }}>
+                  {groupedList[0]?.year_level || ""}
+                </td>
+              </tr>
+
+              {/* Credit Units + Lab Units */}
+              <tr>
+                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Credit Units:</td>
+
+                <td colSpan={1} style={{paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                  {groupedList[0]?.course_unit || "0"}
+                </td>
+
+                <td colSpan={1} style={{width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>Lab Units:</td>
+
+                <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
+                  {groupedList[0]?.lab_unit || "0"}
+                </td>
+
+                <td colSpan={3} style={{ borderLeft: "none", borderTop: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                  <div style={{ display: "flex", justifyContent: "end" }}></div>
+                </td>
+                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", borderBottom: "none", paddingTop: "6px" }}>
+                  {groupedList[0]?.year_level || ""}
+                </td>
+              </tr>
+
+              {/* Mode */}
+              <tr>
+                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Mode:</td>
+                <td colSpan={6} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}></td>
+                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", borderBottom: "none", paddingTop: "6px" }}></td>
+              </tr>
+
+              {/* Faculty */}
+              <tr>
+                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Faculty:</td>
+                <td colSpan={6} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>{profData.fname} {profData.mname} {profData.lname}</td>
+                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}></td>
+              </tr>
+            </thead>
+          </table>
+
+          {/* Students Table */}
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginTop: "0.5rem" }}>
+            <thead>
+              <tr>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "30px", textAlign: "center"}}>#</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center"}}>Student No.</th>
+                <th style={{ border: "1px solid black", padding: "6px", width: "280px", textAlign: "start"}}>Student Name</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "50px", textAlign: "center"}}>Age</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "50px", textAlign: "center"}}>Sex</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center"}}>Year Level</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center" }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupedList.length > 0 ? (
+                groupedList.map((s, index) => (
+                  <tr key={s.student_number}>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{index + 1}</td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{s.student_number}</td>
+                    <td style={{ border: "1px solid black", padding: "6px" }}>{`${s.last_name}, ${s.first_name} ${s.middle_name || ""}`}</td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}></td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}></td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}></td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{Number(s.status) === 1 ? "Regular" : "Irregular"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>
+                    No class details available
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
     </Box>
   );
 };

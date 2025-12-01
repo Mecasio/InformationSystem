@@ -36,6 +36,14 @@ const SectionPanel = () => {
 
   const [description, setDescription] = useState('');
   const [sections, setSections] = useState([]);
+  const [editId, setEditId] = useState(null);
+
+  const handleEdit = (section) => {
+    setEditId(section.id);
+    setDescription(section.description); // Load text in input field
+  };
+
+
 
   // Snackbar state
   const [snackbar, setSnackbar] = useState({
@@ -102,21 +110,46 @@ const SectionPanel = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     if (!description.trim()) {
-      setSnackbar({ open: true, message: "Section description is required", severity: "warning" });
+      setSnackbar({ open: true, message: "Description required", severity: "warning" });
       return;
     }
 
     try {
-      await axios.post(`${API_BASE_URL}/section_table`, { description });
+      if (editId) {
+        // UPDATE
+        await axios.put(`${API_BASE_URL}/section_table/${editId}`, { description });
+        setSnackbar({ open: true, message: "Section updated!", severity: "success" });
+      } else {
+        // INSERT
+        await axios.post(`${API_BASE_URL}/section_table`, { description });
+        setSnackbar({ open: true, message: "Section added!", severity: "success" });
+      }
+
       setDescription('');
+      setEditId(null);
       fetchSections();
-      setSnackbar({ open: true, message: "Section added successfully!", severity: "success" });
+
     } catch (err) {
-      console.log(err);
-      setSnackbar({ open: true, message: "Failed to add section", severity: "error" });
+      const msg = err.response?.data?.error || "Error";
+      setSnackbar({ open: true, message: msg, severity: "error" });
     }
   };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this section?")) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/section_table/${id}`);
+      setSnackbar({ open: true, message: "Section deleted!", severity: "success" });
+      fetchSections();
+    } catch (err) {
+      setSnackbar({ open: true, message: "Delete failed!", severity: "error" });
+    }
+  };
+
+
 
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
@@ -166,7 +199,7 @@ const SectionPanel = () => {
 
           <form onSubmit={handleSubmit}>
             <Box display="flex" flexDirection="column" gap={2}>
-               <Typography fontWeight={500}>Section Description:</Typography>
+              <Typography fontWeight={500}>Section Description:</Typography>
               <TextField
                 label="Section Description"
                 value={description}
@@ -194,18 +227,53 @@ const SectionPanel = () => {
             <Table>
               <TableHead style={{ backgroundColor: settings?.header_color || "#1976d2", }}>
                 <TableRow>
-                  <TableCell sx={{border: `2px solid ${borderColor}`, color: "#fff" }}><strong>ID</strong></TableCell>
-                  <TableCell sx={{border: `2px solid ${borderColor}`, color: "#fff" }}><strong>Section Description</strong></TableCell>
+                  <TableCell sx={{ fontWeight: "bold", textAlign: "center", border: `2px solid ${borderColor}`, backgroundColor: settings?.header_color || "#1976d2", color: "#fff" }}>ID</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", textAlign: "center", border: `2px solid ${borderColor}`, backgroundColor: settings?.header_color || "#1976d2", color: "#fff" }}>Section Description</TableCell>
+                  <TableCell sx={{ fontWeight: "bold", textAlign: "center", border: `2px solid ${borderColor}`, backgroundColor: settings?.header_color || "#1976d2", color: "#fff" }}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {sections.map((section) => (
                   <TableRow key={section.id}>
-                    <TableCell sx={{border: `2px solid ${borderColor}`, }}>{section.id}</TableCell>
-                    <TableCell sx={{border: `2px solid ${borderColor}`, }}>{section.description}</TableCell>
+                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>{section.id}</TableCell>
+                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>{section.description}</TableCell>
+
+                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
+                      <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          sx={{
+                            backgroundColor: "green",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#0f7a0f" },
+                          }}
+                          onClick={() => handleEdit(section)}
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="contained"
+                          size="small"
+                          sx={{
+                            backgroundColor: "#B22222",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#8B1A1A" },
+                          }}
+                          onClick={() => handleDelete(section.id)}
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                    </TableCell>
+
+
+
                   </TableRow>
                 ))}
               </TableBody>
+
             </Table>
           </TableContainer>
         </Paper>

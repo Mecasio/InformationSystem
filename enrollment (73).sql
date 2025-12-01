@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 28, 2025 at 02:18 AM
+-- Generation Time: Dec 01, 2025 at 04:26 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -47,13 +47,13 @@ INSERT INTO `active_school_year_table` (`id`, `year_id`, `semester_id`, `astatus
 (6, 4, 2, 0, 0),
 (8, 12, 2, 0, 0),
 (9, 3, 2, 0, 0),
-(10, 13, 2, 1, 0),
+(10, 13, 2, 0, 0),
 (11, 13, 1, 0, 0),
 (12, 5, 1, 0, 0),
 (13, 5, 2, 0, 0),
 (14, 5, 3, 0, 0),
 (15, 3, 1, 0, 0),
-(16, 10, 1, 0, 0),
+(16, 10, 1, 1, 0),
 (17, 12, 1, 0, 0);
 
 -- --------------------------------------------------------
@@ -69,92 +69,96 @@ CREATE TABLE `course_table` (
   `course_unit` int(11) DEFAULT NULL,
   `lab_unit` int(11) DEFAULT NULL,
   `lec_value` varchar(255) DEFAULT '0',
-  `lab_value` varchar(255) NOT NULL
+  `lab_value` varchar(255) NOT NULL,
+  `office_duty` int(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `course_table`
 --
 
-INSERT INTO `course_table` (`course_id`, `course_code`, `course_description`, `course_unit`, `lab_unit`, `lec_value`, `lab_value`) VALUES
-(1, 'GEREADPH', 'Readings in Philippine History', 3, 0, '100', '0'),
-(2, 'GEUNDETS', 'Understanding the Self', 3, 0, '100', '0'),
-(3, 'GEARTAPP', 'Art Appreciation', 3, 0, '100', '0'),
-(4, 'GEPURPCO', 'Purposive Communication', 3, 0, '100', '0'),
-(5, 'GEKOMFIL', 'Kontekstwalisadong Komunikasyon sa Filipino', 3, 0, '100', '0'),
-(6, 'INTCOMLC', 'Introduction to Computing (Lecture)', 2, 0, '100', '0'),
-(7, 'INTCOMLB', 'Introduction to Computing (Laboratory)', 0, 1, '0', '100'),
-(8, 'FPROGLEC', 'Computer Programming 1 (Lecture)', 2, 0, '100', '0'),
-(9, 'FPROGLAB', 'Computer Programming 1 (Laboratory)', 0, 1, '0', '100'),
-(10, 'GEPEMOVE', 'Movement Enhancement', 2, 0, '100', '0'),
-(11, 'NSTPCTS1', 'National Service Training Program 1', 3, 0, '300', '0'),
-(12, 'GEMATHMW', 'Mathematics in the Modern World', 3, 0, '0', '0'),
-(13, 'GESCIETS', 'Science, Technology and Society', 3, 0, '0', '0'),
-(14, 'GEFILDIS', 'Filipino sa Iba’t-Ibang Disiplina', 3, 0, '0', '0'),
-(15, 'GEPANIPI', 'Panitikan sa Pilipinas', 3, 0, '0', '0'),
-(16, 'IPROGLEC', 'Computer Programming 2 (Lecture)', 2, 0, '0', '0'),
-(17, 'IPROGLAB', 'Computer Programming 2 (Laboratory)', 0, 1, '0', '0'),
-(18, 'DISCMATH', 'Discrete Mathematics', 3, 0, '0', '0'),
-(19, 'DBMSLEC1', 'Database Management System 1 (Lecture)', 2, 0, '0', '0'),
-(20, 'DBMSLAB1', 'Database Management System 1 (Laboratory)', 0, 1, '0', '0'),
-(21, 'GEPEFITE', 'Fitness Exercise', 2, 0, '0', '0'),
-(22, 'NSTPCTS2', 'National Service Training Program 2', 3, 0, '0', '0'),
-(23, 'GEETHICS', 'Ethics', 3, 0, '0', '0'),
-(24, 'DSALGLEC', 'Data Structures and Algorithm 1 (Lecture)', 2, 0, '0', '0'),
-(25, 'DSALGLAB', 'Data Structures and Algorithm 1 (Laboratory)', 0, 1, '0', '0'),
-(26, 'INFMGTLC', 'Information Management (Lecture)', 2, 0, '0', '0'),
-(27, 'INFMGTLB', 'Information Management (Laboratory)', 0, 1, '0', '0'),
-(28, 'PTECHLEC', 'Platform Technologies (Lecture)', 2, 0, '0', '0'),
-(29, 'PTECHLAB', 'Platform Technologies (Laboratory)', 0, 1, '0', '0'),
-(30, 'WEBDVLC1', 'Web Development 1 (Lecture)', 2, 0, '0', '0'),
-(31, 'WEBDVLB1', 'Web Development 1 (Laboratory)', 0, 1, '0', '0'),
-(32, 'BUSANALY', 'Business Analytics', 3, 0, '0', '0'),
-(33, 'GEPEHEF1', 'Physical Activity Towards Health and Fitness 1', 2, 0, '0', '0'),
-(34, 'GEELECCP', 'Communicative Proficiency in Business Writing', 3, 0, '0', '0'),
-(35, 'DBMSLEC2', 'Database Management System 2 (Lecture)', 2, 0, '0', '0'),
-(36, 'DBMSLAB2', 'Database Management System 2 (Laboratory)', 0, 1, '0', '0'),
-(37, 'INTHCILC', 'Introduction to Human-Computer Interaction (Lecture)', 2, 0, '0', '0'),
-(38, 'INTHCILB', 'Introduction to Human-Computer Interaction (Laboratory)', 0, 1, '0', '0'),
-(39, 'NETWKLC1', 'Networking 1 (Lecture)', 2, 0, '0', '0'),
-(40, 'NETWKLB1', 'Networking 1 (Laboratory)', 0, 1, '0', '0'),
-(41, 'WEBDVLC2', 'Web Development 2 (Lecture)', 2, 0, '0', '0'),
-(42, 'WEBDVLB2', 'Web Development 2 (Laboratory)', 0, 1, '0', '0'),
-(43, 'IPATLEC1', 'Integrative Programming and Technologies 1 (Lecture)', 2, 0, '0', '0'),
-(44, 'IPATLAB1', 'Integrative Programming and Technologies 1 (Laboratory)', 0, 1, '0', '0'),
-(45, 'GEPEHEF2', 'Physical Activity Towards Health and Fitness 2', 2, 0, '0', '0'),
-(46, 'GEELECDS', 'Practical Data Science', 3, 0, '0', '0'),
-(47, 'WEBDVLC3', 'Web Development 3 (Lecture)', 2, 0, '0', '0'),
-(48, 'WEBDVLB3', 'Web Development 3 (Laboratory)', 0, 1, '0', '0'),
-(49, 'MMDIALEC', 'Multimedia (Lecture)', 2, 0, '0', '0'),
-(50, 'MMDIALAB', 'Multimedia (Laboratory)', 0, 1, '0', '0'),
-(51, 'SYSARCH1', 'Systems Integration and Architecture 1 (Lecture)', 2, 0, '0', '0'),
-(52, 'SYSARLB1', 'Systems Integration and Architecture 1 (Laboratory)', 0, 1, '0', '0'),
-(53, 'APDEVLEC', 'Application Development and Emerging Tech (Lecture)', 2, 0, '0', '0'),
-(54, 'APDEVLAB', 'Application Development and Emerging Tech (Lab)', 0, 1, '0', '0'),
-(55, 'NETWKLC2', 'Networking 2 (Lecture)', 2, 0, '0', '0'),
-(56, 'NETWKLB2', 'Networking 2 (Laboratory)', 0, 1, '0', '0'),
-(57, 'GELIFEWR', 'Life and Works of Rizal', 3, 0, '0', '0'),
-(58, 'GEELECES', 'Environmental Science', 3, 0, '0', '0'),
-(59, 'QUANMETH', 'Quantitative Methods', 3, 0, '0', '0'),
-(60, 'ITTHESI1', 'Research 1', 3, 0, '0', '0'),
-(61, 'MOBAPLEC', 'Mobile App Development (Lecture)', 2, 0, '0', '0'),
-(62, 'MOBAPLAB', 'Mobile App Development (Laboratory)', 0, 1, '0', '0'),
-(63, 'OOPRGLEC', 'Object-Oriented Programming (Lecture)', 2, 0, '0', '0'),
-(64, 'OOPRGLAB', 'Object-Oriented Programming (Laboratory)', 0, 1, '0', '0'),
-(65, 'IAASLEC1', 'Information Assurance and Security 1 (Lecture)', 2, 0, '0', '0'),
-(66, 'IAASLAB1', 'Information Assurance and Security 1 (Laboratory)', 0, 1, '0', '0'),
-(67, 'GECONTWO', 'Contemporary World', 3, 0, '0', '0'),
-(68, 'SYSARCH2', 'Systems Integration and Architecture 2 (Lecture)', 2, 0, '0', '0'),
-(69, 'SYSARLB2', 'Systems Integration and Architecture 2 (Laboratory)', 0, 1, '0', '0'),
-(70, 'ITTHESI2', 'Research 2 (Lecture)', 2, 0, '0', '0'),
-(71, 'ITTHESL2', 'Research 2 (Laboratory)', 0, 1, '0', '0'),
-(72, 'IAASLEC2', 'Information Assurance and Security 2 (Lecture)', 2, 0, '0', '0'),
-(73, 'IAASLAB2', 'Information Assurance and Security 2 (Laboratory)', 0, 1, '0', '0'),
-(74, 'SYSADMLC', 'Systems Administration and Maintenance (Lecture)', 2, 0, '0', '0'),
-(75, 'SYSADMLB', 'Systems Administration and Maintenance (Laboratory)', 0, 1, '0', '0'),
-(76, 'SPISSUES', 'Social and Professional Issues', 3, 0, '0', '0'),
-(77, 'ITINTERN', 'Practicum / Internship', 10, 0, '0', '0'),
-(78, 'GELIFEWR', 'Life And Work of Rizal', 2, 0, '0', '0');
+INSERT INTO `course_table` (`course_id`, `course_code`, `course_description`, `course_unit`, `lab_unit`, `lec_value`, `lab_value`, `office_duty`) VALUES
+(1, 'GEREADPH', 'Readings in Philippine History', 3, 0, '100', '0', 0),
+(2, 'GEUNDETS', 'Understanding the Self', 3, 0, '100', '0', 0),
+(3, 'GEARTAPP', 'Art Appreciation', 3, 0, '100', '0', 0),
+(4, 'GEPURPCO', 'Purposive Communication', 3, 0, '100', '0', 0),
+(5, 'GEKOMFIL', 'Kontekstwalisadong Komunikasyon sa Filipino', 3, 0, '100', '0', 0),
+(6, 'INTCOMLC', 'Introduction to Computing (Lecture)', 2, 0, '100', '0', 0),
+(7, 'INTCOMLB', 'Introduction to Computing (Laboratory)', 0, 1, '0', '100', 0),
+(8, 'FPROGLEC', 'Computer Programming 1 (Lecture)', 2, 0, '100', '0', 0),
+(9, 'FPROGLAB', 'Computer Programming 1 (Laboratory)', 0, 1, '0', '100', 0),
+(10, 'GEPEMOVE', 'Movement Enhancement', 2, 0, '100', '0', 0),
+(11, 'NSTPCTS1', 'National Service Training Program 1', 3, 0, '300', '0', 0),
+(12, 'GEMATHMW', 'Mathematics in the Modern World', 3, 0, '0', '0', 0),
+(13, 'GESCIETS', 'Science, Technology and Society', 3, 0, '0', '0', 0),
+(14, 'GEFILDIS', 'Filipino sa Iba’t-Ibang Disiplina', 3, 0, '0', '0', 0),
+(15, 'GEPANIPI', 'Panitikan sa Pilipinas', 3, 0, '0', '0', 0),
+(16, 'IPROGLEC', 'Computer Programming 2 (Lecture)', 2, 0, '0', '0', 0),
+(17, 'IPROGLAB', 'Computer Programming 2 (Laboratory)', 0, 1, '0', '0', 0),
+(18, 'DISCMATH', 'Discrete Mathematics', 3, 0, '0', '0', 0),
+(19, 'DBMSLEC1', 'Database Management System 1 (Lecture)', 2, 0, '0', '0', 0),
+(20, 'DBMSLAB1', 'Database Management System 1 (Laboratory)', 0, 1, '0', '0', 0),
+(21, 'GEPEFITE', 'Fitness Exercise', 2, 0, '0', '0', 0),
+(22, 'NSTPCTS2', 'National Service Training Program 2', 3, 0, '0', '0', 0),
+(23, 'GEETHICS', 'Ethics', 3, 0, '0', '0', 0),
+(24, 'DSALGLEC', 'Data Structures and Algorithm 1 (Lecture)', 2, 0, '0', '0', 0),
+(25, 'DSALGLAB', 'Data Structures and Algorithm 1 (Laboratory)', 0, 1, '0', '0', 0),
+(26, 'INFMGTLC', 'Information Management (Lecture)', 2, 0, '0', '0', 0),
+(27, 'INFMGTLB', 'Information Management (Laboratory)', 0, 1, '0', '0', 0),
+(28, 'PTECHLEC', 'Platform Technologies (Lecture)', 2, 0, '0', '0', 0),
+(29, 'PTECHLAB', 'Platform Technologies (Laboratory)', 0, 1, '0', '0', 0),
+(30, 'WEBDVLC1', 'Web Development 1 (Lecture)', 2, 0, '0', '0', 0),
+(31, 'WEBDVLB1', 'Web Development 1 (Laboratory)', 0, 1, '0', '0', 0),
+(32, 'BUSANALY', 'Business Analytics', 3, 0, '0', '0', 0),
+(33, 'GEPEHEF1', 'Physical Activity Towards Health and Fitness 1', 2, 0, '0', '0', 0),
+(34, 'GEELECCP', 'Communicative Proficiency in Business Writing', 3, 0, '0', '0', 0),
+(35, 'DBMSLEC2', 'Database Management System 2 (Lecture)', 2, 0, '0', '0', 0),
+(36, 'DBMSLAB2', 'Database Management System 2 (Laboratory)', 0, 1, '0', '0', 0),
+(37, 'INTHCILC', 'Introduction to Human-Computer Interaction (Lecture)', 2, 0, '0', '0', 0),
+(38, 'INTHCILB', 'Introduction to Human-Computer Interaction (Laboratory)', 0, 1, '0', '0', 0),
+(39, 'NETWKLC1', 'Networking 1 (Lecture)', 2, 0, '0', '0', 0),
+(40, 'NETWKLB1', 'Networking 1 (Laboratory)', 0, 1, '0', '0', 0),
+(41, 'WEBDVLC2', 'Web Development 2 (Lecture)', 2, 0, '0', '0', 0),
+(42, 'WEBDVLB2', 'Web Development 2 (Laboratory)', 0, 1, '0', '0', 0),
+(43, 'IPATLEC1', 'Integrative Programming and Technologies 1 (Lecture)', 2, 0, '0', '0', 0),
+(44, 'IPATLAB1', 'Integrative Programming and Technologies 1 (Laboratory)', 0, 1, '0', '0', 0),
+(45, 'GEPEHEF2', 'Physical Activity Towards Health and Fitness 2', 2, 0, '0', '0', 0),
+(46, 'GEELECDS', 'Practical Data Science', 3, 0, '0', '0', 0),
+(47, 'WEBDVLC3', 'Web Development 3 (Lecture)', 2, 0, '0', '0', 0),
+(48, 'WEBDVLB3', 'Web Development 3 (Laboratory)', 0, 1, '0', '0', 0),
+(49, 'MMDIALEC', 'Multimedia (Lecture)', 2, 0, '0', '0', 0),
+(50, 'MMDIALAB', 'Multimedia (Laboratory)', 0, 1, '0', '0', 0),
+(51, 'SYSARCH1', 'Systems Integration and Architecture 1 (Lecture)', 2, 0, '0', '0', 0),
+(52, 'SYSARLB1', 'Systems Integration and Architecture 1 (Laboratory)', 0, 1, '0', '0', 0),
+(53, 'APDEVLEC', 'Application Development and Emerging Tech (Lecture)', 2, 0, '0', '0', 0),
+(54, 'APDEVLAB', 'Application Development and Emerging Tech (Lab)', 0, 1, '0', '0', 0),
+(55, 'NETWKLC2', 'Networking 2 (Lecture)', 2, 0, '0', '0', 0),
+(56, 'NETWKLB2', 'Networking 2 (Laboratory)', 0, 1, '0', '0', 0),
+(57, 'GELIFEWR', 'Life and Works of Rizal', 3, 0, '0', '0', 0),
+(58, 'GEELECES', 'Environmental Science', 3, 0, '0', '0', 0),
+(59, 'QUANMETH', 'Quantitative Methods', 3, 0, '0', '0', 0),
+(60, 'ITTHESI1', 'Research 1', 3, 0, '0', '0', 0),
+(61, 'MOBAPLEC', 'Mobile App Development (Lecture)', 2, 0, '0', '0', 0),
+(62, 'MOBAPLAB', 'Mobile App Development (Laboratory)', 0, 1, '0', '0', 0),
+(63, 'OOPRGLEC', 'Object-Oriented Programming (Lecture)', 2, 0, '0', '0', 0),
+(64, 'OOPRGLAB', 'Object-Oriented Programming (Laboratory)', 0, 1, '0', '0', 0),
+(65, 'IAASLEC1', 'Information Assurance and Security 1 (Lecture)', 2, 0, '0', '0', 0),
+(66, 'IAASLAB1', 'Information Assurance and Security 1 (Laboratory)', 0, 1, '0', '0', 0),
+(67, 'GECONTWO', 'Contemporary World', 3, 0, '0', '0', 0),
+(68, 'SYSARCH2', 'Systems Integration and Architecture 2 (Lecture)', 2, 0, '0', '0', 0),
+(69, 'SYSARLB2', 'Systems Integration and Architecture 2 (Laboratory)', 0, 1, '0', '0', 0),
+(70, 'ITTHESI2', 'Research 2 (Lecture)', 2, 0, '0', '0', 0),
+(71, 'ITTHESL2', 'Research 2 (Laboratory)', 0, 1, '0', '0', 0),
+(72, 'IAASLEC2', 'Information Assurance and Security 2 (Lecture)', 2, 0, '0', '0', 0),
+(73, 'IAASLAB2', 'Information Assurance and Security 2 (Laboratory)', 0, 1, '0', '0', 0),
+(74, 'SYSADMLC', 'Systems Administration and Maintenance (Lecture)', 2, 0, '0', '0', 0),
+(75, 'SYSADMLB', 'Systems Administration and Maintenance (Laboratory)', 0, 1, '0', '0', 0),
+(76, 'SPISSUES', 'Social and Professional Issues', 3, 0, '0', '0', 0),
+(77, 'ITINTERN', 'Practicum / Internship', 10, 0, '0', '0', 0),
+(78, 'GELIFEWR', 'Life And Work of Rizal', 2, 0, '0', '0', 0),
+(87, 'DESIGNATION', NULL, NULL, NULL, '0', '', 1),
+(88, 'RESEARCH', NULL, NULL, NULL, '0', '', 1),
+(89, 'ACCREDITATION', NULL, NULL, NULL, '0', '', 1);
 
 -- --------------------------------------------------------
 
@@ -432,7 +436,7 @@ CREATE TABLE `dprtmnt_section_table` (
 --
 
 INSERT INTO `dprtmnt_section_table` (`id`, `curriculum_id`, `section_id`, `dsstat`) VALUES
-(1, 1, 1, 0),
+(1, 1, 1, 1),
 (2, 1, 2, 0),
 (3, 1, 3, 0),
 (4, 1, 4, 0),
@@ -1757,23 +1761,6 @@ INSERT INTO `page_access` (`id`, `page_privilege`, `page_id`, `user_id`) VALUES
 (787, 1, 98, '1235678'),
 (788, 1, 99, '1235678'),
 (789, 1, 100, '1235678'),
-(792, 1, 92, '01'),
-(793, 1, 96, '01'),
-(794, 1, 13, '01'),
-(795, 1, 73, '01'),
-(796, 1, 15, '01'),
-(797, 1, 80, '01'),
-(798, 1, 38, '01'),
-(799, 1, 39, '01'),
-(800, 1, 40, '01'),
-(801, 1, 41, '01'),
-(802, 1, 42, '01'),
-(803, 1, 44, '01'),
-(804, 1, 56, '01'),
-(805, 1, 59, '01'),
-(806, 1, 50, '01'),
-(807, 1, 62, '01'),
-(808, 1, 100, '01'),
 (809, 1, 92, '555'),
 (810, 1, 96, '555'),
 (811, 1, 73, '555'),
@@ -1790,24 +1777,6 @@ INSERT INTO `page_access` (`id`, `page_privilege`, `page_id`, `user_id`) VALUES
 (822, 1, 47, '555'),
 (823, 1, 49, '555'),
 (824, 1, 60, '555'),
-(825, 1, 92, '02'),
-(826, 1, 96, '02'),
-(827, 1, 73, '02'),
-(828, 1, 1, '02'),
-(829, 1, 2, '02'),
-(830, 1, 3, '02'),
-(831, 1, 4, '02'),
-(832, 1, 5, '02'),
-(833, 1, 7, '02'),
-(834, 1, 8, '02'),
-(835, 1, 9, '02'),
-(836, 1, 11, '02'),
-(837, 1, 33, '02'),
-(838, 1, 48, '02'),
-(839, 1, 52, '02'),
-(840, 1, 61, '02'),
-(841, 1, 66, '02'),
-(842, 1, 98, '02'),
 (843, 1, 92, '03'),
 (844, 1, 96, '03'),
 (845, 1, 73, '03'),
@@ -1992,25 +1961,62 @@ INSERT INTO `page_access` (`id`, `page_privilege`, `page_id`, `user_id`) VALUES
 (1091, 1, 15, '07'),
 (1092, 1, 107, '07'),
 (1093, 1, 107, '224-06342M'),
-(1094, 1, 108, '02'),
-(1095, 1, 92, '02'),
-(1096, 1, 96, '02'),
-(1097, 1, 73, '02'),
-(1098, 1, 1, '02'),
-(1099, 1, 2, '02'),
-(1100, 1, 3, '02'),
-(1101, 1, 4, '02'),
-(1102, 1, 5, '02'),
-(1103, 1, 7, '02'),
-(1104, 1, 8, '02'),
-(1105, 1, 9, '02'),
-(1106, 1, 11, '02'),
-(1107, 1, 33, '02'),
-(1108, 1, 48, '02'),
-(1109, 1, 52, '02'),
-(1110, 1, 61, '02'),
-(1111, 1, 66, '02'),
-(1112, 1, 98, '02');
+(1114, 1, 103, '02'),
+(1115, 1, 92, '02'),
+(1116, 1, 96, '02'),
+(1117, 1, 73, '02'),
+(1118, 1, 1, '02'),
+(1119, 1, 2, '02'),
+(1120, 1, 3, '02'),
+(1121, 1, 4, '02'),
+(1122, 1, 5, '02'),
+(1123, 1, 7, '02'),
+(1124, 1, 8, '02'),
+(1125, 1, 9, '02'),
+(1126, 1, 11, '02'),
+(1127, 1, 33, '02'),
+(1128, 1, 48, '02'),
+(1129, 1, 52, '02'),
+(1130, 1, 61, '02'),
+(1131, 1, 66, '02'),
+(1132, 1, 98, '02'),
+(1133, 1, 102, '03'),
+(1134, 1, 96, '03'),
+(1135, 1, 73, '03'),
+(1136, 1, 6, '03'),
+(1137, 1, 10, '03'),
+(1138, 1, 12, '03'),
+(1139, 1, 17, '03'),
+(1140, 1, 36, '03'),
+(1141, 1, 37, '03'),
+(1142, 1, 43, '03'),
+(1143, 1, 44, '03'),
+(1144, 1, 45, '03'),
+(1145, 1, 46, '03'),
+(1146, 1, 47, '03'),
+(1147, 1, 49, '03'),
+(1148, 1, 60, '03'),
+(1149, 1, 103, '01'),
+(1150, 1, 92, '01'),
+(1151, 1, 96, '01'),
+(1152, 1, 73, '01'),
+(1168, 1, 80, '01'),
+(1169, 1, 104, '01'),
+(1170, 1, 38, '01'),
+(1171, 1, 39, '01'),
+(1172, 1, 40, '01'),
+(1173, 1, 41, '01'),
+(1174, 1, 42, '01'),
+(1176, 1, 56, '01'),
+(1177, 1, 13, '01'),
+(1178, 1, 50, '01'),
+(1179, 1, 62, '01'),
+(1180, 1, 96, '01'),
+(1181, 1, 92, '01'),
+(1182, 1, 59, '01'),
+(1183, 1, 105, '01'),
+(1184, 1, 15, '01'),
+(1185, 1, 101, '01');
 
 -- --------------------------------------------------------
 
@@ -2135,8 +2141,7 @@ INSERT INTO `page_table` (`id`, `page_description`, `page_group`, `created_at`) 
 (103, 'Admission Officer Dashboard', 'registrar', '2025-11-26 23:29:38'),
 (104, 'Student List', 'registrar', '2025-11-26 23:30:57'),
 (105, 'Grading Evaluation For Registrar', 'registrar', '2025-11-26 23:45:04'),
-(106, 'Submitted Documents', 'registrar', '2025-11-26 23:58:05'),
-(107, 'Registrar Dashboard', 'registrar', '2025-11-27 05:02:30');
+(106, 'Submitted Documents', 'registrar', '2025-11-26 23:58:05');
 
 -- --------------------------------------------------------
 
@@ -2383,7 +2388,7 @@ CREATE TABLE `person_table` (
 --
 
 INSERT INTO `person_table` (`person_id`, `student_number`, `profile_img`, `campus`, `academicProgram`, `classifiedAs`, `applyingAs`, `program`, `program2`, `program3`, `yearLevel`, `last_name`, `first_name`, `middle_name`, `extension`, `nickname`, `height`, `weight`, `lrnNumber`, `nolrnNumber`, `gender`, `pwdMember`, `pwdType`, `pwdId`, `birthOfDate`, `age`, `birthPlace`, `languageDialectSpoken`, `citizenship`, `religion`, `civilStatus`, `tribeEthnicGroup`, `cellphoneNumber`, `emailAddress`, `presentStreet`, `presentBarangay`, `presentZipCode`, `presentRegion`, `presentProvince`, `presentMunicipality`, `presentDswdHouseholdNumber`, `sameAsPresentAddress`, `permanentStreet`, `permanentBarangay`, `permanentZipCode`, `permanentRegion`, `permanentProvince`, `permanentMunicipality`, `permanentDswdHouseholdNumber`, `solo_parent`, `father_deceased`, `father_family_name`, `father_given_name`, `father_middle_name`, `father_ext`, `father_nickname`, `father_education`, `father_education_level`, `father_last_school`, `father_course`, `father_year_graduated`, `father_school_address`, `father_contact`, `father_occupation`, `father_employer`, `father_income`, `father_email`, `mother_deceased`, `mother_family_name`, `mother_given_name`, `mother_middle_name`, `mother_ext`, `mother_nickname`, `mother_education`, `mother_education_level`, `mother_last_school`, `mother_course`, `mother_year_graduated`, `mother_school_address`, `mother_contact`, `mother_occupation`, `mother_employer`, `mother_income`, `mother_email`, `guardian`, `guardian_family_name`, `guardian_given_name`, `guardian_middle_name`, `guardian_ext`, `guardian_nickname`, `guardian_address`, `guardian_contact`, `guardian_email`, `annual_income`, `schoolLevel`, `schoolLastAttended`, `schoolAddress`, `courseProgram`, `honor`, `generalAverage`, `yearGraduated`, `schoolLevel1`, `schoolLastAttended1`, `schoolAddress1`, `courseProgram1`, `honor1`, `generalAverage1`, `yearGraduated1`, `strand`, `cough`, `colds`, `fever`, `asthma`, `faintingSpells`, `heartDisease`, `tuberculosis`, `frequentHeadaches`, `hernia`, `chronicCough`, `headNeckInjury`, `hiv`, `highBloodPressure`, `diabetesMellitus`, `allergies`, `cancer`, `smokingCigarette`, `alcoholDrinking`, `hospitalized`, `hospitalizationDetails`, `medications`, `hadCovid`, `covidDate`, `vaccine1Brand`, `vaccine1Date`, `vaccine2Brand`, `vaccine2Date`, `booster1Brand`, `booster1Date`, `booster2Brand`, `booster2Date`, `chestXray`, `cbc`, `urinalysis`, `otherworkups`, `symptomsToday`, `remarks`, `termsOfAgreement`, `created_at`, `current_step`) VALUES
-(1, '202500001', '2025100001_1by1_2025.jpg', 1, 'Techvoc', 'Returnee', 'ALS Passer', '6', '11', '14', 'First Year', 'Montaño', 'Mark Anthony', 'Placido', NULL, 'Johnny', '5\'11', '65kg', '123456789012', 0, 0, 0, NULL, NULL, '2005-10-23', 20, 'Manila, Philippines', 'Tagalog, English', 'FILIPINO', 'Born Again', 'Single', 'Agta', '09171234567999999', 'markmontano999@gmail.com', '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, 0, 'Doe S', 'Jonathan', 'Smiths', 'III', 'Jon', 1, NULL, NULL, NULL, NULL, NULL, '0918123456', 'Engineer', 'ABC Corp', '50000', 'jon.doe@abc.com', 0, 'Jan', 'Mary', 'Anne', NULL, 'Janey', 1, NULL, NULL, NULL, NULL, NULL, '09221234567', 'Accountant', 'XYZ Corp', '100000', 'jane.doe@xyz.com', 'StepFather', 'Parker', 'Ben', 'Jose', 'IV', 'Benny', '789 Recto Av', '09192233445', NULL, '135,000 to 250,000', 'Senior High School', 'CGEAHS', 'Pasig Citys', 'STEM', 'With Honors', 92.50, 2022, 'Senior High School', 'CGEAHS', 'Rizal High School', 'Rizal High School', '0', 66.00, 0, 'Information and Communications Technology (ICT)', 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 'Wala ngani', 'Vitamins C', 1, '2022-02-11', 'Pfizer', '2022-03-14', 'Pfizer', '2022-04-13', 'Moderna', '2022-07-14', 'Pfizer', '2023-01-14', 'Normal', 'Normal', 'Normal', 'Normal', 1, 'Fit to enroll', 1, '2025-11-08', 1),
+(1, '202500001', '2025100001_1by1_2025.jpg', 1, 'Techvoc', 'Returnee', 'ALS Passer', '6', '11', '14', 'First Year', 'Montaño', 'Mark Anthony', 'Placido', NULL, 'Johnny', '5\'11', '65kg', '123456789012', 0, 0, 0, NULL, NULL, '2005-10-23', 20, 'Manila, Philippines', 'Tagalog, English', 'FILIPINO', 'Born Again', 'Single', 'Agta', '09171234567999999', 'markmontano999@gmail.com', '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, '19 G Dona Yayang Street ', 'Libis', '1000', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'Quezon City', 'DSWD123456', 0, 0, 'Doe Srs', 'Jonathan', 'Smiths', 'III', 'Jon', 1, NULL, NULL, NULL, NULL, NULL, '0918123456', 'Engineer', 'ABC Corp', '50000', 'jon.doe@abc.com', 0, 'Jan', 'Mary', 'Anne', NULL, 'Janey', 1, NULL, NULL, NULL, NULL, NULL, '09221234567', 'Accountant', 'XYZ Corp', '100000', 'jane.doe@xyz.com', 'StepFather', 'Parker', 'Ben', 'Jose', 'IV', 'Benny', '789 Recto Av', '09192233445', NULL, '135,000 to 250,000', 'Senior High School', 'CGEAHS', 'Pasig Citys', 'STEM', 'With Honors', 92.50, 2022, 'Senior High School', 'CGEAHS', 'Rizal High School', 'Rizal High School', '0', 66.00, 0, 'Information and Communications Technology (ICT)', 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 'Wala ngani', 'Vitamins C', 1, '2022-02-11', 'Pfizer', '2022-03-14', 'Pfizer', '2022-04-13', 'Moderna', '2022-07-14', 'Pfizer', '2023-01-14', 'Normal', 'Normal', 'Normal', 'Normal', 1, 'Fit to enroll', 1, '2025-11-08', 1),
 (2, '202500002', '3_1by1_2025.jpg', 1, 'Techvoc', 'Freshman (First Year)', 'Senior High School Graduate', '38', '4', '3', 'Second  Year', 'Emily', 'Johnson', 'Grace', '', 'MARK', '5\'11', '65', '123456789012', 0, 0, 0, '', '', '2003-06-26', 21, 'Manila, Philippines', 'Tagalog, English', 'ALGERIAN', 'Iglesia Ni Cristo', 'Single', 'Cebuano', '09953242510', 'emily.johnson2@example.com', '19 G Dona yayang Street Libis', 'Pag-asa', '4100', 'National Capital Region (NCR)', 'Metro Manila, Second District', 'City Of Mandaluyong', 'DSWD123456', 0, '19 G Dona yayang Street Libis', 'Malipayon', '4100', 'Region X (Northern Mindanao)', 'Bukidnon', 'Pangantucan', 'DSWD123456', 0, 0, '', '', '', '', '', 0, '', '', '', '', '', '', '', '', '', '', 0, '', '', '', '', '', 0, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'fgdsgfasftrasf', '', '', '', 0.00, 0, '', '', '', '', '', 83.00, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '', '', 0, '', '', '', '', '', '', '', '', '', '', '', '', '', 0, '', 0, '2024-12-10', 1),
 (60, NULL, NULL, 0, NULL, NULL, NULL, '31', NULL, NULL, NULL, 'Bell', 'Evelyn', 'Faith', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'evelyn.bell60@example.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 63.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2024-08-09', 1),
 (59, NULL, NULL, 0, NULL, NULL, NULL, '5', NULL, NULL, NULL, 'Morgan', 'Levi', 'Anne', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'levi.morgan59@example.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 99.00, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2023-04-12', 1),
@@ -3469,7 +3474,10 @@ INSERT INTO `person_table` (`person_id`, `student_number`, `profile_img`, `campu
 (2374, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
 (2375, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
 (2376, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
-(2377, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1);
+(2377, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
+(2378, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
+(2379, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
+(2380, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -3534,7 +3542,7 @@ INSERT INTO `prof_table` (`prof_id`, `person_id`, `employee_id`, `profile_image`
 (35, 35, NULL, '', 'Maria Jasmine', NULL, 'Macasil', 'jasmine.macasil@earist.edu.ph', 'MACASIL', 0, 0, 'faculty'),
 (36, 36, NULL, '', 'Jefferson', NULL, 'Costales', 'jefferson.costales@earist.edu.ph', 'COSTALES', 0, 0, 'faculty'),
 (37, 37, NULL, '', 'Arjo', NULL, 'Ladia', 'arjo.ladia@earist.edu.ph', 'LADIA', 0, 0, 'faculty'),
-(38, 38, NULL, '23838_profile_image_2025.webp', 'Mark Anthony', 'Placido', 'Montano', 'markmontano999@gmail.com', '$2b$10$1z0TPyKFo6qtCrVAaA1D4e3qANATLI.pyTLqZinmmT8sF2zMALkDu', 1, 1, 'faculty'),
+(38, 38, NULL, '23838_profile_image_2025.webp', 'Mark Anthony', 'Placido', 'Montano', 'markmontano999@gmail.com', '$2b$10$1z0TPyKFo6qtCrVAaA1D4e3qANATLI.pyTLqZinmmT8sF2zMALkDu', 1, 0, 'faculty'),
 (63, 98, NULL, '98_ProfessorProfile_2025.png', 'Dhani', 'San', 'Jose', 'disanjose@earist.edu.ph', '$2b$10$/XhdvzV/4rugRbZH5gWafenpXBkbuJT2pjsopS85Mj27vDI2ZjFxm', 1, 0, 'faculty'),
 (69, 39, NULL, '39_ProfessorProfile_2025.jpg', 'Jona', 'Descuatan', 'Arcaño', 'jonalane@gmail.com', '$2b$10$XvcQqYNh52ENCzxAtCTI1e6QsCexyw7VsT0ine2LNlGPLp/xTH1oS', 1, 0, 'faculty');
 
@@ -3713,11 +3721,32 @@ INSERT INTO `program_tagging_table` (`program_tagging_id`, `curriculum_id`, `yea
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `question_category_table`
+--
+
+CREATE TABLE `question_category_table` (
+  `id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `question_category_table`
+--
+
+INSERT INTO `question_category_table` (`id`, `title`, `description`) VALUES
+(1, 'Management of Teaching and Learning', 'Management of Teaching and Learning refers to the intentional and organized handling of classroom presence, clear communication of academic expectations, efficient use of time, and the purposeful use of student-centered activities that promote critical thinking, independent learning, reflection, decision-making, and continuous academic improvement through constructive feedback'),
+(2, 'Content Knowledge, Pedagogy and Technology', 'Content Knowledge, Pedagogy, and Technology refer to a teacher\'s ability to demonstrate a strong grasp of subject matter, present complex concepts in a clear and accessible way, relate content to real-world contexts and current developments, engage students through appropriate instructional strategies and digital tools, and apply assessment  methods aligned with intending learning outcomes');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `question_table`
 --
 
 CREATE TABLE `question_table` (
   `id` int(11) NOT NULL,
+  `category` int(11) NOT NULL,
   `question_description` varchar(255) NOT NULL,
   `first_choice` varchar(255) NOT NULL,
   `second_choice` varchar(255) NOT NULL,
@@ -3730,15 +3759,23 @@ CREATE TABLE `question_table` (
 -- Dumping data for table `question_table`
 --
 
-INSERT INTO `question_table` (`id`, `question_description`, `first_choice`, `second_choice`, `third_choice`, `fourth_choice`, `fifth_choice`) VALUES
-(7, 'Is prof good?', '1', '2', '3', '4', '5'),
-(8, 'Is prof alright?', '1', '2', '3', '4', '5'),
-(9, 'Is prof nice?', '1', '2', '3', '4', '5'),
-(10, 'The instructor uses examples or demonstrations that help me learn.', '1', '2', '3', '4', '5'),
-(11, 'The instructor explains concepts clearly and in an understandable manne', '1', '2', '3', '4', '5'),
-(12, 'The instructor is knowledgeable about the course content.', '1', '2', '3', '4', '5'),
-(13, 'The instructor provides feedback that helps me improve.', '1', '2', '3', '4', '5'),
-(14, 'The instructor encourages students to ask questions and participate.', '1', '2', '3', '4', '5');
+INSERT INTO `question_table` (`id`, `category`, `question_description`, `first_choice`, `second_choice`, `third_choice`, `fourth_choice`, `fifth_choice`) VALUES
+(7, 1, 'Comes to class on time', '5', '4', '3', '2', '1'),
+(8, 1, 'Explains learning outcomes, expectations, grading system, and various requirements of the subjetc/course.', '5', '4', '3', '2', '1'),
+(9, 1, 'Maximizes the allocated time/learning hours effectively.', '5', '4', '3', '2', '1'),
+(10, 2, 'The instructor uses examples or demonstrations that help me learn.', '1', '2', '3', '4', '5'),
+(11, 2, 'The instructor explains concepts clearly and in an understandable manne', '1', '2', '3', '4', '5'),
+(12, 2, 'The instructor is knowledgeable about the course content.', '1', '2', '3', '4', '5'),
+(13, 2, 'The instructor provides feedback that helps me improve.', '1', '2', '3', '4', '5'),
+(14, 2, 'The instructor encourages students to ask questions and participate.', '1', '2', '3', '4', '5'),
+(15, 1, 'Facilitates students to think critically and creatively by providing appropriate learning activities', '5', '4', '3', '2', '1'),
+(16, 1, 'Guides students to learn on their own, reflect on new ideas and experiences, and make decisions in accomplishing given tasks', '5', '4', '3', '2', '1'),
+(17, 1, 'Communicates constructive feedback to students for their academic growth', '5', '4', '3', '2', '1'),
+(18, 2, 'Demonstrate extensive and broad knowledge of the subject/course', '5', '4', '3', '2', '1'),
+(19, 2, 'Simplifies complex ideas in the lesson for ease of understanding', '5', '4', '3', '2', '1'),
+(20, 2, 'Relates the subject matter to the contemporary issues and developments in the discipline and/or  daily life activities', '5', '4', '3', '2', '1'),
+(21, 2, 'Promotes active learning and student engagement by using appropriate teaching and learning resources including ICT tools and platforms', '5', '4', '3', '2', '1'),
+(22, 2, 'Uses appropriate assessments  (projects, exams, quizzes, assignments, etc.) aligned with the learning outcomes', '5', '4', '3', '2', '1');
 
 -- --------------------------------------------------------
 
@@ -5767,14 +5804,9 @@ INSERT INTO `user_accounts` (`id`, `person_id`, `employee_id`, `profile_picture`
 (103, 327, NULL, NULL, 'student', NULL, NULL, NULL, 'adasdsda@gmail.com', '$2b$10$i1EM1VDhoVFFDpvr8C0Mjuh1gK3NxXWXf9kFkhNmXTvF4wM7aJkcG', NULL, NULL, 1),
 (104, 357, NULL, NULL, 'student', NULL, NULL, NULL, 'montano.ma.bsinfotech@gmail.com', '$2b$10$yiryW7ccu.imdtTk05cxVegc3DTuHlHkvN2Ofc.YNG7oWUUYdsF0G', NULL, NULL, 1),
 (105, 312, NULL, NULL, 'student', NULL, NULL, NULL, 'aira@gmail.com', '$2b$10$CHqmzAJyLIJfsnZl0Mvu6.aXXBdBTKaQYz9aAyJj02BdIEUyVpD1i', NULL, 1, 1),
-(106, 2367, '01', NULL, 'registrar', 'Reynolds', 'James', 'Alexander', 'registrar@gmail.com', '$2b$10$1u10r0Z6gGT9rBfeqWMtBuj7gLYoSpdXyF6fSYrme2xptbGuy1qMC', 1, 1, 0),
-(108, 2369, '03', NULL, 'clinic', 'Mitchell', 'Allan', 'David', 'clinic@gmail.com', '$2b$10$gDU2ynoJVJAm04Xq2EGMh.pXaHMV3URmTXVMJc6hla/OmTUz4iU.W', 1, NULL, 0),
-(110, 2371, '05', NULL, 'superadmin', 'Bennett', 'Thomas', 'Gabriel', 'superadmin@gmail.com', '$2b$10$mjnTqfyhYduSybVlwBctFOL9tl1xgh5EB4bR5bsxC/Uro5DkmHulu', 1, NULL, 0),
-(111, 2372, '04', NULL, 'enrollment', 'Hughes', 'Michael', 'Ethan', 'enrollment@gmail.com', '$2b$10$Tf5i7gYvd8hbUKbaF2SXI.NmHGxX937JI76vdbJkONwaaFQldA/kW', 1, NULL, 0),
-(113, 2374, '06', NULL, 'enrollment', 'Velasco', 'Placido', 'Camille', 'enrollment1@gmail.com', '$2b$10$UAxd/pyHuKfGW0exp8A6.erGmuQ7C75CbbUfHrHRS6G7YNJcoiMYK', 1, NULL, 0),
-(114, 2375, '07', NULL, 'registrar', 'Montano', 'Placido', 'Mark Anthony', 'registrar1@gmail.com', '$2b$10$vbE6bqGUrjOQIqGSmapCUuyAePSxesAkiDpPZDkcc9xOhB434ISMe', 1, NULL, 0),
-(115, 2376, '02', '02_profile_image_2025.jpeg', 'admission', 'Jules', 'B', 'Besagas', 'admission@gmail.com', '$2b$10$qfMeV.gDSpg7IkHTmhV9eORDbN1XAtxlUx6EOGYq8H27d4LZcN5SG', 1, NULL, 0),
-(116, 2377, '08', NULL, 'admission', 'PENDUCO', 'JUAN', 'PEDRO', 'admission1@gmail.com', '$2b$10$mSLhQE1ygfFtYbuUYxpSpeorQ1qPbyNSwmlxQkFZyTBJBlpFfwGm6', 1, NULL, 0);
+(117, 2378, '02', '02_profile_image_1764297622694.jpeg', 'registrar', 'Montano', 'Placido', 'Mark Anthony', 'admission@gmail.com', '$2b$10$4VBSTG8iq1XXA0OWSOrNjetqQfEQJ3B5FdY5PEZvTrMAFTImKD6oa', 1, NULL, 0),
+(118, 2379, '03', NULL, 'registrar', 'Montano', 'Placido', 'Mark Anthony', 'enrollment@gmail.com', '$2b$10$9M.YxfgT0VWXOVH6dLc6geJIUDwtzDE5Y9erj9a8vap.BQ6X.zgda', 1, 2, 0),
+(119, 2380, '01', NULL, 'registrar', 'Montano', 'Placido', 'Mark Anthony', 'registrar@gmail.com', '$2b$10$dxbXlplMJNlwMlb3ONemme5mHRwvUHrOuVRGTKrnEbmYTc78Pzpue', 1, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -5974,6 +6006,12 @@ ALTER TABLE `program_tagging_table`
   ADD PRIMARY KEY (`program_tagging_id`);
 
 --
+-- Indexes for table `question_category_table`
+--
+ALTER TABLE `question_category_table`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `question_table`
 --
 ALTER TABLE `question_table`
@@ -6107,7 +6145,7 @@ ALTER TABLE `active_school_year_table`
 -- AUTO_INCREMENT for table `course_table`
 --
 ALTER TABLE `course_table`
-  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=87;
+  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
 
 --
 -- AUTO_INCREMENT for table `curriculum_table`
@@ -6173,7 +6211,7 @@ ALTER TABLE `medical_requirements`
 -- AUTO_INCREMENT for table `page_access`
 --
 ALTER TABLE `page_access`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1113;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1186;
 
 --
 -- AUTO_INCREMENT for table `period_status`
@@ -6197,7 +6235,7 @@ ALTER TABLE `person_status_table`
 -- AUTO_INCREMENT for table `person_table`
 --
 ALTER TABLE `person_table`
-  MODIFY `person_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2378;
+  MODIFY `person_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2381;
 
 --
 -- AUTO_INCREMENT for table `prof_table`
@@ -6218,10 +6256,16 @@ ALTER TABLE `program_tagging_table`
   MODIFY `program_tagging_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
+-- AUTO_INCREMENT for table `question_category_table`
+--
+ALTER TABLE `question_category_table`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `question_table`
 --
 ALTER TABLE `question_table`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `requirements_table`
@@ -6323,7 +6367,7 @@ ALTER TABLE `unifast`
 -- AUTO_INCREMENT for table `user_accounts`
 --
 ALTER TABLE `user_accounts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=120;
 
 --
 -- AUTO_INCREMENT for table `year_level_table`

@@ -131,7 +131,6 @@ const checkAccess = async (employeeID) => {
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedProf, setSelectedProf] = useState("");
-  const [selectedRoom2, setSelectedRoom2] = useState("");
   const [selectedProgram, setSelectedProgram] = useState("");
   const [value, setValue] = useState("");
   const [message, setMessage] = useState("");
@@ -145,6 +144,7 @@ const checkAccess = async (employeeID) => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openDialogue, setOpenDialogue] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [isDesignationMode, setIsDesignationMode] = useState(false);
   const { dprtmnt_id } = useParams();
 
   const fetchRoom = async () => {
@@ -162,6 +162,15 @@ const checkAccess = async (employeeID) => {
     try {
       const response = await axios.get(`${API_BASE_URL}/course_list`);
       setCourseList(response.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchDesignationList = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/designation_list`);
+      setCourseList(response.data); // reusing courseList but content changes
     } catch (error) {
       console.log(error);
     }
@@ -215,7 +224,7 @@ const checkAccess = async (employeeID) => {
   const fetchSchedule = async () => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/api/get/all_schedule/${selectedRoom2}`
+        `${API_BASE_URL}/api/get/all_schedule/${selectedRoom}`
       );
       setSchedule(response.data);
     } catch (error) {
@@ -251,16 +260,16 @@ const checkAccess = async (employeeID) => {
   }, []);
 
   useEffect(() => {
-    if (roomList.length > 0 && !selectedRoom2) {
-      setSelectedRoom2(roomList[0].room_id);
+    if (roomList.length > 0 && !selectedRoom) {
+      setSelectedRoom(roomList[0].room_id);
     }
   }, [roomList]);
 
   useEffect(() => {
-    if (selectedRoom2) {
+    if (selectedRoom) {
       fetchSchedule();
     }
-  }, [selectedRoom2]);
+  }, [selectedRoom]);
 
   useEffect(() => {
     if (schoolYearList.length > 0) {
@@ -432,6 +441,50 @@ const checkAccess = async (employeeID) => {
     setOpenSnackbar(false);
   };
 
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+
+    if (modifier) {
+        if (modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+    }
+
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    let displayHours = hours % 12;
+    if (displayHours === 0) displayHours = 12;
+
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
+
+    const getDayScheduleRange = (day) => {
+        const daySchedules = schedule.filter(entry => entry.day_description.toUpperCase() === day.toUpperCase());
+        if (!daySchedules.length) return "";
+        
+        const parseTime = (timeStr) => {
+        if (!timeStr) return 0;
+        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+        if (!match) return 0;
+        let [_, h, m, mod] = match;
+        let hours = Number(h);
+        const minutes = Number(m);
+        if (mod?.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (mod?.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        return hours * 60 + minutes;
+        };
+
+        const earliest = daySchedules.reduce((min, curr) => {
+            return parseTime(curr.school_time_start) < parseTime(min) ? curr.school_time_start : min;
+        }, daySchedules[0].school_time_start);
+
+        const latest = daySchedules.reduce((max, curr) => {
+            return parseTime(curr.school_time_end) > parseTime(max) ? curr.school_time_end : max;
+        }, daySchedules[0].school_time_end);
+
+        return `${formatTime(earliest)} - ${formatTime(latest)}`;
+    };
+
   const isTimeInSchedule = (start, end, day) => {
     const parseTime = (timeStr) => {
       // Converts "5:00 PM" into a Date object
@@ -449,6 +502,48 @@ const checkAccess = async (employeeID) => {
       return slotStart >= schedStart && slotEnd <= schedEnd;
     });
   };
+
+  const officeDutyConversionColor = (course_code) => {
+        if (!course_code) return "";
+
+        // STEP 2: Normalize the course code
+        const normalized = course_code
+            .toUpperCase()
+            .replace(/[^A-Z]/g, "");   // remove spaces, numbers, special characters
+
+        // STEP 3 + 4: Match to category and return color
+        if (normalized === "DESIGNATION") return "#99ccff";
+
+        if (
+            ["RESEARCH", "PRODUCTION", "EXTENSION", "ACCREDITATION"].includes(normalized)
+        ) {
+            return "#ccffcc";
+        }
+
+        if (normalized === "CONSULTATION") return "#fde5d6";
+
+        if (normalized === "LESSONPREPARATION") return "#f7caac";
+
+        return ""; // default if unmatched
+    };
+
+    const getDutyColor = (start, day) => {
+        const parseTime = (t) => new Date(`1970-01-01 ${t}`);
+        const slotStart = parseTime(start);
+
+        for (const entry of schedule) {
+            if (entry.day_description !== day) continue;
+
+            const schedStart = parseTime(entry.school_time_start);
+            const schedEnd = parseTime(entry.school_time_end);
+
+            if (slotStart >= schedStart && slotStart < schedEnd) {
+                return officeDutyConversionColor(entry.course_code);
+            }
+        }
+
+        return ""; // no color
+    };  
 
   const hasAdjacentSchedule = (start, end, day, direction = "top") => {
     const parseTime = (timeStr) => new Date(`1970-01-01 ${timeStr}`);
@@ -501,7 +596,10 @@ const checkAccess = async (employeeID) => {
           <span className="block truncate">
             {entry.room_description === "TBA"
               ? "TBA"
-              : `${entry.program_code} - ${entry.section_description}`}
+              : (!entry.program_code && !entry.section_description)
+                  ? entry.room_description
+                  : `${entry.program_code} - ${entry.section_description}`
+            }
           </span>
           <span className="block truncate">
             {entry.prof_lastname === "TBA"
@@ -628,20 +726,26 @@ const checkAccess = async (employeeID) => {
       <Box sx={{ display: "flex", gap: "1rem" }}>
         <Box>
           <Box sx={{ display: "flex", gap: "1rem", marginTop: "1.3rem" }}>
-            <FormControl fullWidth>
-              <InputLabel>Room</InputLabel>
-              <Select
-                label="Room"
-                value={selectedRoom2}
-                onChange={(e) => setSelectedRoom2(e.target.value)}
-              >
-                {roomList.map((room) => (
-                  <MenuItem key={room.room_id} value={room.room_id}>
-                    {room.room_description}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Button className="hover:bg-[#000000] text-white px-6 py-2 rounded">
+              Print Room Schedule
+            </Button>
+            <Button
+              className="hover:bg-[#000000] text-white px-6 py-2 rounded"
+              onClick={() => {
+                const newMode = !isDesignationMode;
+                setIsDesignationMode(newMode);
+
+                if (newMode) {
+                  // switched FROM regular → designation
+                  fetchDesignationList();
+                } else {
+                  // switched FROM designation → regular
+                  fetchCourseList();
+                }
+              }}
+            >
+              {isDesignationMode ? "Assign Regular Load" : "Assign Designation"}
+            </Button>
           </Box>
           <form
             onSubmit={handleInsert}
@@ -675,13 +779,14 @@ const checkAccess = async (employeeID) => {
             </div>
 
             {/* Section */}
+          {!isDesignationMode && (
             <div className="flex mb-2">
               <div className="p-2 w-[12rem]">Section:</div>
               <select
                 className="border border-gray-500 outline-none rounded w-full"
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
-                required
+                required={!isDesignationMode}
               >
                 <option value="">Select Section</option>
                 {sectionList.map((section) => (
@@ -694,7 +799,7 @@ const checkAccess = async (employeeID) => {
                 ))}
               </select>
             </div>
-
+          )}
             {/* Room */}
             <div className="flex mb-2">
               <div className="p-2 w-[12rem]">Room:</div>
@@ -715,14 +820,16 @@ const checkAccess = async (employeeID) => {
 
             {/* Course */}
             <div className="flex mb-2">
-              <div className="p-2 w-[12rem]">Course:</div>
+              <div className="p-2 w-[12rem]">
+                {isDesignationMode ? "Designation:" : "Course:"}
+              </div>
               <select
                 className="border border-gray-500 outline-none rounded w-full"
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
                 required
               >
-                <option value="">Select Course</option>
+                <option value="">{isDesignationMode ? "Select Designation" : "Select Course"}</option>
                 {courseList.map((subject) => (
                   <option key={subject.course_id} value={subject.course_id}>
                     {subject.course_code} - {subject.course_description}
@@ -807,815 +914,1101 @@ const checkAccess = async (employeeID) => {
           </form>
         </Box>
         <table className="mt-[0.7rem]">
-          <thead className="">
-            <tr className="flex align-center">
-              <td className="min-w-[6.5rem] min-h-[2.2rem] flex items-center justify-center border border-black text-[14px] ">
-                TIME
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[6.6rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  DAY
-                </div>
-                <p className="min-w-[6.6rem] text-center border border-black border-l-0 text-[11.5px] font-bold mt-[-3px]">
-                  Official Time
-                </p>
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  MONDAY
-                </div>
-                <p className="min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
-                  7:00AM - 9:00PM
-                </p>
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  TUESDAY
-                </div>
-                <p className="min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
-                  7:00AM - 9:00PM
-                </p>
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[7rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  WEDNESDAY
-                </div>
-                <p className="min-w-[7rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
-                  7:00AM - 9:00PM
-                </p>
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[6.9rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  THURSDAY
-                </div>
-                <p className="min-w-[6.9rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
-                  7:00AM - 9:00PM
-                </p>
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  FRIDAY
-                </div>
-                <p className="min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
-                  7:00AM - 9:00PM
-                </p>
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  SATUDAY
-                </div>
-                <p className="min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
-                  7:00AM - 9:00PM
-                </p>
-              </td>
-              <td className="p-0 m-0">
-                <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
-                  SUNDAY
-                </div>
-                <p className="min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
-                  7:00AM - 9:00PM
-                </p>
-              </td>
-            </tr>
-          </thead>
-          <tbody className="flex flex-col mt-[-0.1px]">
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  07:00 AM - 08:00 AM
-                </div>
-              </td>
+                            <thead className="bg-[#c0c0c0]">
+                                <tr className="flex align-center">
+                                <td className="min-w-[6.5rem] min-h-[2.2rem] flex items-center justify-center border border-black text-[14px] ">
+                                    TIME
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[6.6rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    DAY
+                                    </div>
+                                    <p className="min-w-[6.6rem] text-center border border-black border-l-0 text-[11.5px] font-bold mt-[-3px]">
+                                    Official Time
+                                    </p>
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    MONDAY
+                                    </div>
+                                    <p className="h-[20px] min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
+                                   {getDayScheduleRange('MON')}
+                                    </p>
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    TUESDAY
+                                    </div>
+                                    <p className="h-[20px] min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
+                                    {getDayScheduleRange('TUE')}
+                                    </p>
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[7rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    WEDNESDAY
+                                    </div>
+                                    <p className="h-[20px] min-w-[7rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
+                                    {getDayScheduleRange('WED')}
+                                    </p>
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[6.9rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    THURSDAY
+                                    </div>
+                                    <p className="h-[20px] min-w-[6.9rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
+                                    {getDayScheduleRange('THU')}
+                                    </p>
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    FRIDAY
+                                    </div>
+                                    <p className="h-[20px] min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
+                                    {getDayScheduleRange('FRI')}
+                                    </p>
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    SATUDAY
+                                    </div>
+                                    <p className="h-[20px] min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
+                                    {getDayScheduleRange('SAT')}
+                                    </p>
+                                </td>
+                                <td className="p-0 m-0">
+                                    <div className="min-w-[6.8rem] text-center border border-black border-l-0 border-b-0 text-[14px]">
+                                    SUNDAY
+                                    </div>
+                                    <p className="h-[20px] min-w-[6.8rem] text-center border border-black border-l-0 text-[11.5px] mt-[-3px]">
+                                    {getDayScheduleRange('SUN')}
+                                    </p>
+                                </td>
+                                </tr>
+                            </thead>
+                            <tbody className="flex flex-col mt-[-0.1px]">
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="bg-[#eaeaea] h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    07:00 AM - 08:00 AM
+                                    </div>
+                                </td>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("7:00 AM", "8:00 AM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("7:00 AM", "8:00 AM", day) &&
-                      hasAdjacentSchedule("7:00 AM", "8:00 AM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("7:00 AM", "8:00 AM", day) &&
-                      hasAdjacentSchedule(
-                        "7:00 AM",
-                        "8:00 AM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("7:00 AM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("7:00 AM", "7:30 AM", day)
+                                            ? (getDutyColor("7:00 AM", day) || "rgb(253 224 71)")
+                                            : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("7:00 AM", "7:30 AM", day) &&
+                                                hasAdjacentSchedule("7:00 AM", "7:30 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("7:00 AM", "7:30 AM", day) &&
+                                                hasAdjacentSchedule("7:00 AM", "7:30 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("7:00 AM", day)}
+                                        </div>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  08:00 AM - 09:00 AM
-                </div>
-              </td>
+                                        <div
+                                            style={{
+                                                borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("7:30 AM", "8:00 AM", day)
+                                            ? (getDutyColor("7:30 AM", day) || "rgb(253 224 71)")
+                                            : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("7:30 AM", "8:00 AM", day) &&
+                                                hasAdjacentSchedule("7:30 AM", "8:00 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("7:30 AM", "8:00 AM", day) &&
+                                                hasAdjacentSchedule("7:30 AM", "8:00 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("7:30 AM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("8:00 AM", "9:00 AM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("8:00 AM", "9:00 AM", day) &&
-                      hasAdjacentSchedule("8:00 AM", "9:00 AM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("8:00 AM", "9:00 AM", day) &&
-                      hasAdjacentSchedule(
-                        "8:00 AM",
-                        "9:00 AM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("8:00 AM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    08:00 AM - 09:00 AM
+                                    </div>
+                                </td>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  09:00 AM - 10:00 AM
-                </div>
-              </td>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("8:00 AM", "8:30 AM", day)
+                                            ? (getDutyColor("8:00 AM", day) || "rgb(253 224 71)")
+                                            : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("8:00 AM", "8:30 AM", day) &&
+                                                hasAdjacentSchedule("8:00 AM", "8:30 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("8:00 AM", "8:30 AM", day) &&
+                                                hasAdjacentSchedule("8:00 AM", "8:30 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("8:00 AM", day)}
+                                        </div>
+                                        <div
+                                            style={{
+                                                borderTop: "none", 
+                                                backgroundColor: isTimeInSchedule("8:30 AM", "9:00 AM", day)
+                                                ? (getDutyColor("8:30 AM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("8:30 AM", "9:00 AM", day) &&
+                                                hasAdjacentSchedule("8:30 AM", "9:00 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("8:30 AM", "9:00 AM", day) &&
+                                                hasAdjacentSchedule("8:30 AM", "9:00 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("8:30 AM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("9:00 AM", "10:00 AM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("9:00 AM", "10:00 AM", day) &&
-                      hasAdjacentSchedule("9:00 AM", "10:00 AM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("9:00 AM", "10:00 AM", day) &&
-                      hasAdjacentSchedule(
-                        "9:00 AM",
-                        "10:00 AM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("9:00 AM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    09:00 AM - 10:00 AM
+                                    </div>
+                                </td>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  10:00 AM - 11:00 AM
-                </div>
-              </td>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("9:00 AM", "9:30 AM", day)
+                                                ? (getDutyColor("9:00 AM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("9:00 AM", "9:30 AM", day) &&
+                                                hasAdjacentSchedule("9:00 AM", "9:30 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("9:00 AM", "9:30 AM", day) &&
+                                                hasAdjacentSchedule("9:00 AM", "9:30 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("9:00 AM", day)}
+                                        </div>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("10:00 AM", "11:00 AM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("10:00 AM", "11:00 AM", day) &&
-                      hasAdjacentSchedule(
-                        "10:00 AM",
-                        "11:00 AM",
-                        day,
-                        "top"
-                      ) === "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("10:00 AM", "11:00 AM", day) &&
-                      hasAdjacentSchedule(
-                        "10:00 AM",
-                        "11:00 AM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("10:00 AM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                        <div
+                                            style={{borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("9:30 AM", "10:00 AM", day)
+                                                ? (getDutyColor("9:30 AM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("9:30 AM", "10:00 AM", day) &&
+                                                hasAdjacentSchedule("9:30 AM", "10:00 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("9:30 AM", "10:00 AM", day) &&
+                                                hasAdjacentSchedule("9:30 AM", "10:00 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("9:30 AM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  11:00 AM - 12:00 PM
-                </div>
-              </td>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    10:00 AM - 11:00 AM
+                                    </div>
+                                </td>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("11:00 AM", "12:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("11:00 AM", "12:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "11:00 AM",
-                        "12:00 PM",
-                        day,
-                        "top"
-                      ) === "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("11:00 AM", "12:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "11:00 AM",
-                        "12:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("11:00 AM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("10:00 AM", "10:30 AM", day)
+                                                ? (getDutyColor("10:00 AM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("10:00 AM", "10:30 AM", day) &&
+                                                hasAdjacentSchedule("10:00 AM", "10:30 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("10:00 AM", "10:30 AM", day) &&
+                                                hasAdjacentSchedule("10:00 AM", "10:30 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("10:00 AM", day)}
+                                        </div>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  12:00 PM - 01:00 PM
-                </div>
-              </td>
+                                        <div
+                                            style={{borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("10:30 AM", "11:00 AM", day)
+                                                ? (getDutyColor("10:30 AM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("10:30 AM", "11:00 AM", day) &&
+                                                hasAdjacentSchedule("10:30 AM", "11:00 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("10:30 AM", "11:00 AM", day) &&
+                                                hasAdjacentSchedule("10:30 AM", "11:00 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("10:30 AM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("12:00 PM", "1:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("12:00 PM", "1:00 PM", day) &&
-                      hasAdjacentSchedule("12:00 PM", "1:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("12:00 PM", "1:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "12:00 PM",
-                        "1:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("12:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    11:00 AM - 12:00 PM
+                                    </div>
+                                </td>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  01:00 PM - 02:00 PM
-                </div>
-              </td>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("11:00 AM", "11:30 AM", day)
+                                                ? (getDutyColor("11:00 AM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("11:00 AM", "11:30 AM", day) &&
+                                                hasAdjacentSchedule("11:00 AM", "11:30 AM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("11:00 AM", "11:30 AM", day) &&
+                                                hasAdjacentSchedule("11:00 AM", "11:30 AM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("11:00 AM", day)}
+                                        </div>
+                                        <div
+                                            style={{borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("11:30 AM", "12:00 PM", day)
+                                                ? (getDutyColor("11:30 AM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("11:30 AM", "12:00 PM", day) &&
+                                                hasAdjacentSchedule("11:30 AM", "12:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("11:30 AM", "12:00 PM", day) &&
+                                                hasAdjacentSchedule("11:30 AM", "12:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("11:30 AM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("1:00 PM", "2:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("1:00 PM", "2:00 PM", day) &&
-                      hasAdjacentSchedule("1:00 PM", "2:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("1:00 PM", "2:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "1:00 PM",
-                        "2:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("1:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    12:00 PM - 01:00 PM
+                                    </div>
+                                </td>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  02:00 PM - 03:00 PM
-                </div>
-              </td>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("12:00 PM", "12:30 PM", day)
+                                                ? (getDutyColor("12:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("12:00 PM", "12:30 PM", day) &&
+                                                hasAdjacentSchedule("12:00 PM", "12:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("12:00 PM", "12:30 PM", day) &&
+                                                hasAdjacentSchedule("12:00 PM", "12:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("12:00 PM", day)}
+                                        </div>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("2:00 PM", "3:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("2:00 PM", "3:00 PM", day) &&
-                      hasAdjacentSchedule("2:00 PM", "3:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("2:00 PM", "3:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "2:00 PM",
-                        "3:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("2:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                        <div
+                                            style={{borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("12:30 PM", "1:00 PM", day)
+                                                ? (getDutyColor("12:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("12:30 PM", "1:00 PM", day) &&
+                                                hasAdjacentSchedule("12:30 PM", "1:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("12:30 PM", "1:00 PM", day) &&
+                                                hasAdjacentSchedule("12:30 PM", "1:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("12:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  03:00 PM - 04:00 PM
-                </div>
-              </td>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] border bg-[#eaeaea] border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    01:00 PM - 02:00 PM
+                                    </div>
+                                </td>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("3:00 PM", "4:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("3:00 PM", "4:00 PM", day) &&
-                      hasAdjacentSchedule("3:00 PM", "4:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("3:00 PM", "4:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "3:00 PM",
-                        "4:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("3:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("1:00 PM", "1:30 PM", day)
+                                                ? (getDutyColor("1:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }} 
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("1:00 PM", "1:30 PM", day) &&
+                                                hasAdjacentSchedule("1:00 PM", "1:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("1:00 PM", "1:30 PM", day) &&
+                                                hasAdjacentSchedule("1:00 PM", "1:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("1:00 PM", day)}
+                                        </div>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  04:00 PM - 05:00 PM
-                </div>
-              </td>
+                                        <div
+                                            style={{borderTop: "none", 
+                                                backgroundColor: isTimeInSchedule("1:30 PM", "2:00 PM", day)
+                                                ? (getDutyColor("1:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("1:30 PM", "2:00 PM", day) &&
+                                                hasAdjacentSchedule("1:30 PM", "2:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("1:30 PM", "2:00 PM", day) &&
+                                                hasAdjacentSchedule("1:30 PM", "2:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("1:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("4:00 PM", "5:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("4:00 PM", "5:00 PM", day) &&
-                      hasAdjacentSchedule("4:00 PM", "5:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("4:00 PM", "5:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "4:00 PM",
-                        "5:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("4:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    02:00 PM - 03:00 PM
+                                    </div>
+                                </td>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  05:00 PM - 06:00 PM
-                </div>
-              </td>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("2:00 PM", "2:30 PM", day)
+                                                ? (getDutyColor("2:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("2:00 PM", "2:30 PM", day) &&
+                                                hasAdjacentSchedule("2:00 PM", "2:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("2:00 PM", "2:30 PM", day) &&
+                                                hasAdjacentSchedule("2:00 PM", "2:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("2:00 PM", day)}
+                                        </div>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("5:00 PM", "6:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("5:00 PM", "6:00 PM", day) &&
-                      hasAdjacentSchedule("5:00 PM", "6:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("5:00 PM", "6:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "5:00 PM",
-                        "6:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("5:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                        <div
+                                            style={{borderTop: "none", 
+                                                backgroundColor: isTimeInSchedule("2:30 PM", "3:00 PM", day)
+                                                ? (getDutyColor("2:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("2:30 PM", "3:00 PM", day) &&
+                                                hasAdjacentSchedule("2:30 PM", "3:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("2:30 PM", "3:00 PM", day) &&
+                                                hasAdjacentSchedule("2:30 PM", "3:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("2:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  06:00 PM - 07:00 PM
-                </div>
-              </td>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    03:00 PM - 04:00 PM
+                                    </div>
+                                </td>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("6:00 PM", "7:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("6:00 PM", "7:00 PM", day) &&
-                      hasAdjacentSchedule("6:00 PM", "7:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("6:00 PM", "7:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "6:00 PM",
-                        "7:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("6:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("3:00 PM", "3:30 PM", day)
+                                                ? (getDutyColor("3:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("3:00 PM", "3:30 PM", day) &&
+                                                hasAdjacentSchedule("3:00 PM", "3:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("3:00 PM", "3:30 PM", day) &&
+                                                hasAdjacentSchedule("3:00 PM", "3:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("3:00 PM", day)}
+                                        </div>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  07:00 PM - 08:00 PM
-                </div>
-              </td>
+                                        <div
+                                            style={{borderTop: "none", 
+                                                backgroundColor: isTimeInSchedule("3:30 PM", "4:00 PM", day)
+                                                ? (getDutyColor("3:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("3:30 PM", "4:00 PM", day) &&
+                                                hasAdjacentSchedule("3:30 PM", "4:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("3:30 PM", "4:00 PM", day) &&
+                                                hasAdjacentSchedule("3:30 PM", "4:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("3:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("7:00 PM", "8:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("7:00 PM", "8:00 PM", day) &&
-                      hasAdjacentSchedule("7:00 PM", "8:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("7:00 PM", "8:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "7:00 PM",
-                        "8:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("7:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    04:00 PM - 05:00 PM
+                                    </div>
+                                </td>
 
-            <tr className="flex w-full">
-              <td className="m-0 p-0 min-w-[13.1rem]">
-                <div className="h-[2.5rem] border border-black border-t-0 text-[14px] flex items-center justify-center">
-                  08:00 PM - 09:00 PM
-                </div>
-              </td>
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("4:00 PM", "4:30 PM", day)
+                                                ? (getDutyColor("4:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("4:00 PM", "4:30 PM", day) &&
+                                                hasAdjacentSchedule("4:00 PM", "4:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("4:00 PM", "4:30 PM", day) &&
+                                                hasAdjacentSchedule("4:00 PM", "4:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("4:00 PM", day)}
+                                        </div>
 
-              {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
-                (day, i) => (
-                  <td
-                    key={day}
-                    className={`m-0 p-0 ${
-                      day === "WED"
-                        ? "min-w-[7rem]"
-                        : day === "THU"
-                        ? "min-w-[6.9rem]"
-                        : "min-w-[6.8rem]"
-                    }`}
-                  >
-                    <div
-                      className={`h-[2.5rem] border border-black border-t-0 border-l-0 text-[14px] flex items-center justify-center  
-                    ${
-                      isTimeInSchedule("8:00 PM", "9:00 PM", day)
-                        ? "bg-yellow-300"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("8:00 PM", "9:00 PM", day) &&
-                      hasAdjacentSchedule("8:00 PM", "9:00 PM", day, "top") ===
-                        "same"
-                        ? "border-t-0"
-                        : ""
-                    } 
-                    ${
-                      isTimeInSchedule("8:00 PM", "9:00 PM", day) &&
-                      hasAdjacentSchedule(
-                        "8:00 PM",
-                        "9:00 PM",
-                        day,
-                        "bottom"
-                      ) === "same"
-                        ? "border-b-0"
-                        : ""
-                    }`}
-                    >
-                      {getCenterText("8:00 PM", day)}
-                    </div>
-                  </td>
-                )
-              )}
-            </tr>
-          </tbody>
-        </table>
+                                        <div
+                                            style={{borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("4:30 PM", "5:00 PM", day)
+                                                ? (getDutyColor("4:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("4:30 PM", "5:00 PM", day) &&
+                                                hasAdjacentSchedule("4:30 PM", "5:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("4:30 PM", "5:00 PM", day) &&
+                                                hasAdjacentSchedule("4:30 PM", "5:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("4:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
+
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    05:00 PM - 06:00 PM
+                                    </div>
+                                </td>
+
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("5:00 PM", "5:30 PM", day)
+                                                ? (getDutyColor("5:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("5:00 PM", "5:30 PM", day) &&
+                                                hasAdjacentSchedule("5:00 PM", "5:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("5:00 PM", "5:30 PM", day) &&
+                                                hasAdjacentSchedule("5:00 PM", "5:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("5:00 PM", day)}
+                                        </div>
+
+                                        <div
+                                            style={{borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("5:30 PM", "6:00 PM", day)
+                                                ? (getDutyColor("5:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("5:30 PM", "6:00 PM", day) &&
+                                                hasAdjacentSchedule("5:30 PM", "6:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("5:30 PM", "6:00 PM", day) &&
+                                                hasAdjacentSchedule("5:30 PM", "6:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("5:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
+
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    06:00 PM - 07:00 PM
+                                    </div>
+                                </td>
+
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("6:00 PM", "6:30 PM", day)
+                                                ? (getDutyColor("6:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("6:00 PM", "6:30 PM", day) &&
+                                                hasAdjacentSchedule("6:00 PM", "6:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("6:00 PM", "6:30 PM", day) &&
+                                                hasAdjacentSchedule("6:00 PM", "6:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("6:00 PM", day)}
+                                        </div>
+
+                                        <div
+                                            style={{borderTop: "none", 
+                                                backgroundColor: isTimeInSchedule("6:30 PM", "7:00 PM", day)
+                                                ? (getDutyColor("6:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("6:30 PM", "7:00 PM", day) &&
+                                                hasAdjacentSchedule("6:30 PM", "7:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("6:30 PM", "7:00 PM", day) &&
+                                                hasAdjacentSchedule("6:30 PM", "7:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("6:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
+
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] bg-[#eaeaea] border border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    07:00 PM - 08:00 PM
+                                    </div>
+                                </td>
+
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                        <div
+                                            style={{
+                                                backgroundColor: isTimeInSchedule("7:00 PM", "7:30 PM", day)
+                                                ? (getDutyColor("7:00 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("7:00 PM", "7:30 PM", day) &&
+                                                hasAdjacentSchedule("7:00 PM", "7:30 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("7:00 PM", "7:30 PM", day) &&
+                                                hasAdjacentSchedule("7:00 PM", "7:30 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("7:00 PM", day)}
+                                        </div>
+
+                                        <div
+                                            style={{borderTop: "none",
+                                                backgroundColor: isTimeInSchedule("7:30 PM", "8:00 PM", day)
+                                                ? (getDutyColor("7:30 PM", day) || "rgb(253 224 71)")
+                                                : undefined
+                                            }}
+                                            className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                            ${
+                                                isTimeInSchedule("7:30 PM", "8:00 PM", day) &&
+                                                hasAdjacentSchedule("7:30 PM", "8:00 PM", day, "top") === "same"
+                                                ? "border-t-0"
+                                                : ""
+                                            }
+                                            ${
+                                                isTimeInSchedule("7:30 PM", "8:00 PM", day) &&
+                                                hasAdjacentSchedule("7:30 PM", "8:00 PM", day, "bottom") === "same"
+                                                ? "border-b-0"
+                                                : ""
+                                            }
+                                            `}
+                                        >
+                                            {getCenterText("7:30 PM", day)}
+                                        </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
+
+                                <tr className="flex w-full">
+                                <td className="m-0 p-0 min-w-[13.1rem]">
+                                    <div className="h-[2.5rem] border bg-[#eaeaea] border-black border-t-0 text-[14px] flex items-center justify-center">
+                                    08:00 PM - 09:00 PM
+                                    </div>
+                                </td>
+
+                                {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(
+                                    (day, i) => (
+                                    <td
+                                        key={day}
+                                        className={`m-0 p-0 ${
+                                        day === "WED"
+                                            ? "min-w-[7rem]"
+                                            : day === "THU"
+                                            ? "min-w-[6.9rem]"
+                                            : "min-w-[6.8rem]"
+                                        }`}
+                                    >
+                                        <div className="h-[2.5rem] p-0 m-0">
+                                            <div
+                                                style={{
+                                                    backgroundColor: isTimeInSchedule("8:00 PM", "8:30 PM", day)
+                                                    ? (getDutyColor("8:00 PM", day) || "rgb(253 224 71)")
+                                                    : undefined
+                                                }}
+                                                className={`h-[1.25rem] border border-black border-t-0 border-l-0 flex items-center justify-center
+                                                ${
+                                                    isTimeInSchedule("8:00 PM", "8:30 PM", day) &&
+                                                    hasAdjacentSchedule("8:00 PM", "8:30 PM", day, "top") === "same"
+                                                    ? "border-t-0"
+                                                    : ""
+                                                }
+                                                ${
+                                                    isTimeInSchedule("8:00 PM", "8:30 PM", day) &&
+                                                    hasAdjacentSchedule("8:00 PM", "8:30 PM", day, "bottom") === "same"
+                                                    ? "border-b-0"
+                                                    : ""
+                                                }
+                                                `}
+                                            >
+                                                {getCenterText("8:00 PM", day)}
+                                            </div>
+
+                                            <div
+                                                style={{borderTop: "none", 
+                                                    backgroundColor: isTimeInSchedule("8:30 PM", "9:00 PM", day)
+                                                    ? (getDutyColor("8:30 PM", day) || "rgb(253 224 71)")
+                                                    : undefined
+                                                }}
+                                                className={`h-[1.25rem] border border-black border-l-0 flex items-center justify-center
+                                                ${
+                                                    isTimeInSchedule("8:30 PM", "9:00 PM", day) &&
+                                                    hasAdjacentSchedule("8:30 PM", "9:00 PM", day, "top") === "same"
+                                                    ? "border-t-0"
+                                                    : ""
+                                                }
+                                                ${
+                                                    isTimeInSchedule("8:30 PM", "9:00 PM", day) &&
+                                                    hasAdjacentSchedule("8:30 PM", "9:00 PM", day, "bottom") === "same"
+                                                    ? "border-b-0"
+                                                    : ""
+                                                }
+                                                `}
+                                            >
+                                                {getCenterText("8:30 PM", day)}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    )
+                                )}
+                                </tr>
+                            </tbody>
+                        </table>
       </Box>
 
       <Dialog
