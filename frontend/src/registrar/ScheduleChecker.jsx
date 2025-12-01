@@ -593,7 +593,7 @@ const checkAccess = async (employeeID) => {
       const text = (
         <>
           <span className="block truncate">{entry.course_code}</span>
-          <span className="block truncate">
+          <span className="block truncate" style={{fontSize: "9px"}}>
             {entry.room_description === "TBA"
               ? "TBA"
               : (!entry.program_code && !entry.section_description)
@@ -625,7 +625,7 @@ const checkAccess = async (employeeID) => {
 
         textContent = (
           <span
-            className="absolute left-0 right-0 text-center text-[11px] leading-tight mt-[-5px]"
+            className="absolute left-0 right-0 text-center text-[8px] leading-tight mt-[-5px]"
             style={{ top: `${marginTop}rem` }}
           >
             {text}
@@ -794,7 +794,7 @@ const checkAccess = async (employeeID) => {
                     key={section.dep_section_id}
                     value={section.dep_section_id}
                   >
-                    {section.description} {section.program_code}
+                    {section.program_code}-{section.description}
                   </option>
                 ))}
               </select>

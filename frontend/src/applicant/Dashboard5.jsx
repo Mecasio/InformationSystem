@@ -197,6 +197,22 @@ const Dashboard5 = (props) => {
   };
 
 
+  // Add this state at the top if not already:
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "warning" });
+
+  // Snackbar close handler
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  // Example: replace previous calls with this:
+  const showSnackbar = (message) => {
+    setSnackbar({ open: true, message, severity: "warning" });
+  };
+
+
+
   const divToPrintRef = useRef();
   const [showPrintView, setShowPrintView] = useState(false);
 
@@ -339,7 +355,7 @@ const Dashboard5 = (props) => {
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
 
       <br />
- <Box
+      <Box
         sx={{
           display: "flex",
           justifyContent: "center",
@@ -723,21 +739,20 @@ const Dashboard5 = (props) => {
                       // 🔑 Mark step5 as completed
                       localStorage.setItem("currentStep", "6");
 
-                      setSnack({
-                        open: true,
-                        message:
-                          "Your account has been successfully registered! Wait for further announcement. Please upload your documents.",
-                        severity: "success",
-                      });
+                      showSnackbar(
+                        "Your account has been successfully registered! Wait for further announcement. Please upload your documents.",
+                        "success"
+                      );
 
                       setTimeout(() => {
                         navigate("/requirements_uploader"); // ✅ goes to uploader after step5
                       }, 2000);
                     } catch (error) {
                       console.error("Notification failed:", error);
+                      showSnackbar("Failed to send submission notification.", "error");
                     }
                   } else {
-                    alert("Please complete all required fields before submitting.");
+                    showSnackbar("Please complete all required fields before submitting.", "error");
                   }
                 }}
                 endIcon={
@@ -763,19 +778,21 @@ const Dashboard5 = (props) => {
               >
                 Submit (Save Information)
               </Button>
+
             </Box>
 
 
             <Snackbar
-              open={snack.open}
-              autoHideDuration={5000}
-              onClose={handleClose}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+              open={snackbar.open}
+              autoHideDuration={3000} // 3 seconds
+              onClose={handleCloseSnackbar}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
             >
-              <Alert severity={snack.severity} onClose={handleClose} sx={{ width: '100%' }}>
-                {snack.message}
+              <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                {snackbar.message}
               </Alert>
             </Snackbar>
+
 
 
           </Container>

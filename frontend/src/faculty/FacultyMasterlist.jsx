@@ -146,6 +146,19 @@ const FacultyMasterList = () => {
     }
   }, [userID]);
 
+  const filteredCourses = courseAssignedTo.filter((course) => {
+    if (!selectedSchoolYear && !selectedSchoolSemester) return true;
+
+    const matchesYear =
+      !selectedSchoolYear || String(course.year_id) === String(selectedSchoolYear);
+
+    const matchesSemester =
+      !selectedSchoolSemester ||
+      String(course.semester_id) === String(selectedSchoolSemester);
+
+    return matchesYear && matchesSemester;
+  });
+
   useEffect(() => {
     if (course_id) setSelectedCourse(course_id);
     if (section_id) setSelectedSection(section_id);
@@ -153,9 +166,9 @@ const FacultyMasterList = () => {
   }, [course_id, section_id, school_year_id]);
 
   useEffect(() => {
-    if (userID && selectedSchoolYear && selectedSchoolSemester) {
+    if (userID) {
       axios
-        .get(`${API_BASE_URL}/api/section_assigned_to/${userID}/${selectedSchoolYear}/${selectedSchoolSemester}`)
+        .get(`${API_BASE_URL}/api/section_assigned_to/${userID}`)
         .then((res) => {
           setSectionAssignedTo(res.data);
           if (res.data.length > 0) {
@@ -166,7 +179,20 @@ const FacultyMasterList = () => {
         })
         .catch((err) => console.error(err));
     }
-  }, [userID, selectedSchoolYear, selectedSchoolSemester]);
+  }, [userID]);
+
+  const filteredSections = sectionAssignedTo.filter((section) => {
+    if (!selectedSchoolYear && !selectedSchoolSemester) return true;
+
+    const matchesYear =
+      !selectedSchoolYear || String(section.year_id) === String(selectedSchoolYear);
+
+    const matchesSemester =
+      !selectedSchoolSemester ||
+      String(section.semester_id) === String(selectedSchoolSemester);
+
+    return matchesYear && matchesSemester;
+  });
 
   useEffect(() => {
   axios
@@ -226,6 +252,22 @@ const FacultyMasterList = () => {
     }
   }, [userID]);
 
+  useEffect(() => {
+  if (filteredCourses.length > 0) {
+    setSelectedCourse(filteredCourses[0].course_id);
+  } else {
+    setSelectedCourse("");
+  }
+}, [filteredCourses]);
+
+useEffect(() => {
+  if (filteredSections.length > 0) {
+    setSelectedSection(filteredSections[0].section_id);
+  } else {
+    setSelectedSection("");
+  }
+}, [filteredSections]);
+
   const handleSchoolYearChange = (event) => {
     setSelectedSchoolYear(event.target.value);
   };
@@ -242,8 +284,41 @@ const FacultyMasterList = () => {
     setSelectedSection(event.target.value);
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFilter, setSearchFilter] = useState("all"); 
+
+  
+
   const filteredStudents = classListAndDetails
     .filter((s) => {
+
+      const searchLower = searchQuery.toLowerCase();
+
+      // 🔍 SEARCH FILTER
+      const matchesSearch = (() => {
+        if (searchQuery === "") return true;
+
+        if (searchFilter === "student_number") {
+          return s.student_number.toString().includes(searchQuery);
+        }
+
+        if (searchFilter === "name") {
+          const fullName1 = `${s.first_name} ${s.last_name}`.toLowerCase();
+          const fullName2 = `${s.last_name} ${s.first_name}`.toLowerCase();
+
+          return (
+            fullName1.includes(searchLower) ||
+            fullName2.includes(searchLower) ||
+            s.first_name.toLowerCase().includes(searchLower) ||
+            s.middle_name?.toLowerCase().includes(searchLower) ||
+            s.last_name.toLowerCase().includes(searchLower)
+          );
+        }
+
+        return true;
+      })();
+
+      // 📌 OTHER FILTERS
       const matchesYear =
         selectedSchoolYear === "" ||
         String(s.year_id) === String(selectedSchoolYear);
@@ -264,7 +339,9 @@ const FacultyMasterList = () => {
         (selectedStatusFilter === "Regular" && Number(s.status) === 1) ||
         (selectedStatusFilter === "Irregular" && Number(s.status) !== 1);
 
+      // ❗ IMPORTANT: add matchesSearch here
       return (
+        matchesSearch &&
         matchesYear &&
         matchesSemester &&
         matchesCourse &&
@@ -276,11 +353,9 @@ const FacultyMasterList = () => {
       const nameA = `${a.last_name} ${a.first_name}`.toLowerCase();
       const nameB = `${b.last_name} ${b.first_name}`.toLowerCase();
 
-      if (sortOrder === "asc") {
-        return nameA.localeCompare(nameB);
-      } else {
-        return nameB.localeCompare(nameA);
-      }
+      return sortOrder === "asc"
+        ? nameA.localeCompare(nameB)
+        : nameB.localeCompare(nameA);
     });
 
   const groupedStudents = filteredStudents.reduce((acc, student) => {
@@ -422,6 +497,43 @@ const FacultyMasterList = () => {
         >
            CLASS LIST
         </Typography>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
+        {/* Search Filter Dropdown */}
+        <select
+          value={searchFilter}
+          onChange={(e) => setSearchFilter(e.target.value)}
+          style={{
+            padding: "8px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            marginTop: "10px",
+            outline: "none"
+          }}
+        >
+          <option value="all">Search All</option>
+          <option value="student_number">Student Number</option>
+          <option value="name">Name</option>
+        </select>
+
+        {/* Search Bar */}
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            padding: "8px",
+            width: "250px",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            marginRight: "5.1rem",
+            outline: "none",
+            marginTop: "10px",
+          }}
+        />
+        
+      </div>
+
       </Box>
       <hr style={{ border: "1px solid #ccc", width: "95%" }} />
 
@@ -663,14 +775,16 @@ const FacultyMasterList = () => {
                   label="Course"
                   onChange={handleSelectCourseChange}
                 >
-                  {courseAssignedTo.length > 0 ? (
-                    courseAssignedTo.map((course) => (
-                      <MenuItem value={course.course_id} key={course.course_id}>
-                        {course.course_description} ({course.course_code})
+                  {(!courseAssignedTo || courseAssignedTo.length === 0) ? (
+                    <MenuItem disabled>No Course Assigned this Academic Year</MenuItem>
+                  ) : filteredCourses.length > 0 ? (
+                    filteredCourses.map((course) => (
+                      <MenuItem key={course.course_id} value={course.course_id}>
+                        {course.course_code} - {course.course_description}
                       </MenuItem>
                     ))
                   ) : (
-                    <MenuItem disabled>No courses assigned</MenuItem>
+                    <MenuItem disabled>No Course Assigned this Academic Year</MenuItem>
                   )}
                 </Select>
               </FormControl>
@@ -699,17 +813,16 @@ const FacultyMasterList = () => {
                     label="Course"
                     onChange={handleSelectSectionChange}
                   >
-                    {sectionAssignedTo.length > 0 ? (
-                      sectionAssignedTo.map((section) => (
-                        <MenuItem
-                          value={section.section_id}
-                          key={section.section_id}
-                        >
+                    {(!sectionAssignedTo || sectionAssignedTo.length === 0) ? (
+                      <MenuItem disabled>No Section Assigned this Academic Year</MenuItem>
+                    ) : filteredSections.length > 0 ? (
+                      filteredSections.map((section) => (
+                        <MenuItem key={section.section_id} value={section.section_id}>
                           {section.program_code}-{section.section_description}
                         </MenuItem>
                       ))
                     ) : (
-                      <MenuItem disabled>No section assigned</MenuItem>
+                      <MenuItem disabled>No Section Assigned this Academic Year</MenuItem>
                     )}
                   </Select>
                 </FormControl>
@@ -841,40 +954,7 @@ const FacultyMasterList = () => {
                   }}
                 >
                   <FcPrint size={20} />
-                  Print Evaluation
-                </span>
-              </button>
-              <button
-                onClick={printDiv}
-                style={{
-                  width: "308px",
-                  padding: "10px 20px",
-                  border: "2px solid black",
-                  backgroundColor: "#f0f0f0",
-                  color: "black",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  transition: "background-color 0.3s, transform 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-                onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-                onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
-              >
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <FcPrint size={20} />
-                  Export Excel
+                  Print Class List
                 </span>
               </button>
             </Box>
@@ -1076,6 +1156,7 @@ const FacultyMasterList = () => {
                   page-break-inside: avoid;
                   page-break-after: auto;
                 }
+                  
               }
             `}
           </style>
@@ -1169,7 +1250,7 @@ const FacultyMasterList = () => {
                 </td>
 
                 <td colSpan={2} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
-                  {groupedList[0]?.year_level || "Third Year"}
+                  {groupedList[0]?.year_level_description || ""}
                 </td>
               </tr>
 
@@ -1191,7 +1272,19 @@ const FacultyMasterList = () => {
                   <div style={{ display: "flex", justifyContent: "end" }}>Schedule:</div>
                 </td>
                 <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", borderBottom: "none", paddingBottom: "1px", paddingTop: "6px" }}>
-                  {groupedList[0]?.year_level || ""}
+                  {groupedList.length > 0 ? (
+                    groupedList.map((student, index) => (
+                      <div key={index}>
+                        {student.schedules.map((sch, i) => (
+                          <div key={i}>
+                            {sch.day} {sch.start} - {sch.end}
+                          </div>
+                        ))}
+                      </div>
+                    ))
+                  ) : (
+                    <div>TBA</div>
+                  )}
                 </td>
               </tr>
 
@@ -1212,8 +1305,7 @@ const FacultyMasterList = () => {
                 <td colSpan={3} style={{ borderLeft: "none", borderTop: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
                   <div style={{ display: "flex", justifyContent: "end" }}></div>
                 </td>
-                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", borderBottom: "none", paddingTop: "6px" }}>
-                  {groupedList[0]?.year_level || ""}
+                <td colSpan={2} rowSpan={4} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>
                 </td>
               </tr>
 
@@ -1221,14 +1313,12 @@ const FacultyMasterList = () => {
               <tr>
                 <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Mode:</td>
                 <td colSpan={6} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}></td>
-                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", borderBottom: "none", paddingTop: "6px" }}></td>
               </tr>
 
               {/* Faculty */}
               <tr>
                 <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Faculty:</td>
                 <td colSpan={6} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>{profData.fname} {profData.mname} {profData.lname}</td>
-                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}></td>
               </tr>
             </thead>
           </table>
@@ -1253,9 +1343,9 @@ const FacultyMasterList = () => {
                     <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{index + 1}</td>
                     <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{s.student_number}</td>
                     <td style={{ border: "1px solid black", padding: "6px" }}>{`${s.last_name}, ${s.first_name} ${s.middle_name || ""}`}</td>
-                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}></td>
-                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}></td>
-                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}></td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{s.age}</td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{s.gender === 0 ? "Male" : "Female"}</td>
+                    <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{s.year_level_description}</td>
                     <td style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>{Number(s.status) === 1 ? "Regular" : "Irregular"}</td>
                   </tr>
                 ))

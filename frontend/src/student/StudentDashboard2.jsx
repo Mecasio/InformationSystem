@@ -456,7 +456,7 @@ const StudentDashboard2 = () => {
 
 
 
-     
+
             <Box
                 sx={{
                     display: "flex",
@@ -1039,84 +1039,150 @@ const StudentDashboard2 = () => {
                                     <hr style={{ border: '1px solid #ccc', width: '100%' }} />
                                     <br />
 
-                                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                                        <Box sx={{ flex: 1 }}>
+                                    <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+
+                                        {/* Father Contact */}
+                                        <Box flex={1} display="flex" flexDirection="column">
                                             <Typography variant="subtitle2" mb={0.5}>Father Contact</Typography>
+
                                             <TextField
+
+
                                                 fullWidth
                                                 size="small"
-                                                required
                                                 name="father_contact"
-                                                placeholder="Enter Father Contact"
-                                                value={person.father_contact ?? ""}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                error={errors.father_contact} helperText={errors.father_contact ? "This field is required." : ""}
+                                                placeholder="9XXXXXXXXX"
+                                                value={person.father_contact || ""}
+                                                onBlur={() => handleUpdate(person)}
+                                                onChange={(e) => {
+                                                    const onlyNumbers = e.target.value.replace(/\D/g, "");
+                                                    handleChange({
+                                                        target: {
+                                                            name: "father_contact",
+                                                            value: onlyNumbers,
+                                                        },
+                                                    });
+                                                }}
+                                                error={!!errors.father_contact}
+                                                helperText={errors.father_contact && "This field is required."}
+                                                InputProps={{
+                                                    readOnly: true,
+                                                    startAdornment: (
+                                                        <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                                                    ),
+                                                }}
                                             />
                                         </Box>
-                                        <Box sx={{ flex: 1 }}>
+
+                                        {/* Father Occupation */}
+                                        <Box flex={1}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Occupation</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_occupation"
-                                                value={person.father_occupation ?? ""}
+                                                value={person.father_occupation || ""}
                                                 placeholder="Enter Father Occupation"
                                                 onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                error={errors.father_occupation} helperText={errors.father_occupation ? "This field is required." : ""}
+                                                onBlur={() => handleUpdate(person)}
+                                                error={errors.father_occupation}
+                                                helperText={errors.father_occupation ? "This field is required." : ""}
                                             />
                                         </Box>
-                                        <Box sx={{ flex: 1 }}>
+
+                                        {/* Father Employer */}
+                                        <Box flex={1}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Employer</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_employer"
                                                 placeholder="Enter Father Employer"
-                                                value={person.father_employer ?? ""}
+                                                value={person.father_employer || ""}
                                                 onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                error={errors.father_employer} helperText={errors.father_employer ? "This field is required." : ""}
+                                                onBlur={() => handleUpdate(person)}
+                                                error={errors.father_employer}
+                                                helperText={errors.father_employer ? "This field is required." : ""}
                                             />
                                         </Box>
+
                                         {/* Father Income */}
-                                        <Box sx={{ flex: 1 }}>
+                                        <Box flex={1}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Income</Typography>
                                             <TextField
+                                                InputProps={{ readOnly: true }}
+
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_income"
                                                 placeholder="Enter Father Income"
-                                                value={person.father_income ?? ""}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
+                                                value={person.father_income || ""}
+                                                onChange={(e) => {
+                                                    const onlyNumbers = e.target.value.replace(/\D/g, ""); // numbers only
+                                                    handleChange({
+                                                        target: {
+                                                            name: "father_income",
+                                                            value: onlyNumbers,
+                                                        },
+                                                    });
+                                                }}
+                                                onBlur={() => handleUpdate(person)}
                                                 error={errors.father_income}
                                                 helperText={errors.father_income ? "This field is required." : ""}
                                             />
                                         </Box>
+                                        {/* Father Email */}
+
                                     </Box>
 
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle2" mb={1}>Father Email Address</Typography>
+                                    <Box flex={1}>
+                                        <Typography variant="subtitle2" mb={0.5}>Father Email Address</Typography>
                                         <TextField
+                                            InputProps={{ readOnly: true }}
+
+
                                             fullWidth
                                             size="small"
                                             required
                                             name="father_email"
-                                            placeholder="Enter your Father Email Address (e.g., username@gmail.com)"
-                                            value={person.father_email ?? ""}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-
+                                            placeholder="Enter Father Email Address"
+                                            value={person.father_email || ""}
+                                            onChange={(e) => {
+                                                const cleaned = e.target.value.replace(/\s/g, "");
+                                                handleChange({
+                                                    target: { name: "father_email", value: cleaned }
+                                                });
+                                            }}
+                                            onBlur={(e) => {
+                                                let value = e.target.value.trim();
+                                                if (value && !value.includes("@")) {
+                                                    value += "@gmail.com";
+                                                }
+                                                handleChange({
+                                                    target: { name: "father_email", value }
+                                                });
+                                                handleUpdate(person);
+                                            }}
+                                            error={errors.father_email}
+                                            helperText={errors.father_email ? "Please enter a valid email address." : ""}
                                         />
                                     </Box>
+
                                 </>
                             )}
                         </Box>
+
+
 
 
                         <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Mother's Details</Typography>
@@ -1473,6 +1539,8 @@ const StudentDashboard2 = () => {
                                     <MenuItem value="Father">Father</MenuItem>
                                     <MenuItem value="Mother">Mother</MenuItem>
                                     <MenuItem value="Brother/Sister">Brother/Sister</MenuItem>
+                                    <MenuItem value="GrandMother">GrandMother</MenuItem>
+                                    <MenuItem value="GrandFather">GrandFather</MenuItem>
                                     <MenuItem value="Uncle">Uncle</MenuItem>
                                     <MenuItem value="StepFather">Stepfather</MenuItem>
                                     <MenuItem value="StepMother">Stepmother</MenuItem>

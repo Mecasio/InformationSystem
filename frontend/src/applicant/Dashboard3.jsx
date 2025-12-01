@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ExamPermit from "../applicant/ExamPermit";
 import API_BASE_URL from "../apiConfig";
+import { Snackbar, Alert } from "@mui/material";
 const Dashboard3 = (props) => {
   const settings = useContext(SettingsContext);
 
@@ -79,6 +80,22 @@ const Dashboard3 = (props) => {
     yearGraduated1: "",
     strand: "",
   });
+
+  // Add this state at the top if not already:
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "warning" });
+
+  // Snackbar close handler
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  // Example: replace previous calls with this:
+  const showSnackbar = (message) => {
+    setSnackbar({ open: true, message, severity: "warning" });
+  };
+
+
 
   // do not alter
   useEffect(() => {
@@ -203,7 +220,7 @@ const Dashboard3 = (props) => {
       setClickedSteps(newClickedSteps);
       navigate(steps[index].path); // ✅ actually move to step
     } else {
-      alert("Please fill all required fields before proceeding.");
+      Snackbar("Please fill all required fields before proceeding.");
     }
   };
 
@@ -212,7 +229,7 @@ const Dashboard3 = (props) => {
   const isFormValid = () => {
     const requiredFields = [
       // Original fields
-      "schoolLevel", "schoolLastAttended", "schoolAddress", "courseProgram",
+      "schoolLevel", "schoolLastAttended", "schoolAddress",
       "honor", "generalAverage", "yearGraduated", "strand",
 
       // Newly added fields
@@ -381,7 +398,7 @@ const Dashboard3 = (props) => {
 
       <br />
 
-   <Box
+      <Box
         sx={{
           display: "flex",
           justifyContent: "center",
@@ -1070,10 +1087,18 @@ const Dashboard3 = (props) => {
 
 
             <Box display="flex" justifyContent="space-between" mt={4}>
-              {/* Previous Page Button */}
+              {/* Previous Step Button */}
               <Button
                 variant="contained"
-                onClick={() => navigate(`/dashboard/${keys.step2}`)} // ✅ FIXED
+                onClick={() => {
+                  handleUpdate();
+
+                  if (isFormValid()) {
+                    navigate(`/dashboard/${keys.step2}`);
+                  } else {
+                    showSnackbar("Please complete all required fields before proceeding.");
+                  }
+                }}
                 startIcon={
                   <ArrowBackIcon
                     sx={{
@@ -1107,17 +1132,10 @@ const Dashboard3 = (props) => {
                   if (isFormValid()) {
                     navigate(`/dashboard/${keys.step4}`); // ✅ Goes to step4
                   } else {
-                    alert("Please complete all required fields before proceeding.");
+                    showSnackbar("Please complete all required fields before proceeding.");
                   }
                 }}
-                endIcon={
-                  <ArrowForwardIcon
-                    sx={{
-                      color: "#fff",
-                      transition: "color 0.3s",
-                    }}
-                  />
-                }
+                endIcon={<ArrowForwardIcon sx={{ color: "#fff" }} />}
                 sx={{
                   backgroundColor: mainButtonColor,
                   border: `2px solid ${borderColor}`,
@@ -1125,17 +1143,27 @@ const Dashboard3 = (props) => {
                   "&:hover": {
                     backgroundColor: "#000000",
                     color: "#fff",
-                    "& .MuiSvgIcon-root": {
-                      color: "#fff",
-                    },
+                    "& .MuiSvgIcon-root": { color: "#fff" },
                   },
                 }}
               >
                 Next Step
               </Button>
+
+
             </Box>
 
 
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={3000} // 3 seconds
+              onClose={handleCloseSnackbar}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                {snackbar.message}
+              </Alert>
+            </Snackbar>
 
 
           </Container>

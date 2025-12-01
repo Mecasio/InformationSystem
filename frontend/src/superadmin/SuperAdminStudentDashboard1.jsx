@@ -1318,15 +1318,22 @@ const SuperAdminStudentDashboard1 = () => {
                         <hr style={{ border: "1px solid #ccc", width: "100%" }} />
                         <br />
 
+
                         <div className="flex items-center mb-4 gap-4">
                             <label className="w-40 font-medium">Campus:</label>
                             <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
+
                                 <Select
+                        
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
-                                    value={person.campus == null ? "" : String(person.campus)}
+                                    value={
+                                        person.campus === null || person.campus === undefined
+                                            ? ""
+                                            : String(person.campus)
+                                    }
                                     label="Campus (Manila/Cavite)"
                                     onChange={(e) => {
                                         const val = e.target.value;
@@ -1343,6 +1350,7 @@ const SuperAdminStudentDashboard1 = () => {
                                     <MenuItem value="0">MANILA</MenuItem>
                                     <MenuItem value="1">CAVITE</MenuItem>
                                 </Select>
+
                                 {errors.campus && (
                                     <FormHelperText>This field is required.</FormHelperText>
                                 )}
@@ -1960,7 +1968,7 @@ const SuperAdminStudentDashboard1 = () => {
                                     onChange={handleChange}
                                     error={!!errors.age}
                                     helperText={errors.age ? "This field is required." : ""}
-                                    InputProps={{ readOnly: true }} // read-only so user can’t manually change
+                            
                                 />
                             </Box>
                             <Box flex={1}>
@@ -2384,15 +2392,54 @@ const SuperAdminStudentDashboard1 = () => {
 
 
 
+
+
+                        <Box display="flex" gap={2} mb={2}>
+                            <Box flex={1}>
+                                <Typography mb={1} fontWeight="medium">Present Street</Typography>
+                                <TextField
+                                    fullWidth
+                            
+
+                                    size="small"
+                                    name="presentStreet"
+                                    value={person.presentStreet || ""}
+                                    onBlur={() => handleUpdate(person)} placeholder="Enter your Present Street"
+                                    onChange={handleChange}
+                                    error={!!errors.presentStreet}
+                                    helperText={errors.presentStreet && "This field is required."}
+                                />
+                            </Box>
+
+                            <Box flex={1}>
+                                <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
+                                <TextField
+                                    fullWidth
+                               
+
+                                    size="small"
+                                    name="presentZipCode"
+                                    placeholder="Enter your Zip Code"
+                                    value={person.presentZipCode || ""}
+                                    onBlur={() => handleUpdate(person)} onChange={handleChange}
+                                    error={!!errors.presentZipCode}
+                                    helperText={errors.presentZipCode && "This field is required."}
+                                />
+                            </Box>
+                        </Box>
+
+
+
                         <Box display="flex" gap={2} mb={2}>
 
                             {/* REGION */}
                             <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
-                                <Typography mb={1} fontWeight="medium">Region</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Region</Typography>
 
                                 <Select
                                     name="presentRegion"
                                     displayEmpty
+                                
                                     value={person.presentRegion || ""}
                                     onBlur={() => handleUpdate(person)}
                                     onChange={(e) => {
@@ -2423,9 +2470,10 @@ const SuperAdminStudentDashboard1 = () => {
 
                             {/* PROVINCE */}
                             <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
-                                <Typography mb={1} fontWeight="medium">Province</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Province</Typography>
 
                                 <Select
+                                  
                                     name="presentProvince"
                                     displayEmpty
                                     value={person.presentProvince || ""}
@@ -2462,9 +2510,10 @@ const SuperAdminStudentDashboard1 = () => {
 
                             {/* MUNICIPALITY */}
                             <FormControl fullWidth size="small" required error={!!errors.presentMunicipality}>
-                                <Typography mb={1} fontWeight="medium">Municipality</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Municipality</Typography>
 
                                 <Select
+                                    
                                     name="presentMunicipality"
                                     displayEmpty
                                     value={person.presentMunicipality || ""}
@@ -2494,9 +2543,10 @@ const SuperAdminStudentDashboard1 = () => {
 
                             {/* BARANGAY */}
                             <FormControl fullWidth size="small" required error={!!errors.presentBarangay}>
-                                <Typography mb={1} fontWeight="medium">Barangay</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Barangay</Typography>
 
                                 <Select
+                                    
                                     name="presentBarangay"
                                     displayEmpty
                                     value={person.presentBarangay || ""}
@@ -2531,6 +2581,8 @@ const SuperAdminStudentDashboard1 = () => {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
                             <TextField
+                           
+
                                 fullWidth
                                 size="small"
                                 name="presentDswdHouseholdNumber"
@@ -2541,6 +2593,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 helperText={errors.presentDswdHouseholdNumber && "This field is required."}
                             />
                         </Box>
+
 
                         <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Permanent Address:</Typography>
                         <hr style={{ border: "1px solid #ccc", width: "100%" }} />

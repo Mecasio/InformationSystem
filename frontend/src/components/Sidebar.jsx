@@ -160,19 +160,29 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
     const id = localStorage.getItem("person_id");
     const empID = localStorage.getItem("employee_id");
 
-    if (email && role && id && empID) {
-      setUserID(id);
-      setUserRole(role);
-      setEmployeeID(empID);
-
-      if (role === "registrar", "student", "applicant", "faculty") {
-        fetchUserAccessList(empID);
-      } else {
-        window.location.href = "/login";
-      }
-    } else {
+    if (!email || !role || !id) {
       window.location.href = "/login";
+      return;
     }
+
+    setUserID(id);
+    setUserRole(role);
+
+    // ✅ Applicants don't have employee_id
+    if (role === "applicant") {
+      setIsAuthenticated(true);
+      return; // STOP HERE — no access list needed
+    }
+
+    // For all other roles
+    if (!empID) {
+      window.location.href = "/login";
+      return;
+    }
+
+    setEmployeeID(empID);
+    fetchUserAccessList(empID);
+
   }, []);
 
   // ✅ ACCESS LOADER

@@ -1071,15 +1071,22 @@ const StudentDashboard1 = () => {
                         <hr style={{ border: "1px solid #ccc", width: "100%" }} />
                         <br />
 
+
                         <div className="flex items-center mb-4 gap-4">
                             <label className="w-40 font-medium">Campus:</label>
                             <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
+
                                 <Select
+                                    readOnly
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
-                                    value={person.campus == null ? "" : String(person.campus)}
+                                    value={
+                                        person.campus === null || person.campus === undefined
+                                            ? ""
+                                            : String(person.campus)
+                                    }
                                     label="Campus (Manila/Cavite)"
                                     onChange={(e) => {
                                         const val = e.target.value;
@@ -1096,12 +1103,12 @@ const StudentDashboard1 = () => {
                                     <MenuItem value="0">MANILA</MenuItem>
                                     <MenuItem value="1">CAVITE</MenuItem>
                                 </Select>
+
                                 {errors.campus && (
                                     <FormHelperText>This field is required.</FormHelperText>
                                 )}
                             </FormControl>
                         </div>
-
 
 
                         <div className="flex items-center mb-4 gap-4">
@@ -1609,7 +1616,7 @@ const StudentDashboard1 = () => {
                                 control={
 
                                     <Checkbox
-                                        
+
                                         checked={person.pwdMember === 1}
                                         onChange={handlePwdCheck}
                                         inputProps={{ "aria-label": "PWD Checkbox" }}
@@ -1744,7 +1751,7 @@ const StudentDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">
                                     Language/Dialect Spoken
                                 </Typography>
-                                <TextField fullWidth size="small" 
+                                <TextField fullWidth size="small"
                                     name="languageDialectSpoken" placeholder="Enter your Language Spoken" value={person.languageDialectSpoken || ""} required onBlur={handleBlur} onChange={handleChange} error={!!errors.languageDialectSpoken}
                                     helperText={errors.languageDialectSpoken ? "This field is required." : ""}
                                 />
@@ -2126,35 +2133,41 @@ const StudentDashboard1 = () => {
                         </Box>
 
 
-                        <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Present Address:</Typography>
-                        <hr style={{ border: "1px solid #ccc", width: "100%" }} />
-                        <br />
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center', // vertically center
-                                justifyContent: 'center', // horizontally center
-                                backgroundColor: '#FFF4E5',
-                                border: '1px solid #FFA726',
-                                borderRadius: 2,
-                                p: 2,
-                                height: "50px",
-                                mb: 2,
-                                textAlign: 'center' // ensures multiline text is centered
-                            }}
-                        >
-                            <WarningAmberIcon sx={{ color: '#FF9800', mr: 1 }} />
-                            <Typography fontWeight="medium" color="#BF360C">
-                                NOTICE: Fill up first the{" "}
-                                <strong>
-                                    REGION <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span>
-                                    PERMANENT PROVINCE <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span>
-                                    PERMANENT MUNICIPALITY <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span>
-                                    PERMANENT BARANGAY
-                                </strong>
-                            </Typography>
-                        </Box>
 
+
+                        <Box display="flex" gap={2} mb={2}>
+                            <Box flex={1}>
+                                <Typography mb={1} fontWeight="medium">Present Street</Typography>
+                                <TextField
+                                    fullWidth
+                                    InputProps={{ readOnly: true }}
+
+                                    size="small"
+                                    name="presentStreet"
+                                    value={person.presentStreet || ""}
+                                    onBlur={() => handleUpdate(person)} placeholder="Enter your Present Street"
+                                    onChange={handleChange}
+                                    error={!!errors.presentStreet}
+                                    helperText={errors.presentStreet && "This field is required."}
+                                />
+                            </Box>
+
+                            <Box flex={1}>
+                                <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
+                                <TextField
+                                    fullWidth
+                                    InputProps={{ readOnly: true }}
+
+                                    size="small"
+                                    name="presentZipCode"
+                                    placeholder="Enter your Zip Code"
+                                    value={person.presentZipCode || ""}
+                                    onBlur={() => handleUpdate(person)} onChange={handleChange}
+                                    error={!!errors.presentZipCode}
+                                    helperText={errors.presentZipCode && "This field is required."}
+                                />
+                            </Box>
+                        </Box>
 
 
 
@@ -2162,11 +2175,12 @@ const StudentDashboard1 = () => {
 
                             {/* REGION */}
                             <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
-                                <Typography mb={1} fontWeight="medium">Region</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Region</Typography>
 
                                 <Select
                                     name="presentRegion"
                                     displayEmpty
+                                    readOnly
                                     value={person.presentRegion || ""}
                                     onBlur={() => handleUpdate(person)}
                                     onChange={(e) => {
@@ -2197,9 +2211,10 @@ const StudentDashboard1 = () => {
 
                             {/* PROVINCE */}
                             <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
-                                <Typography mb={1} fontWeight="medium">Province</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Province</Typography>
 
                                 <Select
+                                    readOnly
                                     name="presentProvince"
                                     displayEmpty
                                     value={person.presentProvince || ""}
@@ -2236,9 +2251,10 @@ const StudentDashboard1 = () => {
 
                             {/* MUNICIPALITY */}
                             <FormControl fullWidth size="small" required error={!!errors.presentMunicipality}>
-                                <Typography mb={1} fontWeight="medium">Municipality</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Municipality</Typography>
 
                                 <Select
+                                    readOnly
                                     name="presentMunicipality"
                                     displayEmpty
                                     value={person.presentMunicipality || ""}
@@ -2268,9 +2284,10 @@ const StudentDashboard1 = () => {
 
                             {/* BARANGAY */}
                             <FormControl fullWidth size="small" required error={!!errors.presentBarangay}>
-                                <Typography mb={1} fontWeight="medium">Barangay</Typography>
+                                <Typography mb={1} fontWeight="medium">Present Barangay</Typography>
 
                                 <Select
+                                    readOnly
                                     name="presentBarangay"
                                     displayEmpty
                                     value={person.presentBarangay || ""}
@@ -2305,6 +2322,8 @@ const StudentDashboard1 = () => {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
                             <TextField
+                                InputProps={{ readOnly: true }}
+
                                 fullWidth
                                 size="small"
                                 name="presentDswdHouseholdNumber"
@@ -2315,6 +2334,8 @@ const StudentDashboard1 = () => {
                                 helperText={errors.presentDswdHouseholdNumber && "This field is required."}
                             />
                         </Box>
+
+
 
                         <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Permanent Address:</Typography>
                         <hr style={{ border: "1px solid #ccc", width: "100%" }} />

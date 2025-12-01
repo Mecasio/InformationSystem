@@ -185,6 +185,7 @@ const CourseTagging = () => {
   const [subjectCounts, setSubjectCounts] = useState({});
   const [isenrolled, setIsEnrolled] = useState(null);
   const [disableYearButtons, setDisableYearButtons] = useState(false);
+  const [activeSemester, setActiveSemester] = useState("");
 
   const fetchSubjectCounts = async (sectionId) => {
     try {
@@ -192,7 +193,6 @@ const CourseTagging = () => {
         params: { sectionId },
       });
 
-      // Transform into object for easy lookup: { subject_id: enrolled_count }
       const counts = {};
       response.data.forEach((item) => {
         counts[item.course_id] = item.enrolled_count;
@@ -211,7 +211,21 @@ const CourseTagging = () => {
       .get(`${API_BASE_URL}/get_year_level`)
       .then((res) => setYearLevel(res.data))
       .catch((err) => console.error(err));
-  })
+  }, []);
+
+  
+   useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/get_active_semester`)
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setActiveSemester(res.data[0].semester_description);
+        } else {
+          setActiveSemester("No Active Semester");
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   useEffect(() => {
     if (selectedSection) {
@@ -601,15 +615,10 @@ const CourseTagging = () => {
             </Button>
           </Box>
         </Box>
-
-
-
       </Box>
 
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
-
       <br />
-
 
       <Box
         sx={{
@@ -658,8 +667,6 @@ const CourseTagging = () => {
       </Box>
 
       <div style={{ height: "40px" }}></div>
-
-
 
       <Typography
         variant="h4"
@@ -771,10 +778,9 @@ const CourseTagging = () => {
                 key={index}
                 variant="contained"
                 color="success"
-                disabled={disableYearButtons}
                 onClick={() => addAllToCart(year_level.year_level_id)}
               >
-                {year_level.year_level_description} Button
+              {year_level.year_level_description}<br /> {activeSemester} Button
               </Button>
             ))}
 
@@ -791,7 +797,9 @@ const CourseTagging = () => {
             <TableHead>
               <TableRow>
                 <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>Course Code</TableCell>
-                <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>Subject ID</TableCell>
+                <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>Description</TableCell>
+                <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>Course Unit</TableCell>
+                <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>Lab Units</TableCell>
                 <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>Enrolled Students</TableCell>
                 <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>Action</TableCell>
               </TableRow>
@@ -801,6 +809,8 @@ const CourseTagging = () => {
                 <TableRow key={c.course_id}>
                   <TableCell style={{ border: `2px solid ${borderColor}`, }}>{c.course_code}</TableCell>
                   <TableCell style={{ border: `2px solid ${borderColor}`, }}>{c.course_description}</TableCell>
+                  <TableCell style={{ border: `2px solid ${borderColor}`, }}>{c.course_unit}</TableCell>
+                  <TableCell style={{ border: `2px solid ${borderColor}`, }}>{c.lab_unit}</TableCell>
                   <TableCell style={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
                     {subjectCounts[c.course_id] || 0}
                   </TableCell>
@@ -890,7 +900,8 @@ const CourseTagging = () => {
                 <TableCell style={{ display: "none", border: `2px solid ${borderColor}` }}>Enrolled Subject ID</TableCell>
                 <TableCell style={{ display: "none", border: `2px solid ${borderColor}` }}>Subject ID</TableCell>
                 <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>SUBJECT CODE</TableCell>
-                <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>SECTION</TableCell>
+                <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>COURSE UNIT</TableCell>
+                <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>LAB UNIT</TableCell>                <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>SECTION</TableCell>
                 <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>DAY</TableCell>
                 <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>TIME</TableCell>
                 <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>ROOM</TableCell>
@@ -909,8 +920,15 @@ const CourseTagging = () => {
                 <TableRow key={idx} >
                   <TableCell style={{ display: "none", border: `2px solid ${borderColor}` }}>{e.id}</TableCell>
                   <TableCell style={{ display: "none", border: `2px solid ${borderColor}` }}>{e.course_id}</TableCell>
+
                   <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
-                    {e.course_code}-{e.section_description}
+                    {e.course_code}
+                  </TableCell>
+                  <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                    {e.course_unit}
+                  </TableCell>
+                  <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                    {e.lab_unit}
                   </TableCell>
                   <TableCell style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
                     {e.program_code}-{e.description}
@@ -927,6 +945,17 @@ const CourseTagging = () => {
                   </TableCell>
                 </TableRow>
               ))}
+              <TableRow>
+                <TableCell colSpan={1} style={{ textAlign: "end", fontWeight: "600", border: `2px solid ${borderColor}` }}>
+                  Total Unit
+                </TableCell>
+                <TableCell colSpan={2} style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+                  {enrolled.reduce((sum, item) => sum + (parseFloat(item.course_unit) || 0), 0) + enrolled.reduce((sum, item) => sum + (parseFloat(item.lab_unit) || 0), 0)}
+                </TableCell>
+                <TableCell colSpan={7} style={{ textAlign: "center", border: `2px solid ${borderColor}` }}>
+
+                </TableCell>
+              </TableRow>
             </TableBody>
 
           </Table>

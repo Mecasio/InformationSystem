@@ -81,11 +81,11 @@ const AdminDashboard1 = () => {
 
 
   const stepsData = [
-       { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
-        { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
-        { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
-        { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
-        { label: "Entrance Examination Score", to: "/applicant_scoring", icon: <PersonSearchIcon fontSize="large" /> },
+    { label: "Admission Process for Registrar", to: "/applicant_list_admin", icon: <SchoolIcon fontSize="large" /> },
+    { label: "Applicant Form", to: "/admin_dashboard1", icon: <DashboardIcon fontSize="large" /> },
+    { label: "Student Requirements", to: "/student_requirements", icon: <AssignmentIcon fontSize="large" /> },
+    { label: "Examination Profile", to: "/registrar_examination_profile", icon: <PersonSearchIcon fontSize="large" /> },
+    { label: "Entrance Examination Score", to: "/applicant_scoring", icon: <PersonSearchIcon fontSize="large" /> },
 
   ];
 
@@ -1539,12 +1539,17 @@ const AdminDashboard1 = () => {
               <label className="w-40 font-medium">Campus:</label>
               <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
+
                 <Select
                   readOnly
                   labelId="campus-label"
                   id="campus-select"
                   name="campus"
-                  value={person.campus == null ? "" : String(person.campus)}
+                  value={
+                    person.campus === null || person.campus === undefined
+                      ? ""
+                      : String(person.campus)
+                  }
                   label="Campus (Manila/Cavite)"
                   onChange={(e) => {
                     const val = e.target.value;
@@ -1561,12 +1566,12 @@ const AdminDashboard1 = () => {
                   <MenuItem value="0">MANILA</MenuItem>
                   <MenuItem value="1">CAVITE</MenuItem>
                 </Select>
+
                 {errors.campus && (
                   <FormHelperText>This field is required.</FormHelperText>
                 )}
               </FormControl>
             </div>
-
 
 
             <div className="flex items-center mb-4 gap-4">
@@ -2545,8 +2550,8 @@ const AdminDashboard1 = () => {
                 </Typography>
 
                 <TextField
-                  fullWidth
 
+                  fullWidth
                   size="small"
                   name="cellphoneNumber"
                   placeholder="9XXXXXXXXX"
@@ -2579,31 +2584,37 @@ const AdminDashboard1 = () => {
                 </Typography>
 
                 <TextField
-                  InputProps={{ readOnly: true }}
                   fullWidth
                   size="small"
+                  InputProps={{ readOnly: true }}
                   name="emailAddress"
                   required
                   value={person.emailAddress || ""}
-                  placeholder="Enter your Gmail address"
-                  onBlur={() => handleUpdate(person)}
+                  placeholder="Enter your Email Address (e.g., username@gmail.com)"
                   error={!!errors.emailAddress}
-                  helperText={errors.emailAddress ? "This field is required." : ""}
+                  helperText={errors.emailAddress ? "Please enter a valid email address." : ""}
                   onChange={(e) => {
-                    let value = e.target.value.replace(/\s/g, "");
-
-                    value = value.replace(/@.*/, "");
-
-                    const finalValue = value === "" ? "" : value + "@gmail.com";
-
+                    const cleaned = e.target.value.replace(/\s/g, "");
                     handleChange({
-                      target: {
-                        name: "emailAddress",
-                        value: finalValue
-                      }
+                      target: { name: "emailAddress", value: cleaned }
                     });
                   }}
+                  onBlur={(e) => {
+                    let value = e.target.value.trim();
+
+                    // If user typed "username" only → auto add domain
+                    if (value && !value.includes("@")) {
+                      value = value + "@gmail.com"; // ← YOU CAN CHANGE THIS DEFAULT DOMAIN
+                    }
+
+                    handleChange({
+                      target: { name: "emailAddress", value }
+                    });
+
+                    handleUpdate(person);
+                  }}
                 />
+
 
 
               </Box>
@@ -2642,16 +2653,52 @@ const AdminDashboard1 = () => {
 
 
 
+            <Box display="flex" gap={2} mb={2}>
+              <Box flex={1}>
+                <Typography mb={1} fontWeight="medium">Present Street</Typography>
+                <TextField
+                  fullWidth
+                  InputProps={{ readOnly: true }}
+
+                  size="small"
+                  name="presentStreet"
+                  value={person.presentStreet || ""}
+                  onBlur={() => handleUpdate(person)} placeholder="Enter your Present Street"
+                  onChange={handleChange}
+                  error={!!errors.presentStreet}
+                  helperText={errors.presentStreet && "This field is required."}
+                />
+              </Box>
+
+              <Box flex={1}>
+                <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
+                <TextField
+                  fullWidth
+                  InputProps={{ readOnly: true }}
+
+                  size="small"
+                  name="presentZipCode"
+                  placeholder="Enter your Zip Code"
+                  value={person.presentZipCode || ""}
+                  onBlur={() => handleUpdate(person)} onChange={handleChange}
+                  error={!!errors.presentZipCode}
+                  helperText={errors.presentZipCode && "This field is required."}
+                />
+              </Box>
+            </Box>
+
+
 
             <Box display="flex" gap={2} mb={2}>
 
               {/* REGION */}
               <FormControl fullWidth size="small" required error={!!errors.presentRegion}>
-                <Typography mb={1} fontWeight="medium">Region</Typography>
+                <Typography mb={1} fontWeight="medium">Present Region</Typography>
 
                 <Select
                   name="presentRegion"
                   displayEmpty
+                  readOnly
                   value={person.presentRegion || ""}
                   onBlur={() => handleUpdate(person)}
                   onChange={(e) => {
@@ -2682,9 +2729,10 @@ const AdminDashboard1 = () => {
 
               {/* PROVINCE */}
               <FormControl fullWidth size="small" required error={!!errors.presentProvince}>
-                <Typography mb={1} fontWeight="medium">Province</Typography>
+                <Typography mb={1} fontWeight="medium">Present Province</Typography>
 
                 <Select
+                  readOnly
                   name="presentProvince"
                   displayEmpty
                   value={person.presentProvince || ""}
@@ -2721,9 +2769,10 @@ const AdminDashboard1 = () => {
 
               {/* MUNICIPALITY */}
               <FormControl fullWidth size="small" required error={!!errors.presentMunicipality}>
-                <Typography mb={1} fontWeight="medium">Municipality</Typography>
+                <Typography mb={1} fontWeight="medium">Present Municipality</Typography>
 
                 <Select
+                  readOnly
                   name="presentMunicipality"
                   displayEmpty
                   value={person.presentMunicipality || ""}
@@ -2753,9 +2802,10 @@ const AdminDashboard1 = () => {
 
               {/* BARANGAY */}
               <FormControl fullWidth size="small" required error={!!errors.presentBarangay}>
-                <Typography mb={1} fontWeight="medium">Barangay</Typography>
+                <Typography mb={1} fontWeight="medium">Present Barangay</Typography>
 
                 <Select
+                  readOnly
                   name="presentBarangay"
                   displayEmpty
                   value={person.presentBarangay || ""}
@@ -2790,6 +2840,8 @@ const AdminDashboard1 = () => {
             <Box mb={2}>
               <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
               <TextField
+                InputProps={{ readOnly: true }}
+
                 fullWidth
                 size="small"
                 name="presentDswdHouseholdNumber"
@@ -2800,6 +2852,8 @@ const AdminDashboard1 = () => {
                 helperText={errors.presentDswdHouseholdNumber && "This field is required."}
               />
             </Box>
+
+
 
             <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Permanent Address:</Typography>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />

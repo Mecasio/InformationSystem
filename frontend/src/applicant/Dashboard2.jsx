@@ -17,6 +17,8 @@ import { motion } from "framer-motion";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ExamPermit from "../applicant/ExamPermit";
 import API_BASE_URL from "../apiConfig";
+
+import { Snackbar, Alert } from "@mui/material";
 const Dashboard2 = (props) => {
   const settings = useContext(SettingsContext);
 
@@ -69,6 +71,21 @@ const Dashboard2 = (props) => {
     mother_year_graduated: "", mother_school_address: "", mother_contact: "", mother_occupation: "", mother_employer: "", mother_income: "", mother_email: "", guardian: "", guardian_family_name: "", guardian_given_name: "",
     guardian_middle_name: "", guardian_ext: "", guardian_nickname: "", guardian_address: "", guardian_contact: "", guardian_email: "", annual_income: "",
   });
+
+  // Add this state at the top if not already:
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "warning" });
+
+  // Snackbar close handler
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  // Example: replace previous calls with this:
+  const showSnackbar = (message) => {
+    setSnackbar({ open: true, message, severity: "warning" });
+  };
+
 
   // do not alter
   useEffect(() => {
@@ -127,9 +144,11 @@ const Dashboard2 = (props) => {
       setClickedSteps(newClickedSteps);
       navigate(steps[index].path); // ✅ actually move to step
     } else {
-      alert("Please fill all required fields before proceeding.");
+      showSnackbar("Please fill all required fields before proceeding.");
     }
   };
+
+
   const fetchPersonData = async (id) => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/person/${id}`);
@@ -260,7 +279,7 @@ const Dashboard2 = (props) => {
     // If father is NOT deceased, require father fields:
     if (person.father_deceased !== 1) {
       requiredFields.push(
-        "father_family_name", "father_given_name", "father_middle_name", "father_nickname",
+        "father_family_name", "father_given_name",
         "father_contact", "father_occupation", "father_employer", "father_income",
       );
 
@@ -275,7 +294,7 @@ const Dashboard2 = (props) => {
     // If mother is NOT deceased, require mother fields:
     if (person.mother_deceased !== 1) {
       requiredFields.push(
-        "mother_family_name", "mother_given_name", "mother_middle_name", "mother_nickname",
+        "mother_family_name", "mother_given_name",
         "mother_contact", "mother_occupation", "mother_employer", "mother_income",
       );
 
@@ -456,7 +475,7 @@ const Dashboard2 = (props) => {
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
 
       <br />
-  <Box
+      <Box
         sx={{
           display: "flex",
           justifyContent: "center",
@@ -1016,22 +1035,40 @@ const Dashboard2 = (props) => {
                   <hr style={{ border: '1px solid #ccc', width: '100%' }} />
                   <br />
 
-                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+
+                    {/* Father Contact */}
+                    <Box flex={1} display="flex" flexDirection="column">
                       <Typography variant="subtitle2" mb={0.5}>Father Contact</Typography>
+
                       <TextField
                         fullWidth
                         size="small"
-                        required
                         name="father_contact"
-                        placeholder="Enter Father Contact"
+                        placeholder="9XXXXXXXXX"
                         value={person.father_contact || ""}
-                        onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.father_contact} helperText={errors.father_contact ? "This field is required." : ""}
+                        onChange={(e) => {
+                          const onlyNumbers = e.target.value.replace(/\D/g, "");
+                          handleChange({
+                            target: {
+                              name: "father_contact",
+                              value: onlyNumbers,
+                            },
+                          });
+                        }}
+                        error={!!errors.father_contact}
+                        helperText={errors.father_contact && "This field is required."}
+                        InputProps={{
+                          startAdornment: (
+                            <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                          ),
+                        }}
                       />
                     </Box>
-                    <Box sx={{ flex: 1 }}>
+
+                    {/* Father Occupation */}
+                    <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Father Occupation</Typography>
                       <TextField
                         fullWidth
@@ -1042,10 +1079,13 @@ const Dashboard2 = (props) => {
                         placeholder="Enter Father Occupation"
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.father_occupation} helperText={errors.father_occupation ? "This field is required." : ""}
+                        error={errors.father_occupation}
+                        helperText={errors.father_occupation ? "This field is required." : ""}
                       />
                     </Box>
-                    <Box sx={{ flex: 1 }}>
+
+                    {/* Father Employer */}
+                    <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Father Employer</Typography>
                       <TextField
                         fullWidth
@@ -1056,11 +1096,13 @@ const Dashboard2 = (props) => {
                         value={person.father_employer || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.father_employer} helperText={errors.father_employer ? "This field is required." : ""}
+                        error={errors.father_employer}
+                        helperText={errors.father_employer ? "This field is required." : ""}
                       />
                     </Box>
+
                     {/* Father Income */}
-                    <Box sx={{ flex: 1 }}>
+                    <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Father Income</Typography>
                       <TextField
                         fullWidth
@@ -1069,28 +1111,54 @@ const Dashboard2 = (props) => {
                         name="father_income"
                         placeholder="Enter Father Income"
                         value={person.father_income || ""}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          const onlyNumbers = e.target.value.replace(/\D/g, ""); // numbers only
+                          handleChange({
+                            target: {
+                              name: "father_income",
+                              value: onlyNumbers,
+                            },
+                          });
+                        }}
                         onBlur={() => handleUpdate(person)}
                         error={errors.father_income}
                         helperText={errors.father_income ? "This field is required." : ""}
                       />
                     </Box>
+                    {/* Father Email */}
+
                   </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" mb={1}>Father Email Address</Typography>
+                  <Box flex={1}>
+                    <Typography variant="subtitle2" mb={0.5}>Father Email Address</Typography>
                     <TextField
                       fullWidth
                       size="small"
                       required
                       name="father_email"
-                      placeholder="Enter your Father Email Address (e.g., username@gmail.com)"
+                      placeholder="Enter Father Email Address"
                       value={person.father_email || ""}
-                      onChange={handleChange}
-                      onBlur={() => handleUpdate(person)}
-
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/\s/g, "");
+                        handleChange({
+                          target: { name: "father_email", value: cleaned }
+                        });
+                      }}
+                      onBlur={(e) => {
+                        let value = e.target.value.trim();
+                        if (value && !value.includes("@")) {
+                          value += "@gmail.com";
+                        }
+                        handleChange({
+                          target: { name: "father_email", value }
+                        });
+                        handleUpdate(person);
+                      }}
+                      error={errors.father_email}
+                      helperText={errors.father_email ? "Please enter a valid email address." : ""}
                     />
                   </Box>
+
                 </>
               )}
             </Box>
@@ -1348,84 +1416,135 @@ const Dashboard2 = (props) => {
                   <hr style={{ border: '1px solid #ccc', width: '100%' }} />
                   <br />
 
-                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+
+                    {/* Mother Contact */}
+                    <Box flex={1} display="flex" flexDirection="column">
                       <Typography variant="subtitle2" mb={0.5}>Mother Contact</Typography>
+
                       <TextField
                         fullWidth
                         size="small"
-                        required
                         name="mother_contact"
-                        placeholder="Enter your Mother Contact"
+                        placeholder="9XXXXXXXXX"
                         value={person.mother_contact || ""}
-                        onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.mother_contact} helperText={errors.mother_contact ? "This field is required." : ""}
+                        onChange={(e) => {
+                          const onlyNumbers = e.target.value.replace(/\D/g, "");
+                          handleChange({
+                            target: {
+                              name: "mother_contact",
+                              value: onlyNumbers,
+                            },
+                          });
+                        }}
+                        error={!!errors.mother_contact}
+                        helperText={errors.mother_contact && "This field is required."}
+                        InputProps={{
+                          startAdornment: (
+                            <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                          ),
+                        }}
                       />
                     </Box>
-                    <Box sx={{ flex: 1 }}>
+
+                    {/* Mother Occupation */}
+                    <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Mother Occupation</Typography>
                       <TextField
                         fullWidth
                         size="small"
                         required
                         name="mother_occupation"
-                        placeholder="Enter your Mother Occupation"
+                        placeholder="Enter Mother Occupation"
                         value={person.mother_occupation || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.mother_occupation} helperText={errors.mother_occupation ? "This field is required." : ""}
+                        error={errors.mother_occupation}
+                        helperText={errors.mother_occupation ? "This field is required." : ""}
                       />
                     </Box>
-                    <Box sx={{ flex: 1 }}>
+
+                    {/* Mother Employer */}
+                    <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Mother Employer</Typography>
                       <TextField
                         fullWidth
                         size="small"
                         required
                         name="mother_employer"
-                        placeholder="Enter your Mother Employer"
+                        placeholder="Enter Mother Employer"
                         value={person.mother_employer || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.mother_employer} helperText={errors.mother_employer ? "This field is required." : ""}
+                        error={errors.mother_employer}
+                        helperText={errors.mother_employer ? "This field is required." : ""}
                       />
                     </Box>
 
                     {/* Mother Income */}
-                    <Box sx={{ flex: 1 }}>
+                    <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Mother Income</Typography>
                       <TextField
                         fullWidth
                         size="small"
                         required
                         name="mother_income"
-                        placeholder="Enter your Mother Income"
+                        placeholder="Enter Mother Income"
                         value={person.mother_income || ""}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          const onlyNumbers = e.target.value.replace(/\D/g, ""); // numbers only
+                          handleChange({
+                            target: {
+                              name: "mother_income",
+                              value: onlyNumbers,
+                            },
+                          });
+                        }}
                         onBlur={() => handleUpdate(person)}
                         error={errors.mother_income}
                         helperText={errors.mother_income ? "This field is required." : ""}
                       />
                     </Box>
+                    {/* Mother Email */}
+
                   </Box>
 
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" mb={1}>Mother Email</Typography>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      required
-                      name="mother_email"
-                      placeholder="Enter your Mother Email Address (e.g., username@gmail.com)"
-                      value={person.mother_email || ""}
-                      onChange={handleChange}
-                      onBlur={() => handleUpdate(person)}
 
-                    />
-                  </Box>
                 </>
               )}
+
+              <Box flex={1}>
+                <Typography variant="subtitle2" mb={0.5}>Mother Email Address</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  required
+                  name="mother_email"
+                  placeholder="Enter Mother Email"
+                  value={person.mother_email || ""}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/\s/g, "");
+                    handleChange({
+                      target: { name: "mother_email", value: cleaned }
+                    });
+                  }}
+                  onBlur={(e) => {
+                    let value = e.target.value.trim();
+                    if (value && !value.includes("@")) {
+                      value += "@gmail.com";
+                    }
+                    handleChange({
+                      target: { name: "mother_email", value }
+                    });
+
+                    handleUpdate(person);
+                  }}
+                  error={errors.mother_email}
+                  helperText={errors.mother_email ? "Please enter a valid email address." : ""}
+                />
+              </Box>
+
             </Box>
 
 
@@ -1457,6 +1576,8 @@ const Dashboard2 = (props) => {
                   <MenuItem value="Father in Law">Father-in-law</MenuItem>
                   <MenuItem value="Mother in Law">Mother-in-law</MenuItem>
                   <MenuItem value="Sister in Law">Sister-in-law</MenuItem>
+                  <MenuItem value="GrandMother">GrandMother</MenuItem>
+                  <MenuItem value="GrandFather">GrandFather</MenuItem>
                   <MenuItem value="Spouse">Spouse</MenuItem>
                   <MenuItem value="Others">Others</MenuItem>
                 </Select>
@@ -1585,37 +1706,75 @@ const Dashboard2 = (props) => {
               />
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle2" mb={1}>Guardian Contact</Typography>
+            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+
+              {/* Guardian Contact */}
+              <Box flex={1} display="flex" flexDirection="column">
+                <Typography variant="subtitle2" mb={0.5}>Guardian Contact</Typography>
+
                 <TextField
                   fullWidth
                   size="small"
-                  required
                   name="guardian_contact"
-                  placeholder="Enter your Guardian Contact Number"
+                  placeholder="9XXXXXXXXX"
                   value={person.guardian_contact || ""}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const onlyNumbers = e.target.value.replace(/\D/g, ""); // numbers only
+                    handleChange({
+                      target: {
+                        name: "guardian_contact",
+                        value: onlyNumbers,
+                      },
+                    });
+                  }}
                   onBlur={() => handleUpdate(person)}
-                  error={errors.guardian_contact} helperText={errors.guardian_contact ? "This field is required." : ""}
+                  error={!!errors.guardian_contact}
+                  helperText={errors.guardian_contact && "This field is required."}
+                  InputProps={{
+                    startAdornment: (
+                      <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                    ),
+                  }}
                 />
               </Box>
 
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle2" mb={1}>Guardian Email</Typography>
+              {/* Guardian Email */}
+              <Box flex={1} display="flex" flexDirection="column">
+                <Typography variant="subtitle2" mb={0.5}>Guardian Email</Typography>
+
                 <TextField
                   fullWidth
                   size="small"
                   required
                   name="guardian_email"
-                  placeholder="Enter your Guardian Email Address (e.g., username@gmail.com)"
+                  placeholder="Enter Guardian Email (e.g., username@gmail.com)"
                   value={person.guardian_email || ""}
-                  onChange={handleChange}
-                  onBlur={() => handleUpdate(person)}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/\s/g, "");
+                    handleChange({
+                      target: { name: "guardian_email", value: cleaned }
+                    });
+                  }}
+                  onBlur={(e) => {
+                    let value = e.target.value.trim();
 
+                    if (value && !value.includes("@")) {
+                      value += "@gmail.com"; // auto-domain
+                    }
+
+                    handleChange({
+                      target: { name: "guardian_email", value }
+                    });
+
+                    handleUpdate(person);
+                  }}
+                  error={errors.guardian_email}
+                  helperText={errors.guardian_email ? "Please enter a valid email address." : ""}
                 />
               </Box>
+
             </Box>
+
 
             <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Family (Annual Income)</Typography>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
@@ -1690,10 +1849,18 @@ const Dashboard2 = (props) => {
 
 
             <Box display="flex" justifyContent="space-between" mt={4}>
-              {/* Previous Page Button */}
+              {/* Previous Step Button */}
               <Button
                 variant="contained"
-                onClick={() => navigate(`/dashboard/${keys.step1}`)} // ✅ FIXED
+                onClick={() => {
+                  handleUpdate();
+
+                  if (isFormValid()) {
+                    navigate(`/dashboard/${keys.step1}`);
+                  } else {
+                    showSnackbar("Please complete all required fields before proceeding.");
+                  }
+                }}
                 startIcon={
                   <ArrowBackIcon
                     sx={{
@@ -1727,7 +1894,7 @@ const Dashboard2 = (props) => {
                   if (isFormValid()) {
                     navigate(`/dashboard/${keys.step3}`); // ✅ Goes to next step
                   } else {
-                    alert("Please complete all required fields before proceeding.");
+                    showSnackbar("Please complete all required fields before proceeding.");
                   }
                 }}
                 endIcon={
@@ -1753,7 +1920,18 @@ const Dashboard2 = (props) => {
               >
                 Next Step
               </Button>
+
             </Box>
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={3000} // 3 seconds
+              onClose={handleCloseSnackbar}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                {snackbar.message}
+              </Alert>
+            </Snackbar>
 
 
           </Container>

@@ -129,8 +129,8 @@ const SuperAdminStudentDashboard2 = () => {
 
 
     const location = useLocation();
-  
-   const queryParams = new URLSearchParams(location.search);
+
+    const queryParams = new URLSearchParams(location.search);
     const queryPersonId = queryParams.get("person_id");
 
     useEffect(() => {
@@ -163,10 +163,10 @@ const SuperAdminStudentDashboard2 = () => {
 
         window.location.href = "/login";
     }, [queryPersonId]);
-   
 
 
-  
+
+
     const [selectedPerson, setSelectedPerson] = useState(null);
 
 
@@ -415,26 +415,26 @@ const SuperAdminStudentDashboard2 = () => {
 
 
 
-const links = [
-  {
-    to: userID ? `/admin_ecat_application_form?person_id=${userID}` : "/admin_ecat_application_form",
-    label: "ECAT Application Form",
-  },
-  {
-    to: userID ? `/admin_admission_form_process?person_id=${userID}` : "/admin_admission_form_process",
-    label: "Admission Form Process",
-  },
-  {
-    to: userID ? `/admin_personal_data_form?person_id=${userID}` : "/admin_personal_data_form",
-    label: "Personal Data Form",
-  },
-  {
-    to: userID ? `/admin_office_of_the_registrar?person_id=${userID}` : "/admin_office_of_the_registrar",
-    label: `Application For ${shortTerm ? shortTerm.toUpperCase() : ""} College Admission`,
-  },
-  { to: "/admission_services", label: "Application/Student Satisfactory Survey" },
- 
-];
+    const links = [
+        {
+            to: userID ? `/admin_ecat_application_form?person_id=${userID}` : "/admin_ecat_application_form",
+            label: "ECAT Application Form",
+        },
+        {
+            to: userID ? `/admin_admission_form_process?person_id=${userID}` : "/admin_admission_form_process",
+            label: "Admission Form Process",
+        },
+        {
+            to: userID ? `/admin_personal_data_form?person_id=${userID}` : "/admin_personal_data_form",
+            label: "Personal Data Form",
+        },
+        {
+            to: userID ? `/admin_office_of_the_registrar?person_id=${userID}` : "/admin_office_of_the_registrar",
+            label: `Application For ${shortTerm ? shortTerm.toUpperCase() : ""} College Admission`,
+        },
+        { to: "/admission_services", label: "Application/Student Satisfactory Survey" },
+
+    ];
 
 
 
@@ -553,74 +553,74 @@ const links = [
 
             <br />
 
-  <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          width: "100%",
-          mt: 2,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            p: 2,
-            borderRadius: "10px",
-            backgroundColor: "#fffaf5",
-            border: "1px solid #6D2323",
-            boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-            width: "100%",
-            overflow: "hidden",
-          }}
-        >
-          {/* Icon */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: "#800000",
-              borderRadius: "8px",
-              width: 60,
-              height: 60,
-              flexShrink: 0,
-            }}
-          >
-            <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
-          </Box>
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    width: "100%",
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: 2,
+                        borderRadius: "10px",
+                        backgroundColor: "#fffaf5",
+                        border: "1px solid #6D2323",
+                        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+                        width: "100%",
+                        overflow: "hidden",
+                    }}
+                >
+                    {/* Icon */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            backgroundColor: "#800000",
+                            borderRadius: "8px",
+                            width: 60,
+                            height: 60,
+                            flexShrink: 0,
+                        }}
+                    >
+                        <ErrorIcon sx={{ color: "white", fontSize: 40 }} />
+                    </Box>
 
-          {/* Text */}
-          <Typography
-            sx={{
-              fontSize: "20px",
-              fontFamily: "Arial",
-              color: "#3e3e3e",
-              lineHeight: 1.3, // slightly tighter to fit in fewer rows
-              whiteSpace: "normal",
-              overflow: "hidden",
-            }}
-          >
-            <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
-            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
-            <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
+                    {/* Text */}
+                    <Typography
+                        sx={{
+                            fontSize: "20px",
+                            fontFamily: "Arial",
+                            color: "#3e3e3e",
+                            lineHeight: 1.3, // slightly tighter to fit in fewer rows
+                            whiteSpace: "normal",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <strong style={{ color: "maroon" }}>Notice:</strong> &nbsp;
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px' }}>➔</span> Kindly type 'NA' in boxes where there are no possible answers to the information being requested. &nbsp;  &nbsp; <br />
+                        <strong></strong> <span style={{ fontSize: '1.2em', margin: '0 15px', marginLeft: "100px", }}>➔</span> To make use of the letter 'Ñ', please press ALT while typing "165", while for 'ñ', please press ALT while typing "164"
 
-          </Typography>
-        </Box>
-      </Box>
+                    </Typography>
+                </Box>
+            </Box>
 
-      <h1
-        style={{
-          fontSize: "30px",
-          fontWeight: "bold",
-          textAlign: "center",
-          color: "black",
-          marginTop: "25px",
-        }}
-      >
-        LISTS OF ALL PRINTABLE FILES
-      </h1>
+            <h1
+                style={{
+                    fontSize: "30px",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    color: "black",
+                    marginTop: "25px",
+                }}
+            >
+                LISTS OF ALL PRINTABLE FILES
+            </h1>
 
 
 
@@ -1128,91 +1128,151 @@ const links = [
                                         </Box>
                                     )}
 
-
                                     <Typography sx={{ fontSize: '20px', color: '#6D2323', fontWeight: 'bold', mt: 3 }}>
                                         Father's Contact Information
                                     </Typography>
                                     <hr style={{ border: '1px solid #ccc', width: '100%' }} />
                                     <br />
 
-                                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                                        <Box sx={{ flex: 1 }}>
+                                    <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+
+                                        {/* Father Contact */}
+                                        <Box flex={1} display="flex" flexDirection="column">
                                             <Typography variant="subtitle2" mb={0.5}>Father Contact</Typography>
+
                                             <TextField
+
+
                                                 fullWidth
                                                 size="small"
-                                                required
                                                 name="father_contact"
-                                                placeholder="Enter Father Contact"
-                                                value={person.father_contact ?? ""}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                error={errors.father_contact} helperText={errors.father_contact ? "This field is required." : ""}
+                                                placeholder="9XXXXXXXXX"
+                                                value={person.father_contact || ""}
+                                                onBlur={() => handleUpdate(person)}
+                                                onChange={(e) => {
+                                                    const onlyNumbers = e.target.value.replace(/\D/g, "");
+                                                    handleChange({
+                                                        target: {
+                                                            name: "father_contact",
+                                                            value: onlyNumbers,
+                                                        },
+                                                    });
+                                                }}
+                                                error={!!errors.father_contact}
+                                                helperText={errors.father_contact && "This field is required."}
+                                                InputProps={{
+                                                   
+                                                    startAdornment: (
+                                                        <Typography sx={{ mr: 1, fontWeight: "bold" }}>+63</Typography>
+                                                    ),
+                                                }}
                                             />
                                         </Box>
-                                        <Box sx={{ flex: 1 }}>
+
+                                        {/* Father Occupation */}
+                                        <Box flex={1}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Occupation</Typography>
                                             <TextField
+                                             
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_occupation"
-                                                value={person.father_occupation ?? ""}
+                                                value={person.father_occupation || ""}
                                                 placeholder="Enter Father Occupation"
                                                 onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                error={errors.father_occupation} helperText={errors.father_occupation ? "This field is required." : ""}
+                                                onBlur={() => handleUpdate(person)}
+                                                error={errors.father_occupation}
+                                                helperText={errors.father_occupation ? "This field is required." : ""}
                                             />
                                         </Box>
-                                        <Box sx={{ flex: 1 }}>
+
+                                        {/* Father Employer */}
+                                        <Box flex={1}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Employer</Typography>
                                             <TextField
+                                           
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_employer"
                                                 placeholder="Enter Father Employer"
-                                                value={person.father_employer ?? ""}
+                                                value={person.father_employer || ""}
                                                 onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                error={errors.father_employer} helperText={errors.father_employer ? "This field is required." : ""}
+                                                onBlur={() => handleUpdate(person)}
+                                                error={errors.father_employer}
+                                                helperText={errors.father_employer ? "This field is required." : ""}
                                             />
                                         </Box>
+
                                         {/* Father Income */}
-                                        <Box sx={{ flex: 1 }}>
+                                        <Box flex={1}>
                                             <Typography variant="subtitle2" mb={0.5}>Father Income</Typography>
                                             <TextField
+                                         
+
                                                 fullWidth
                                                 size="small"
                                                 required
                                                 name="father_income"
                                                 placeholder="Enter Father Income"
-                                                value={person.father_income ?? ""}
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
+                                                value={person.father_income || ""}
+                                                onChange={(e) => {
+                                                    const onlyNumbers = e.target.value.replace(/\D/g, ""); // numbers only
+                                                    handleChange({
+                                                        target: {
+                                                            name: "father_income",
+                                                            value: onlyNumbers,
+                                                        },
+                                                    });
+                                                }}
+                                                onBlur={() => handleUpdate(person)}
                                                 error={errors.father_income}
                                                 helperText={errors.father_income ? "This field is required." : ""}
                                             />
                                         </Box>
+                                        {/* Father Email */}
+
                                     </Box>
 
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle2" mb={1}>Father Email Address</Typography>
+                                    <Box flex={1}>
+                                        <Typography variant="subtitle2" mb={0.5}>Father Email Address</Typography>
                                         <TextField
+                                      
+
                                             fullWidth
                                             size="small"
                                             required
                                             name="father_email"
-                                            placeholder="Enter your Father Email Address (e.g., username@gmail.com)"
-                                            value={person.father_email ?? ""}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-
+                                            placeholder="Enter Father Email Address"
+                                            value={person.father_email || ""}
+                                            onChange={(e) => {
+                                                const cleaned = e.target.value.replace(/\s/g, "");
+                                                handleChange({
+                                                    target: { name: "father_email", value: cleaned }
+                                                });
+                                            }}
+                                            onBlur={(e) => {
+                                                let value = e.target.value.trim();
+                                                if (value && !value.includes("@")) {
+                                                    value += "@gmail.com";
+                                                }
+                                                handleChange({
+                                                    target: { name: "father_email", value }
+                                                });
+                                                handleUpdate(person);
+                                            }}
+                                            error={errors.father_email}
+                                            helperText={errors.father_email ? "Please enter a valid email address." : ""}
                                         />
                                     </Box>
+
                                 </>
                             )}
                         </Box>
+
 
 
                         <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Mother's Details</Typography>
@@ -1569,6 +1629,8 @@ const links = [
                                     <MenuItem value="Father">Father</MenuItem>
                                     <MenuItem value="Mother">Mother</MenuItem>
                                     <MenuItem value="Brother/Sister">Brother/Sister</MenuItem>
+                                    <MenuItem value="GrandMother">GrandMother</MenuItem>
+                                    <MenuItem value="GrandFather">GrandFather</MenuItem>
                                     <MenuItem value="Uncle">Uncle</MenuItem>
                                     <MenuItem value="StepFather">Stepfather</MenuItem>
                                     <MenuItem value="StepMother">Stepmother</MenuItem>

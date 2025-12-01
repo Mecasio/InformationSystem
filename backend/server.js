@@ -8441,7 +8441,7 @@ app.get("/get_course", async (req, res) => {
 
 // COURSE LIST (UPDATED!)
 app.get("/course_list", async (req, res) => {
-  const query = "SELECT * FROM course_table";
+  const query = "SELECT * FROM course_table ORDER BY course_table.course_code ASC";
 
   try {
     const [result] = await db3.query(query);
@@ -8662,6 +8662,21 @@ app.get("/get_year_level", async (req, res) => {
   } catch (err) {
     console.error("Query error:", err);
     res.status(500).json({ error: "Failed to retrieve year level data", details: err.message });
+  }
+});
+
+app.get("/get_active_semester", async (req, res) => {
+  try{
+    const semester = await db3.query(`
+      SELECT smt.semester_description FROM active_school_year_table AS sy
+      LEFT JOIN semester_table AS smt ON sy.semester_id = smt.semester_id
+      WHERE sy.astatus = 1;  
+    `);
+
+    res.json(semester[0])
+  } catch (err) {
+    console.log("Internal Server Error");
+    res.status(500).json(err);
   }
 });
 
@@ -10800,11 +10815,13 @@ app.get('/course_assigned_to/:userID', async (req, res) => {
 
   try {
     const sql = `
-    SELECT DISTINCT tt.course_id, ct.course_description, ct.course_code FROM time_table AS tt
+    SELECT DISTINCT tt.course_id, ct.course_description, ct.course_code, yt.year_id, st.semester_id FROM time_table AS tt
       INNER JOIN course_table AS ct ON tt.course_id = ct.course_id
       INNER JOIN prof_table AS pt ON tt.professor_id = pt.prof_id
       INNER JOIN active_school_year_table AS sy ON tt.school_year_id = sy.id
-    WHERE pt.person_id = ? AND sy.astatus = 1
+      INNER JOIN year_table AS yt ON sy.year_id = yt.year_id
+      INNER JOIN semester_table AS st ON sy.semester_id = st.semester_id
+    WHERE pt.person_id = ? AND ct.office_duty = 0
     `
     const [result] = await db3.query(sql, [userID]);
     res.json(result);
@@ -10813,6 +10830,8 @@ app.get('/course_assigned_to/:userID', async (req, res) => {
     res.status(500).send({ message: "Internal Error", err });
   }
 });
+
+
 
 
 
@@ -12790,6 +12809,7 @@ app.get("/api/student_number", async (req, res) => {
   }
 });
 
+
 app.get('/get_class_details/:userID', async (req, res) => {
   const { userID } = req.params;
   try {
@@ -12801,7 +12821,9 @@ app.get('/get_class_details/:userID', async (req, res) => {
         ct.lab_unit,
         pst.first_name, 
         pst.middle_name, 
-        pst.last_name, 
+        pst.last_name,
+        pst.gender,
+        pst.age,
         pt.program_code, 
         st.description AS section_description, 
         ct.course_id,
@@ -12817,7 +12839,8 @@ app.get('/get_class_details/:userID', async (req, res) => {
         yr.year_description AS current_year,
         yr.year_description + 1 AS next_year,
         smt.semester_description,
-        dt.dprtmnt_name
+        dt.dprtmnt_name,
+        yrlt.year_level_description
       FROM enrolled_subject AS es
       INNER JOIN student_numbering_table AS snt ON es.student_number = snt.student_number
       INNER JOIN person_table AS pst ON snt.person_id = pst.person_id
@@ -12837,6 +12860,8 @@ app.get('/get_class_details/:userID', async (req, res) => {
       INNER JOIN room_table AS rt ON tt.department_room_id = rt.room_id
       INNER JOIN dprtmnt_curriculum_table AS dct ON cct.curriculum_id = dct.curriculum_id
       INNER JOIN dprtmnt_table AS dt ON dct.dprtmnt_id = dt.dprtmnt_id
+      LEFT JOIN student_status_table AS sst ON es.student_number = sst.student_number
+      LEFT JOIN year_level_table AS yrlt ON sst.year_level_id = yrlt.year_level_id
     WHERE tt.professor_id = ?
     `;
     const [result] = await db3.query(query, [userID]);
@@ -12847,7 +12872,6 @@ app.get('/get_class_details/:userID', async (req, res) => {
     res.status(500).send({ message: "Internal Error", err });
   }
 });
-
 
 
 app.get("/api/section_assigned_to/:userID/:selectedSchoolYear/:selectedSchoolSemester", async (req, res) => {
@@ -13020,13 +13044,15 @@ app.post("/api/grades/import", upload.single("file"), async (req, res) => {
 });
 
 app.get("/api/section_assigned_to/:userID", async (req, res) => {
-  const { userID } = req.params;
+  const { userID} = req.params;
   try {
     const [rows] = await db3.execute(`
       SELECT DISTINCT
-		st.id AS section_id,
+		    st.id AS section_id,
         st.description AS section_description,
-        pgt.program_code
+        pgt.program_code,
+        yt.year_id,
+        smt.semester_id
       FROM time_table t
       JOIN room_day_table d ON d.id = t.room_day
       INNER JOIN active_school_year_table asy ON t.school_year_id = asy.id
@@ -13035,6 +13061,8 @@ app.get("/api/section_assigned_to/:userID", async (req, res) => {
       INNER JOIN curriculum_table AS cct ON dst.curriculum_id = cct.curriculum_id
       INNER JOIN program_table AS pgt ON cct.program_id = pgt.program_id
       INNER JOIN prof_table AS pft ON t.professor_id = pft.prof_id
+      INNER JOIN year_table AS yt ON asy.year_id = yt.year_id
+      INNER JOIN semester_table AS smt ON asy.semester_id = smt.semester_id 
       WHERE pft.person_id = ?
     `, [userID]);
 
@@ -13048,6 +13076,7 @@ app.get("/api/section_assigned_to/:userID", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
 
 app.put("/add_grades", async (req, res) => {
   const { midterm, finals, final_grade, en_remarks, student_number, subject_id } = req.body;

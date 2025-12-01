@@ -119,8 +119,21 @@ const Dashboard1 = (props) => {
     permanentDswdHouseholdNumber: "",
   });
 
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  const handleCloseSnackbar = () => setSnackbar((prev) => ({ ...prev, open: false }));
+
+  // Add this state at the top if not already:
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "warning" });
+
+  // Snackbar close handler
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  // Example: replace previous calls with this:
+  const showSnackbar = (message) => {
+    setSnackbar({ open: true, message, severity: "warning" });
+  };
+
 
 
   // do not alter
@@ -564,20 +577,21 @@ const Dashboard1 = (props) => {
     requiredFields.forEach((field) => {
       const value = person[field];
       const stringValue = value?.toString().trim();
-      // Special rule for emailAddress
-      const emailValue = person.emailAddress?.trim();
-
-      // If user has not typed a username
-      if (!emailValue || emailValue === "@gmail.com") {
-        newErrors.emailAddress = true;
-        isValid = false;
-      }
 
       if (!stringValue) {
         newErrors[field] = true;
         isValid = false;
       }
     });
+
+    // ✅ NEW EMAIL VALIDATION (any domain allowed)
+    const emailValue = person.emailAddress?.trim();
+    const emailPattern = /^[^@]+@[^@]+\.[^@]+$/;
+
+    if (!emailValue || !emailPattern.test(emailValue)) {
+      newErrors.emailAddress = true;
+      isValid = false;
+    }
 
     // ✅ LRN Number: required only if N/A is NOT checked
     if (!isLrnNA) {
@@ -1008,11 +1022,16 @@ const Dashboard1 = (props) => {
               <label className="w-40 font-medium">Campus:</label>
               <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
+
                 <Select
                   labelId="campus-label"
                   id="campus-select"
                   name="campus"
-                  value={person.campus == null ? "" : String(person.campus)}
+                  value={
+                    person.campus === null || person.campus === undefined
+                      ? ""
+                      : String(person.campus)
+                  }
                   label="Campus (Manila/Cavite)"
                   onChange={(e) => {
                     const val = e.target.value;
@@ -1029,11 +1048,13 @@ const Dashboard1 = (props) => {
                   <MenuItem value="0">MANILA</MenuItem>
                   <MenuItem value="1">CAVITE</MenuItem>
                 </Select>
+
                 {errors.campus && (
                   <FormHelperText>This field is required.</FormHelperText>
                 )}
               </FormControl>
             </div>
+
 
 
 
@@ -1985,32 +2006,25 @@ const Dashboard1 = (props) => {
                   name="emailAddress"
                   required
                   value={person.emailAddress || ""}
-                  placeholder="Enter your Gmail address"
+                  placeholder="Enter your Email Address (e.g., username@gmail.com)"
                   error={!!errors.emailAddress}
-                  helperText={errors.emailAddress ? "This field is required." : ""}
+                  helperText={errors.emailAddress ? "Please enter a valid email address." : ""}
                   onChange={(e) => {
-                    // remove spaces only (let user type naturally)
                     const cleaned = e.target.value.replace(/\s/g, "");
-
                     handleChange({
-                      target: {
-                        name: "emailAddress",
-                        value: cleaned
-                      }
+                      target: { name: "emailAddress", value: cleaned }
                     });
                   }}
                   onBlur={(e) => {
                     let value = e.target.value.trim();
 
+                    // If user typed "username" only → auto add domain
                     if (value && !value.includes("@")) {
-                      value = value + "@gmail.com";
+                      value = value + "@gmail.com"; // ← YOU CAN CHANGE THIS DEFAULT DOMAIN
                     }
 
                     handleChange({
-                      target: {
-                        name: "emailAddress",
-                        value
-                      }
+                      target: { name: "emailAddress", value }
                     });
 
                     handleUpdate(person);
@@ -2754,13 +2768,8 @@ const Dashboard1 = (props) => {
 
                   if (isFormValid()) {
                     navigate(`/dashboard/${keys.step2}`);
-
                   } else {
-                    setSnackbar({
-                      open: true,
-                      message: "Please complete all required fields before proceeding.",
-                      severity: "error",
-                    });
+                    showSnackbar("Please complete all required fields before proceeding.");
                   }
                 }}
                 endIcon={
@@ -2786,40 +2795,20 @@ const Dashboard1 = (props) => {
               >
                 Next Step
               </Button>
+
             </Box>
 
             <Snackbar
               open={snackbar.open}
-              autoHideDuration={3000}
+              autoHideDuration={3000} // 3 seconds
               onClose={handleCloseSnackbar}
               anchorOrigin={{ vertical: "top", horizontal: "center" }}
             >
-              <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: "100%" }}>
+              <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                 {snackbar.message}
               </Alert>
             </Snackbar>
 
-            <Snackbar
-              open={snackbar.open}
-              autoHideDuration={4000}
-              onClose={handleCloseSnackbar}
-              anchorOrigin={{ vertical: "top", horizontal: "center" }} // <-- top center
-            >
-              <Alert
-                onClose={handleCloseSnackbar}
-                severity={snackbar.severity} // "error" for red
-                sx={{
-                  width: "100%",
-                  height: 50,       // bigger height
-                  fontSize: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {snackbar.message}
-              </Alert>
-            </Snackbar>
 
 
           </Container>
