@@ -17,7 +17,7 @@ const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:5173", "http://192.168.50.2:5173"],
+    origin: ["http://localhost:5173", "http://192.168.85.167:5173"],
     methods: ["GET", "POST"]
   }
 });
@@ -26,7 +26,7 @@ const io = new Server(http, {
 
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.84.245:5173"],  // ✅ Explicitly allow Vite dev server
+  origin: ["http://localhost:5173", "http://192.168.85.167:5173"],  // ✅ Explicitly allow Vite dev server
   credentials: true                  // ✅ Allow credentials (cookies, auth)
 }));
 
@@ -1231,57 +1231,6 @@ app.post("/transfer", async (req, res) => {
     return res.status(500).send({ message: "Something went wrong in the server", error });
   }
 });
-
-
-// REGISTER API (NEW)
-// app.post("/register_account", async (req, res) => {
-//   const { email, password } = req.body;
-
-//   if (!email || !password ) {
-//     return res.status(400).json({ message: "All fields are required" });
-//   }
-
-//   try {
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     // Check if user already exists
-//     const checkUserSql = "SELECT * FROM user_accounts WHERE email = ?";
-//     const [existingUsers] = await db.query(checkUserSql, [email]);
-
-//     if (existingUsers.length > 0) {
-//       return res.status(400).json({ message: "User already exists" });
-//     }
-
-//     // Insert blank record into person_table and get inserted person_id
-//     const insertPersonSql = "INSERT INTO person_table () VALUES ()";
-//     const [personResult] = await db.query(insertPersonSql);
-
-//     // Step 1: Get the active_school_year_id
-//     const activeYearSql = `SELECT asy.id, st.semester_code FROM active_school_year_table AS asy
-//     LEFT JOIN
-//     semester_table AS st ON asy.semester_id = st.semester_id WHERE astatus = 1 LIMIT 1`;
-//     const [yearResult] = await db3.query(activeYearSql);
-
-//     if (yearResult.length === 0) {
-//       return res.status(404).json({ error: "No active school year found" });
-//     }
-
-//     const activeSchoolYearId = yearResult[0].id;
-//     const semester_code = yearResult[0].semester_code;
-
-//     const person_id = personResult.insertId;
-
-//     // Insert user with person_id
-//     const insertUserSql = "INSERT INTO user_accounts (email, person_id, password, role) VALUES (?, ?, ?, 'applicant')";
-//     await db.query(insertUserSql, [email, person_id, hashedPassword]);
-
-//     res.status(201).json({ message: "User registered successfully", person_id });
-//   } catch (error) {
-//     console.error("Registration error:", error);
-//     res.status(500).json({ message: "Registration failed" });
-//   }
-// });
-
 
 
 // Get applicant_number by person_id
@@ -5747,23 +5696,6 @@ WHERE proctor LIKE ?
     }
   });
 
-  app.get("/api/employee/:employeeID", async (req, res) => {
-    const { employeeID } = req.params;
-    console.log(employeeID);
-    try {
-      const [rows] = await db3.query(
-        "SELECT page_id FROM page_access WHERE user_id = ?",
-        [employeeID]
-      );
-
-      const pageIds = rows.map(r => r.page_id);
-
-      res.json({ success: true, accessList: pageIds });
-    } catch (err) {
-      console.error("Error fetching access list:", err);
-      res.status(500).json({ error: "Database error" });
-    }
-  });
 
   // ✅ Unified Save or Update for Qualifying / Interview Scores (with duplicate-safe notifications)
   app.post("/api/interview/save", async (req, res) => {
@@ -5861,7 +5793,7 @@ WHERE proctor LIKE ?
   });
 
   
-  app.post("/exam/save", async (req, res) => {
+app.post("/exam/save", async (req, res) => {
     try {
       const {
         applicant_number,
@@ -5971,6 +5903,68 @@ WHERE proctor LIKE ?
       res.status(500).json({ error: "Failed to save exam data" });
     }
   });
+
+  // ======================= EMAIL NOTIFICATION LOGGER =======================
+  app.post("/api/log-email", async (req, res) => {
+    try {
+      const { applicant_number, user_person_id, subject, customMessage } = req.body;
+
+      if (!applicant_number) {
+        return res.status(400).json({ error: "Applicant number is required" });
+      }
+
+      // 1️⃣ Get applicant’s person_id
+      const personId = await getPersonIdByApplicantNumber(applicant_number);
+      if (!personId) {
+        return res.status(404).json({ error: "Applicant not found" });
+      }
+
+      // 2️⃣ Get actor info (email + role) from user_accounts in db3
+      let actorEmail = "earistmis@gmail.com";
+      let actorFullName = "System";
+
+      if (user_person_id) {
+        const [actorRows] = await db3.query(
+          "SELECT email, role FROM user_accounts WHERE person_id = ? LIMIT 1",
+          [user_person_id]
+        );
+
+        if (actorRows.length > 0) {
+          const actor = actorRows[0];
+          actorEmail = actor.email;
+          actorFullName = actor.role ? actor.role.toUpperCase() : actor.email;
+        }
+      }
+
+      // 3️⃣ Build message
+      const message =
+        customMessage ||
+        `📧 ${subject || "Email"} sent for Applicant #${applicant_number}`;
+
+      // 4️⃣ Insert into notifications
+      await db.query(
+        `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+        ["email", message, applicant_number, actorEmail, actorFullName]
+      );
+
+      // 5️⃣ Emit via socket
+      io.emit("notification", {
+        type: "email",
+        message,
+        applicant_number,
+        actor_email: actorEmail,
+        actor_name: actorFullName,
+        timestamp: new Date().toISOString(),
+      });
+
+      res.json({ success: true, message: "Email notification logged" });
+    } catch (err) {
+      console.error("❌ Email log error:", err);
+      res.status(500).json({ error: "Failed to log email notification" });
+    }
+  });
+
 
 
   // ======================= EMAIL NOTIFICATION LOGGER =======================
@@ -8261,9 +8255,9 @@ app.delete("/delete_course/:id", async (req, res) => {
 });
 
 
-// COURSE LIST
+
 app.get("/course_list", async (req, res) => {
-  const query = "SELECT * FROM course_table ORDER BY course_code ASC";
+  const query = "SELECT * FROM course_table ORDER BY course_table.course_code ASC";
 
   try {
     const [result] = await db3.query(query);
@@ -8401,21 +8395,7 @@ app.get("/get_course", async (req, res) => {
   }
 });
 
-// COURSE LIST (UPDATED!)
-app.get("/course_list", async (req, res) => {
-  const query = "SELECT * FROM course_table ORDER BY course_table.course_code ASC";
 
-  try {
-    const [result] = await db3.query(query);
-    res.status(200).json(result);
-  } catch (err) {
-    console.error("Query error:", err);
-    res.status(500).json({
-      error: "Query failed",
-      details: err.message,
-    });
-  }
-});
 
 // ----------------------------- PROGRAM TAGGING PANEL ------------------------------- //
 app.post("/program_tagging", async (req, res) => {
@@ -9575,6 +9555,8 @@ app.get("/prof_list/:dprtmnt_id", async (req, res) => {
   }
 });
 
+
+
 app.get("/room_list/:dprtmnt_id", async (req, res) => {
   const { dprtmnt_id } = req.params;
 
@@ -9604,6 +9586,7 @@ app.get("/schedule-plotting/day_list", async (req, res) => {
     res.status(500).send(error);
   }
 });
+
 
 app.delete("/api/delete/schedule/:id", async (req, res) => {
   const { id } = req.params;
@@ -9667,6 +9650,8 @@ function timeToMinutes(timeStr) {
 
   return hours * 60 + minutes;
 }
+
+
 
 //CHECK CONFLICT
 app.post("/api/check-conflict", async (req, res) => {
@@ -9796,12 +9781,13 @@ app.post("/api/check-time", async (req, res) => {
     console.error("Error checking conflict:", err);
     return res.status(500).json({ error: "Server error while checking conflict" });
   }
+
 });
 
 
 // ✅ Insert schedule API
 app.post("/api/insert-schedule", async (req, res) => {
-  const { day, start_time, end_time, section_id, subject_id, prof_id, room_id, school_year_id } = req.body;
+  const { day, start_time, end_time, section_id, subject_id, prof_id, room_id, school_year_id, ishonorarium } = req.body;
 
   if (!day || !start_time || !end_time || !school_year_id || !prof_id || !room_id || !subject_id) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -9886,10 +9872,10 @@ app.post("/api/insert-schedule", async (req, res) => {
     // Insert schedule
     const insertQuery = `
       INSERT INTO time_table 
-      (room_day, school_time_start, school_time_end, department_section_id, course_id, professor_id, department_room_id, school_year_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (room_day, school_time_start, school_time_end, department_section_id, course_id, ishonorarium, professor_id, department_room_id, school_year_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    await db3.query(insertQuery, [day, start_time, end_time, section_id, subject_id, prof_id, room_id, school_year_id]);
+    await db3.query(insertQuery, [day, start_time, end_time, section_id, subject_id, ishonorarium, prof_id, room_id, school_year_id]);
 
     res.status(200).json({ message: "Schedule inserted successfully" });
 
@@ -9898,7 +9884,6 @@ app.post("/api/insert-schedule", async (req, res) => {
     res.status(500).json({ error: "Failed to insert schedule" });
   }
 });
-
 
 
 
@@ -10809,8 +10794,6 @@ app.post("/grade_period_activate/:id", async (req, res) => {
 
 
 
-
-
 app.get("/designation_list", async (req, res) => {
   const query = "SELECT * FROM course_table WHERE office_duty = 1;";
 
@@ -10826,12 +10809,8 @@ app.get("/designation_list", async (req, res) => {
   }
 });
 
-
-
-
 app.get('/handle_section_of/:userID/:selectedCourse/:selectedActiveSchoolYear', async (req, res) => {
   const { userID, selectedCourse, selectedActiveSchoolYear } = req.params;
-
 
   try {
     const sql = `
@@ -10843,9 +10822,32 @@ app.get('/handle_section_of/:userID/:selectedCourse/:selectedActiveSchoolYear', 
       INNER JOIN program_table AS ptbl ON ct.program_id = ptbl.program_id
       INNER JOIN active_school_year_table AS sy ON tt.school_year_id = sy.id
       INNER JOIN year_table AS yt ON sy.year_id = yt.year_id
-    WHERE pt.person_id = ? AND tt.course_id = ? AND sy.id = ? ORDER BY section_description
+    WHERE pt.person_id = ? AND tt.course_id = ? AND sy.id = ? GROUP BY tt.department_section_id
+    ORDER BY section_description 
     `
     const [result] = await db3.query(sql, [userID, selectedCourse, selectedActiveSchoolYear]);
+    res.json(result);
+  } catch (err) {
+    console.error("Server Error: ", err);
+    res.status(500).send({ message: "Internal Error", err });
+  }
+});
+
+
+app.get('/course_assigned_to/:userID', async (req, res) => {
+  const { userID } = req.params;
+
+  try {
+    const sql = `
+    SELECT DISTINCT tt.course_id, ct.course_description, ct.course_code, yt.year_id, st.semester_id FROM time_table AS tt
+      INNER JOIN course_table AS ct ON tt.course_id = ct.course_id
+      INNER JOIN prof_table AS pt ON tt.professor_id = pt.prof_id
+      INNER JOIN active_school_year_table AS sy ON tt.school_year_id = sy.id
+      INNER JOIN year_table AS yt ON sy.year_id = yt.year_id
+      INNER JOIN semester_table AS st ON sy.semester_id = st.semester_id
+    WHERE pt.person_id = ? AND ct.office_duty = 0
+    `
+    const [result] = await db3.query(sql, [userID]);
     res.json(result);
   } catch (err) {
     console.error("Server Error: ", err);
@@ -10930,7 +10932,6 @@ app.get('/get_selecterd_year/:selectedSchoolYear/:selectedSchoolSemester', async
 });
 
 // UPDATED 09/06/2025
-
 app.get('/enrolled_student_list/:userID/:selectedCourse/:department_section_id/:activeSchoolYear', async (req, res) => {
   const { userID, selectedCourse, department_section_id, activeSchoolYear } = req.params;
 
@@ -11023,6 +11024,7 @@ function getFormattedTimestamp() {
   return `${mm}/${dd}/${year} ${hh}:${min}:${ss} ${ampm}`;
 }
 
+
 app.put("/add_grades", async (req, res) => {
   const { midterm, finals, final_grade, en_remarks, student_number, subject_id } = req.body;
   console.log("Received data:", { midterm, finals, final_grade, en_remarks, student_number, subject_id });
@@ -11039,13 +11041,12 @@ app.put("/add_grades", async (req, res) => {
       String(finals).toLowerCase() === "inc" ||
       String(finals).toLowerCase() === "incomplete";
 
-    const timestamp = getFormattedTimestamp();
     if (isIncomplete) {
       const [result] = await db3.execute(
         `UPDATE enrolled_subject 
-        SET midterm = ?, finals = ? , final_grade= "0.00", grades_status = 'INC', en_remarks = 3, created_at = ?
+        SET midterm = ?, finals = ? , final_grade= "0.00", grades_status = 'INC', en_remarks = 3
         WHERE student_number = ? AND course_id = ?`,
-        [midterm, finals, timestamp, student_number, subject_id]
+        [midterm, finals, student_number, subject_id]
       );
 
       return result.affectedRows > 0
@@ -11055,7 +11056,7 @@ app.put("/add_grades", async (req, res) => {
 
     const [result] = await db3.execute(
       `UPDATE enrolled_subject 
-      SET midterm = ?, finals = ?, final_grade = ?, grades_status = ?, en_remarks = ?, created_at = ?
+      SET midterm = ?, finals = ?, final_grade = ?, grades_status = ?, en_remarks = ?
       WHERE student_number = ? AND course_id = ?`,
       [midterm, finals, final_grade, final_grade, en_remarks, student_number, subject_id]
     );
@@ -12357,6 +12358,7 @@ app.get("/api/get/all_schedule/:roomID", async (req, res) => {
         cst.course_code,
         rmt.room_description,
         pgt.program_code,
+        tt.ishonorarium,
         st.description AS section_description
       FROM time_table AS tt
         LEFT JOIN room_day_table AS rdt ON tt.room_day = rdt.id
@@ -12369,7 +12371,7 @@ app.get("/api/get/all_schedule/:roomID", async (req, res) => {
         LEFT JOIN room_table AS rmt ON tt.department_room_id = rmt.room_id
         LEFT JOIN section_table AS st ON dst.section_id = st.id
         LEFT JOIN active_school_year_table AS sy ON tt.school_year_id = sy.id
-      WHERE rmt.room_id = ? AND sy.astatus = 1;
+      WHERE (rmt.room_id = ? OR tt.department_room_id IS NULL) AND sy.astatus = 1;
     `
     const [schedule] = await db3.execute(scheduleQuery, [roomID]);
 
@@ -12381,6 +12383,90 @@ app.get("/api/get/all_schedule/:roomID", async (req, res) => {
   } catch (error) {
     console.error("Error fetching person:", error);
     res.status(500).json({ error: "Database error" });
+  }
+});
+
+
+app.post("/api/insert-schedule-designation", async (req, res) => {
+  const { day, start_time, end_time, subject_id, prof_id, school_year_id } = req.body;
+
+  if (!day || !start_time || !end_time || !school_year_id || !prof_id) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  let startMinutes = timeToMinutes(start_time);
+  let endMinutes = timeToMinutes(end_time);
+  const earliest = timeToMinutes("7:00 AM");
+  const latest = timeToMinutes("9:00 PM");
+
+  // Validate times
+  if (endMinutes <= startMinutes) {
+    return res.status(409).json({
+      conflict: true,
+      message: "End time must be later than start time (same day only)."
+    });
+  }
+
+  if (startMinutes < earliest || endMinutes > latest) {
+    return res.status(409).json({
+      conflict: true,
+      message: "Time must be between 7:00 AM and 9:00 PM (same day)."
+    });
+  }
+
+  try {
+    // Check for time conflicts (prof, section, room)
+    const checkTimeQuery = `
+      SELECT * FROM time_table
+      WHERE room_day = ?
+        AND school_year_id = ?
+        AND (professor_id = ? OR department_section_id = ?)
+        AND (
+          (? > TIME_TO_SEC(STR_TO_DATE(school_time_start, '%l:%i %p'))/60
+          AND ? < TIME_TO_SEC(STR_TO_DATE(school_time_end, '%l:%i %p'))/60)
+          OR
+          (? > TIME_TO_SEC(STR_TO_DATE(school_time_start, '%l:%i %p'))/60
+          AND ? < TIME_TO_SEC(STR_TO_DATE(school_time_end, '%l:%i %p'))/60)
+          OR
+          (TIME_TO_SEC(STR_TO_DATE(school_time_start, '%l:%i %p'))/60 > ?
+          AND TIME_TO_SEC(STR_TO_DATE(school_time_start, '%l:%i %p'))/60 < ?)
+          OR
+          (TIME_TO_SEC(STR_TO_DATE(school_time_end, '%l:%i %p'))/60 > ?
+          AND TIME_TO_SEC(STR_TO_DATE(school_time_end, '%l:%i %p'))/60 < ?)
+          OR
+          (TIME_TO_SEC(STR_TO_DATE(school_time_start, '%l:%i %p'))/60 = ?
+          AND TIME_TO_SEC(STR_TO_DATE(school_time_end, '%l:%i %p'))/60 = ?)
+        )
+    `;
+
+    const [timeResult] = await db3.query(checkTimeQuery, [
+  day, school_year_id, prof_id,   
+  startMinutes, startMinutes, endMinutes, endMinutes, 
+  startMinutes, endMinutes, startMinutes, endMinutes, 
+  startMinutes, endMinutes, startMinutes, endMinutes, 
+  startMinutes, endMinutes  
+]);
+
+    if (timeResult.length > 0) {
+      return res.status(409).json({
+        conflict: true,
+        message: "Schedule conflict detected! Please choose a different time."
+      });
+    }
+
+    // Insert schedule
+    const insertQuery = `
+      INSERT INTO time_table 
+      (room_day, school_time_start, school_time_end, department_section_id, course_id, professor_id, department_room_id, school_year_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    await db3.query(insertQuery, [day, start_time, end_time, null, subject_id, prof_id, null, school_year_id]);
+
+    res.status(200).json({ message: "Schedule inserted successfully" });
+
+  } catch (error) {
+    console.error("Error inserting schedule:", error);
+    res.status(500).json({ error: "Failed to insert schedule" });
   }
 });
 
@@ -12405,6 +12491,8 @@ app.delete("/api/delete/schedule/:scheduleId", async (req, res) => {
     res.status(500).json({ error: "Database error while deleting schedule." });
   }
 });
+
+
 
 
 //HELPER FUNCTION 
@@ -12984,7 +13072,6 @@ app.get("/api/section_assigned_to/:userID/:selectedSchoolYear/:selectedSchoolSem
 });
 
 
-
 app.post("/api/grades/import", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -13115,6 +13202,7 @@ app.post("/api/grades/import", upload.single("file"), async (req, res) => {
   }
 });
 
+
 app.get("/api/section_assigned_to/:userID", async (req, res) => {
   const { userID } = req.params;
   try {
@@ -13146,53 +13234,6 @@ app.get("/api/section_assigned_to/:userID", async (req, res) => {
   } catch (error) {
     console.error("Error fetching curriculum data:", error);
     res.status(500).json({ error: "Database error" });
-  }
-});
-
-
-app.put("/add_grades", async (req, res) => {
-  const { midterm, finals, final_grade, en_remarks, student_number, subject_id } = req.body;
-  console.log("Received data:", { midterm, finals, final_grade, en_remarks, student_number, subject_id });
-
-  try {
-    const [rows] = await db3.execute(`SELECT id, description, status FROM period_status WHERE id = 3`);
-    if (!rows.length || rows[0].status !== 1) {
-      return res.status(400).json({ message: "The uploading of grades is still not open." });
-    }
-
-    const isIncomplete =
-      String(midterm).toLowerCase() === "inc" ||
-      String(midterm).toLowerCase() === "incomplete" ||
-      String(finals).toLowerCase() === "inc" ||
-      String(finals).toLowerCase() === "incomplete";
-
-    if (isIncomplete) {
-      const [result] = await db3.execute(
-        `UPDATE enrolled_subject 
-        SET midterm = ?, finals = ? , final_grade= "0.00", grades_status = 'INC', en_remarks = 3
-        WHERE student_number = ? AND course_id = ?`,
-        [midterm, finals, student_number, subject_id]
-      );
-
-      return result.affectedRows > 0
-        ? res.status(200).json({ message: "Grades marked as INC successfully!" })
-        : res.status(404).json({ message: "No matching record found to update." });
-    }
-
-    const [result] = await db3.execute(
-      `UPDATE enrolled_subject 
-      SET midterm = ?, finals = ?, final_grade = ?, grades_status = ?, en_remarks = ?
-      WHERE student_number = ? AND course_id = ?`,
-      [midterm, finals, final_grade, final_grade, en_remarks, student_number, subject_id]
-    );
-
-    return result.affectedRows > 0
-      ? res.status(200).json({ message: "Grades updated successfully!" })
-      : res.status(404).json({ message: "No matching record found to update." });
-
-  } catch (err) {
-    console.error("Failed to update grades:", err);
-    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -16220,23 +16261,7 @@ app.get("/api/person/:id", (req, res) => {
 
 
 
-app.get("/api/:employeeID", async (req, res) => {
-  const { employeeID } = req.params;
-  console.log(employeeID);
-  try {
-    const [rows] = await db3.query(
-      "SELECT page_id FROM page_access WHERE user_id = ?",
-      [employeeID]
-    );
 
-    const pageIds = rows.map(r => r.page_id);
-
-    res.json({ success: true, accessList: pageIds });
-  } catch (err) {
-    console.error("Error fetching access list:", err);
-    res.status(500).json({ error: "Database error" });
-  }
-});
 
 // ---------------------- ALL FILTERING FOR ADMISSION DASHBOARD ---------------------- //
 app.get("/api/applicant-stats", async (req, res) => {
@@ -16576,6 +16601,159 @@ app.get("/exam/completed-count", async (req, res) => {
 
 // ---------------------- ALL FILTERING FOR ADMISSION DASHBOARD ---------------------- //
 
+
+
+// ---------- DEPARTMENT <-> CURRICULUM MAPPING (dprtmnt_curriculum_table) ----------
+// GET mappings for a department
+app.get("/dprtmnt_curriculum/:dprtmnt_id", async (req, res) => {
+  const { dprtmnt_id } = req.params;
+  try {
+    const query = `
+      SELECT 
+        dc.dprtmnt_curriculum_id,
+        dc.dprtmnt_id,
+        dc.curriculum_id,
+        dt.dprtmnt_name,
+        dt.dprtmnt_code,
+        ct.curriculum_id AS ct_curriculum_id,
+        ct.year_id,
+        y.year_description,
+        ct.program_id,
+        ct.lock_status,
+        p.program_description AS p_description,
+        p.program_code AS p_code
+      FROM dprtmnt_curriculum_table AS dc
+      INNER JOIN dprtmnt_table AS dt 
+        ON dc.dprtmnt_id = dt.dprtmnt_id
+      LEFT JOIN curriculum_table AS ct 
+        ON dc.curriculum_id = ct.curriculum_id
+      LEFT JOIN program_table AS p 
+        ON ct.program_id = p.program_id
+      LEFT JOIN year_table AS y
+        ON ct.year_id = y.year_id
+      WHERE dc.dprtmnt_id = ?
+      ORDER BY 
+        COALESCE(p_code, ''), 
+        dc.curriculum_id;
+    `;
+
+    const [rows] = await db3.execute(query, [dprtmnt_id]);
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error("Error fetching dprtmnt_curriculum:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+});
+
+
+// POST add mapping (dprtmnt_id + curriculum_id)
+app.post("/dprtmnt_curriculum", async (req, res) => {
+  const { dprtmnt_id, curriculum_id } = req.body;
+  if (!dprtmnt_id || !curriculum_id) {
+    return res.status(400).json({ error: "dprtmnt_id and curriculum_id are required" });
+  }
+
+  try {
+    // prevent duplicate mapping
+    const [exists] = await db3.execute(
+      "SELECT * FROM dprtmnt_curriculum_table WHERE dprtmnt_id = ? AND curriculum_id = ?",
+      [dprtmnt_id, curriculum_id]
+    );
+    if (exists.length > 0) {
+      return res.status(409).json({ message: "Mapping already exists" });
+    }
+
+    const [result] = await db3.execute(
+      "INSERT INTO dprtmnt_curriculum_table (dprtmnt_id, curriculum_id) VALUES (?, ?)",
+      [dprtmnt_id, curriculum_id]
+    );
+
+    // return inserted id
+    res.status(201).json({ message: "Mapping created", dprtmnt_curriculum_id: result.insertId });
+  } catch (err) {
+    console.error("Error creating mapping:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+});
+
+// DELETE mapping by mapping id
+app.delete("/dprtmnt_curriculum/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [result] = await db3.execute(
+      "DELETE FROM dprtmnt_curriculum_table WHERE dprtmnt_curriculum_id = ?",
+      [id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Mapping not found" });
+    }
+    res.status(200).json({ message: "Mapping deleted" });
+  } catch (err) {
+    console.error("Error deleting mapping:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+});
+
+app.put("/dprtmnt_curriculum/:id", async (req, res) => {
+  const { id } = req.params;
+  const { curriculum_id, dprtmnt_id } = req.body;
+
+  if (!curriculum_id || !dprtmnt_id) {
+    return res.status(400).json({ message: "curriculum_id and dprtmnt_id required" });
+  }
+
+  try {
+    // Check duplicate mapping
+    const [exists] = await db3.execute(
+      `SELECT * FROM dprtmnt_curriculum_table 
+       WHERE dprtmnt_id = ? AND curriculum_id = ? AND dprtmnt_curriculum_id != ?`,
+      [dprtmnt_id, curriculum_id, id]
+    );
+
+    if (exists.length > 0) {
+      return res.status(409).json({ message: "Mapping already exists" });
+    }
+
+    const [result] = await db3.execute(
+      `UPDATE dprtmnt_curriculum_table 
+       SET curriculum_id = ? 
+       WHERE dprtmnt_curriculum_id = ?`,
+      [curriculum_id, id]
+    );
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: "Mapping ID not found" });
+
+    res.json({ message: "Mapping updated" });
+
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+});
+
+app.get("/api/ecat-summary", async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT 
+        SUM(CASE WHEN pt.termsOfAgreement = 1 THEN 1 ELSE 0 END) AS total_applied,
+        SUM(CASE WHEN ea.schedule_id IS NOT NULL THEN 1 ELSE 0 END) AS total_scheduled,
+        SUM(CASE WHEN ea.schedule_id IS NULL THEN 1 ELSE 0 END) AS total_pending,
+        SUM(CASE WHEN ae.status IN ('PASSED','FAILED') THEN 1 ELSE 0 END) AS total_finished
+      FROM exam_applicants AS ea
+      LEFT JOIN applicant_numbering_table AS ant ON ea.applicant_id = ant.applicant_number
+      LEFT JOIN person_table AS pt ON ant.person_id = pt.person_id
+      LEFT JOIN person_status_table AS pst ON pt.person_id = pst.person_id
+      LEFT JOIN admission_exam AS ae ON pt.person_id = ae.person_id
+    `);
+
+    res.json(rows);
+    console.log(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 const PORT = process.env.WEB_PORT || 5000;
 const HOST = getDbHost();

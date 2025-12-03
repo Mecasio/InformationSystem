@@ -264,29 +264,16 @@ const RegisterRegistrar = () => {
 
     const [determinedRoles, setDeterminedRoles] = useState({});
 
-    const determineRolesForRegistrars = async (registrars) => {
+    const determineRolesForRegistrars = (registrars) => {
         const rolesMap = {};
 
-        for (const r of registrars) {
-            try {
-                const res = await axios.get(`${API_BASE_URL}/api/page_access/${r.employee_id}`);
-
-
-                if (res.data.success) {
-                    const role = determineRoleFromPageAccess(
-                        res.data.accessList,
-                        ROLE_PAGE_ACCESS
-                    );
-
-                    rolesMap[r.employee_id] = role;
-                }
-            } catch (err) {
-                rolesMap[r.employee_id] = "Unknown";
-            }
-        }
+        registrars.forEach(r => {
+            rolesMap[r.employee_id] = r.role; // 🔥 USE DB ROLE DIRECTLY
+        });
 
         setDeterminedRoles(rolesMap);
     };
+
 
     // Handle form field changes
     const handleChange = (e) => {
@@ -807,7 +794,7 @@ const RegisterRegistrar = () => {
 
 
                                     {/* ✅ EDIT BUTTON */}
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign:"center", borderRight: "2px solid maroon" }}>
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", borderRight: "2px solid maroon" }}>
                                         <Button
                                             onClick={() => handleEdit(r)}
                                             sx={{

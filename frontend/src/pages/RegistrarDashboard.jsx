@@ -22,7 +22,7 @@ import GroupIcon from "@mui/icons-material/Groups";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Legend,} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Legend, PieChart, Pie} from "recharts";
 import { Tooltip } from "recharts";
 import MuiTooltip from "@mui/material/Tooltip";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
@@ -381,6 +381,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
 
   const [personData, setPersonData] = useState(null);
   const [hovered, setHovered] = useState(false);
+  const [pieData, setPieData] = useState([]);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -443,6 +444,21 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
       .then((res) => setYears(res.data))
       .catch((err) => console.error(err));
   }, [])
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/api/ecat-summary`)
+      .then((res) => {
+        console.log("count", res.data);
+        const d = res.data[0];
+        setPieData([
+          { name: "Applied", value: 236 },
+          { name: "Scheduled", value: 16 },
+          { name: "Pending", value: 220 },
+          { name: "Finished", value: 215},
+        ]);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
 
   return (
@@ -1101,7 +1117,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
             </Grid>
 
             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-              Applicants By Terms of Agreement:
+              ECAT Monitoring Panel:
             </Typography>
 
             <Box
@@ -1115,24 +1131,36 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 alignItems: "center",
                 fontSize: 14,
                 color: "#6c6c6c",
-                height: 300, // <-- important to make chart visible
+                height: 300,
               }}
             >
-              {applicant.statusCounts.length > 0 ? (
+              {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={applicant.statusCounts}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="termsOfAgreement" />
-                    <YAxis />
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      startAngle={180}
+                      endAngle={0}
+                      outerRadius={110}
+                      label
+                    >
+                      {pieData.map((_, i) => (
+                        <Cell key={i} fill={["#0088FE", "#00C49F", "#FFBB28", "#FF8042"][i]} />
+                      ))}
+                    </Pie>
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="total" fill="#8884d8" />
-                  </BarChart>
+                  </PieChart>
                 </ResponsiveContainer>
               ) : (
                 <Typography>Loading chart...</Typography>
               )}
             </Box>
+
           </Card>
         </Grid>
       </Grid>

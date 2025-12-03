@@ -343,6 +343,8 @@ const ApplicantScoring = () => {
         generalAverage1: "",
         program: "",
         created_at: "",
+        middle_code: "",
+        created_at: ""
     });
     const [allApplicants, setAllApplicants] = useState([]);
 

@@ -22,10 +22,7 @@ import LoadingOverlay from "../components/LoadingOverlay";
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import API_BASE_URL from "../apiConfig";
 const ScheduleChecker = () => {
-
-
   const settings = useContext(SettingsContext);
-
   const [titleColor, setTitleColor] = useState("#000000");
   const [subtitleColor, setSubtitleColor] = useState("#555555");
   const [borderColor, setBorderColor] = useState("#000000");
@@ -119,10 +116,6 @@ const ScheduleChecker = () => {
     }
   };
 
-
-
-
-
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -145,6 +138,8 @@ const ScheduleChecker = () => {
   const [openDialogue, setOpenDialogue] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
   const [isDesignationMode, setIsDesignationMode] = useState(false);
+  const [isHonorarium, setIsHonorarium] = useState(false);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const { dprtmnt_id } = useParams();
 
   const fetchRoom = async () => {
@@ -375,6 +370,114 @@ const ScheduleChecker = () => {
           prof_id: selectedProf,
           room_id: selectedRoom,
           subject_id: selectedSubject,
+          ishonorarium: isHonorarium ? 1 : 0,
+        }
+      );
+
+      if (response.status === 200) {
+        setMessage("Schedule inserted successfully.");
+        setOpenSnackbar(true);
+      }
+
+      setSelectedDay("");
+      setSelectedSection("");
+      setSelectedRoom("");
+      setSelectedSubject("");
+      setSelectedProf("");
+      setSelectedStartTime("");
+      setSelectedEndTime("");
+      fetchSchedule();
+    } catch (error) {
+      console.error("Error inserting schedule:", error);
+      if (error.response && error.response.data) {
+        setMessage(error.response.data.message || "Failed to insert schedule.");
+      } else {
+        setMessage("Network error. Please try again.");
+      }
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleSubmitDesignation = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    console.log(selectedSection);
+
+    try {
+      const formattedStartTime = formatTimeTo12Hour(selectedStartTime);
+      const formattedEndTime = formatTimeTo12Hour(selectedEndTime);
+
+      const timeValidation = await axios.post(
+        `${API_BASE_URL}/api/check-time`,
+        {
+          start_time: formattedStartTime,
+          end_time: formattedEndTime,
+        }
+      );
+
+      if (timeValidation.data.conflict) {
+        setMessage(timeValidation.data.message);
+        setOpenSnackbar(true);
+        return;
+      }
+
+      const timeResponse = await axios.post(
+        `${API_BASE_URL}/api/check-conflict-designation`,
+        {
+          day: selectedDay,
+          start_time: formattedStartTime,
+          end_time: formattedEndTime,
+          section_id: selectedSection,
+          school_year_id: selectedSchoolYear,
+          prof_id: selectedProf,
+          room_id: selectedRoom,
+          subject_id: selectedSubject,
+        }
+      );
+
+      if (timeResponse.data.conflict) {
+        setMessage(
+          "Schedule conflict detected! Please choose a different time."
+        );
+        setOpenSnackbar(true);
+      } else {
+        setMessage("Schedule is available. You can proceed with adding it.");
+        setOpenSnackbar(true);
+      }
+    } catch (error) {
+      console.error("Error checking schedule:", error);
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        setMessage(error.response.data.message);
+      } else {
+        setMessage("An unexpected error occurred. Please try again.");
+      }
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleInsertDesignation = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    try {
+      const formattedStartTime = formatTimeTo12Hour(selectedStartTime);
+      const formattedEndTime = formatTimeTo12Hour(selectedEndTime);
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/insert-schedule-designation`,
+        {
+          day: selectedDay,
+          start_time: formattedStartTime,
+          end_time: formattedEndTime,
+          section_id: selectedSection,
+          school_year_id: selectedSchoolYear,
+          prof_id: selectedProf,
+          room_id: selectedRoom,
+          subject_id: selectedSubject,
         }
       );
 
@@ -535,7 +638,7 @@ const ScheduleChecker = () => {
     if (normalized === "DESIGNATION") return "#99ccff";
 
     if (
-      ["RESEARCH", "PRODUCTION", "EXTENSION", "ACCREDITATION"].includes(normalized)
+      ["RESEARCH", "PRODUCTION", "EXTENSION", "ACCREDITATION",].includes(normalized)
     ) {
       return "#ccffcc";
     }
@@ -558,6 +661,9 @@ const ScheduleChecker = () => {
       const schedEnd = parseTime(entry.school_time_end);
 
       if (slotStart >= schedStart && slotStart < schedEnd) {
+        if (entry.ishonorarium === 1 || entry.ishonorarium === "1") {
+          return "#ccffff";
+        }
         return officeDutyConversionColor(entry.course_code);
       }
     }
@@ -595,89 +701,103 @@ const ScheduleChecker = () => {
 
   const getCenterText = (start, day) => {
     const parseTime = (t) => new Date(`1970-01-01 ${t}`);
-    const SLOT_HEIGHT_REM = 2.5; // height per slot
+    const SLOT_HEIGHT_REM = 2.5;
+
     const slotStart = parseTime(start);
 
     for (const entry of schedule) {
       if (entry.day_description !== day) continue;
-
       const schedStart = parseTime(entry.school_time_start);
       const schedEnd = parseTime(entry.school_time_end);
 
       if (!(slotStart >= schedStart && slotStart < schedEnd)) continue;
 
-      const totalHours = Math.round((schedEnd - schedStart) / (1000 * 60 * 60));
-
+      const totalHours = (schedEnd - schedStart) / (1000 * 60 * 60);
       const isTopSlot = slotStart.getTime() === schedStart.getTime();
-
-      const text = (
-        <>
-          <span className="block truncate">{entry.course_code}</span>
-          <span className="block truncate">
-            {entry.room_description === "TBA"
-              ? "TBA"
-              : (!entry.program_code && !entry.section_description)
-                ? entry.room_description
-                : `${entry.program_code} - ${entry.section_description}`
-            }
-          </span>
-          <span className="block truncate">
-            {entry.prof_lastname === "TBA"
-              ? "TBA"
-              : `Prof. ${entry.prof_lastname}`}
-          </span>
-        </>
-      );
-
-      // Show delete button only at top slot
       const showDeleteButton = isTopSlot;
 
-      // Calculate vertical centering only for multi-slot blocks
       let textContent = null;
       if (totalHours === 1) {
-        // Single block → flex center
-        textContent = <div className="flex flex-col items-center justify-center h-full text-[9px]">{text}</div>;
-      } else {
-        // Multi-slot → absolute top with marginTop to center
-        const blockHeightRem = totalHours * SLOT_HEIGHT_REM;
-        const textHeightRem = 2; // approximate text height
-        const marginTop = (blockHeightRem - textHeightRem) / 2;
+          textContent = 
+                    <>
+                        <span className="block truncate text-[10px]">{entry.course_code}</span>
+                        {entry.program_code && entry.section_description && (
+                            <span className="block truncate text-[8px]">
+                              {entry.program_code}-{entry.section_description}
+                            </span>
+                        )}
+                        {entry.section_description && entry.section_description !== 0 && entry.section_description !== "0" && entry.room_description && (
+                            <span className="block truncate text-[8px]">{entry.room_description}</span>
+                        )}
+                    </>;
+            } else {
+                const totalHours = (schedEnd - schedStart) / (1000 * 60 * 60);
+                const blockHeightRem = totalHours * SLOT_HEIGHT_REM;
+                const textHeightRem = 0.5;
+                const marginTop = (blockHeightRem - textHeightRem) / 2;
 
-        textContent = (
-          <span
-            className="absolute left-0 right-0 text-center text-[11px] leading-tight mt-[-5px]"
-            style={{ top: `${marginTop}rem` }}
-          >
-            {text}
-          </span>
-        );
-      }
+                textContent = (
+                    <span
+                        className="absolute inset-0 flex flex-col items-center justify-center text-center text-[11px] leading-tight cursor-pointer"
+                        style={{ top: `${marginTop}rem` }}
+                    >
+                        {entry.course_code} <br />
+                        {(entry.program_code || entry.section_description) && (
+                            <>
+                                {[entry.program_code, entry.section_description].filter(Boolean).join(" - ")}
+                                <br />
+                            </>
+                        )}
+                        {entry.section_description && entry.section_description !== 0 && entry.section_description !== "0" && entry.room_description && (
+                            <>({entry.room_description})</>
+                        )}
+                    </span>
+                );
+            }
 
-      return (
-        <div className="schedule-block relative w-full h-full">
-          {showDeleteButton && (
-            <button
-              className="absolute top-[-10px] right-[-10px] bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center hover:bg-red-700"
-              onClick={() => {
-                setSelectedScheduleId(entry.id);
-                setOpenDialogue(true);
-              }}
-            >
-              <HighlightOffIcon />
-            </button>
-          )}
-          {isTopSlot && textContent}
-        </div>
-      );
+            return (
+                <div 
+                    className="schedule-block relative w-full h-full cursor-pointer text-center" 
+                >
+                  {showDeleteButton && (
+                    <button
+                      className="absolute top-[-10px] right-[-10px] bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center hover:bg-red-700"
+                      onClick={() => {
+                        setSelectedScheduleId(entry.id);
+                        setOpenDialogue(true);
+                      }}
+                    >
+                      <HighlightOffIcon />
+                    </button>
+                  )}
+                    {isTopSlot && textContent}
+                </div>
+            );
+        }
+
+        return "";
+    };
+
+  const handleSubmitWrapper = (e) => {
+    e.preventDefault();
+
+    if (isDesignationMode) {
+      return handleSubmitDesignation(e); // your designation check
+    } else {
+      return handleSubmit(e); // your regular-load check
     }
+  }; 
 
-    return "";
+  const handleInsertWrapper = (e) => {
+    e.preventDefault();
+
+    if (isDesignationMode) {
+      return handleInsertDesignation(e); // your designation insert
+    } else {
+      return handleInsert(e); // your regular insert
+    }
   };
-
-
-
-
-
+  
 
   // Put this at the very bottom before the return 
   if (loading || hasAccess === null) {
@@ -768,7 +888,7 @@ const ScheduleChecker = () => {
             </Button>
           </Box>
           <form
-            onSubmit={handleInsert}
+            onSubmit={handleInsertWrapper}
             style={{
               width: "100%",
               maxWidth: "600px",
@@ -819,23 +939,24 @@ const ScheduleChecker = () => {
             )}
 
             {/* Room */}
-            <div className="flex mb-2">
-              <div className="p-2 w-[12rem]">Room:</div>
-              <select
-                className="border border-gray-500 outline-none rounded w-full h-10 px-2"
-                value={selectedRoom}
-                onChange={(e) => setSelectedRoom(e.target.value)}
-                required
-              >
-                <option value="">Select Room</option>
-                {roomList.map((room) => (
-                  <option key={room.room_id} value={room.room_id}>
-                    {room.room_description}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            {!isDesignationMode && (
+              <div className="flex mb-2">
+                <div className="p-2 w-[12rem]">Room:</div>
+                <select
+                  className="border border-gray-500 outline-none rounded w-full h-10 px-2"
+                  value={selectedRoom}
+                  onChange={(e) => setSelectedRoom(e.target.value)}
+                  required
+                >
+                  <option value="">Select Room</option>
+                  {roomList.map((room) => (
+                    <option key={room.room_id} value={room.room_id}>
+                      {room.room_description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             {/* Search Course & Course Select */}
             <div className="flex flex-col mb-2 w-full">
               {/* Course Search Input */}
@@ -962,12 +1083,28 @@ const ScheduleChecker = () => {
                 required
               />
             </div>
-
+          {!isDesignationMode && (
+            <div className="flex mb-4 items-center">
+              <div className="p-2 w-[12rem]">Honorarium Load:</div>
+              <input
+                type="checkbox"
+                checked={isHonorarium}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setOpenConfirmDialog(true); // open confirmation dialog
+                  } else {
+                    setIsHonorarium(false); // allow uncheck without dialog
+                  }
+                }}
+                className="h-4 w-4"
+              />
+            </div>
+          )}
             <div className="flex justify-between">
               <button
                 className="bg-[#800000] hover:bg-red-900 text-white px-6 py-2 rounded"
                 style={{ backgroundColor: mainButtonColor }}
-                onClick={handleSubmit}
+                onClick={handleSubmitWrapper}
               >
                 Check Schedule
               </button>
@@ -2054,6 +2191,29 @@ const ScheduleChecker = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Dialog
+  open={openConfirmDialog}
+  onClose={() => setOpenConfirmDialog(false)}
+>
+  <DialogTitle>Confirm Honorarium Load</DialogTitle>
+  <DialogContent>
+    Are you sure you want to assign this schedule as Honorarium Load?
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setOpenConfirmDialog(false)} color="secondary">
+      Cancel
+    </Button>
+    <Button
+      onClick={() => {
+        setIsHonorarium(true);
+        setOpenConfirmDialog(false);
+      }}
+      color="primary"
+    >
+      Yes
+    </Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 };

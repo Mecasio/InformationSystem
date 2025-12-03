@@ -126,7 +126,7 @@ const SystemDashboardPanel = () => {
     {
       label: "SETTINGS & COMMUNICATION",
       items: [
-        { title: "SETTINGS", link: "/settings", icon: Settings, page_id: 74 },
+        // { title: "SETTINGS", link: "/settings", icon: Settings, page_id: 74 },
         { title: "EMAIL SENDER", link: "/email_template_manager", icon: Email, page_id: 67 },
         { title: "ANNOUNCEMENT", link: "/announcement", icon: Campaign, page_id: 66 },
       ],

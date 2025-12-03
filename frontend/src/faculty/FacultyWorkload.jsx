@@ -195,6 +195,9 @@ const FacultyWorkload = () => {
             const schedEnd = parseTime(entry.school_time_end);
 
             if (slotStart >= schedStart && slotStart < schedEnd) {
+                if (entry.ishonorarium === 1 || entry.ishonorarium === "1") {
+                    return "#ccffff";
+                }
                 return officeDutyConversionColor(entry.course_code);
             }
         }
@@ -267,7 +270,7 @@ const FacultyWorkload = () => {
             if (totalHours === 1) {
                 textContent = 
                     <>
-                        <span className="block truncate text-[10px]" style={{marginTop: "-0.1rem"}}>{entry.course_code}</span>
+                        <span className="block truncate text-[10px]">{entry.course_code}</span>
                         {entry.program_code && entry.section_description && (
                             <span className="block truncate text-[8px]">
                                 {entry.program_code}-{entry.section_description}
@@ -280,12 +283,12 @@ const FacultyWorkload = () => {
             } else {
                 const totalHours = (schedEnd - schedStart) / (1000 * 60 * 60);
                 const blockHeightRem = totalHours * SLOT_HEIGHT_REM;
-                const textHeightRem = 2;
+                const textHeightRem = 0.5;
                 const marginTop = (blockHeightRem - textHeightRem) / 2;
 
                 textContent = (
                     <span
-                        className="absolute left-0 right-0 text-center text-[11px] leading-tight cursor-pointer"
+                        className="absolute inset-0 flex flex-col items-center justify-center text-center text-[11px] leading-tight cursor-pointer"
                         style={{ top: `${marginTop}rem` }}
                     >
                         {entry.course_code} <br />

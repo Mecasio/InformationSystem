@@ -113,6 +113,7 @@ import TranscriptOfRecords from './registrar/TranscriptOfRecords';
 import TOSFCrud from './superadmin/TOSFCrud';
 import EvaluationCRUD from './registrar/EvaluationCrud';
 
+import DepartmentCurriculumPanel from './registrar/DepartmentCurriculumPanel';
 import MedicalApplicantList from './registrar/MedicalApplicantList';
 import MedicalRequirementsForm from './registrar/MedicalRequirementsForm';
 import DentalAssessment from './registrar/DentalAssessment';
@@ -507,6 +508,7 @@ function App() {
                     <Route path="/admission_services" element={<ProtectedRoute allowedRoles={['applicant', 'registrar']}><AdmissionServices /></ProtectedRoute>} />
                     <Route path="/office_of_the_registrar" element={<ProtectedRoute allowedRoles={['applicant']}><OfficeOfTheRegistrar /></ProtectedRoute>} />
 
+                    <Route path="/department_curriculum_panel" element={<ProtectedRoute><DepartmentCurriculumPanel /></ProtectedRoute>} />
 
                     <Route path="/class_roster" element={<ProtectedRoute ><ClassRoster /></ProtectedRoute>} />
                     <Route path="/transcript_of_records" element={<ProtectedRoute ><TranscriptOfRecords /></ProtectedRoute>} />
