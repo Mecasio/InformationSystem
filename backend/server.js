@@ -17,7 +17,7 @@ const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:5173", "http://192.168.85.167:5173"],
+    origin: ["http://localhost:5173", "http://192.168.1.9:5173"],
     methods: ["GET", "POST"]
   }
 });
@@ -26,7 +26,7 @@ const io = new Server(http, {
 
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.85.167:5173"],  // ✅ Explicitly allow Vite dev server
+  origin: ["http://localhost:5173", "http://192.168.1.9:5173"],  // ✅ Explicitly allow Vite dev server
   credentials: true                  // ✅ Allow credentials (cookies, auth)
 }));
 
@@ -43,6 +43,47 @@ app.use("/uploads", express.static(uploadPath));
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
 }
+
+app.get("/ecat_scores_template", (req, res) => {
+  const filePath = path.join(__dirname, "excelfiles", "ECATScoresTemplate.xlsx");
+  res.download(filePath, "ECATScoresTemplate.xlsx", (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      res.status(500).send("Error downloading file");
+    }
+  });
+});
+
+app.get("/qualifying_interview_template", (req, res) => {
+  const filePath = path.join(__dirname, "excelfiles", "QualifyingInterviewScore.xlsx");
+  res.download(filePath, "QualifyingInterviewScore.xlsx", (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      res.status(500).send("Error downloading file");
+    }
+  });
+});
+
+app.get("/grade_report_template", (req, res) => {
+  const filePath = path.join(__dirname, "excelfiles", "GradeReport.xlsx");
+  res.download(filePath, "GradeReport.xlsx", (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      res.status(500).send("Error downloading file");
+    }
+  });
+});
+
+
+app.get("/student_data", (req, res) => {
+  const filePath = path.join(__dirname, "excelfiles", "StudentData.xlsx");
+  res.download(filePath, "StudentData.xlsx", (err) => {
+    if (err) {
+      console.error("Error sending file:", err);
+      res.status(500).send("Error downloading file");
+    }
+  });
+});
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -610,10 +651,10 @@ app.post("/register", async (req, res) => {
 
 
 const ROLE_PAGE_ACCESS = {
-  admission: [103, 92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98],
-  enrollment: [102, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60,],
+  admission: [103, 92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98,],
+  enrollment: [102, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60, 92],
   clinic: [101, 92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
-  registrar: [80, 104, 38, 39, 40, 41, 42, 30, 56, 13, 50, 62, 96, 92, 59, 105, 15, 101],
+  registrar: [80, 104, 38, 73, 39, 40, 41, 42, 56, 13, 50, 62, 96, 92, 59, 105, 15, 101],
   superadmin: "ALL"
 };
 
@@ -678,7 +719,7 @@ app.post("/register_registrar", upload.single("profile_picture"), async (req, re
         last_name,
         middle_name,
         first_name,
-        role,
+        "registrar",
         normalizedEmail,
         hashedPassword,
         status || 1,
@@ -740,11 +781,14 @@ app.get("/api/registrars", async (req, res) => {
 });
 
 
+
+
 // ✅ Actual upload + database update route
 app.put("/update_registrar/:id", profileUpload.single("profile_picture"), async (req, res) => {
   const { id } = req.params;
   const data = req.body;
   const file = req.file;
+  console.log("hello")
 
   try {
     const [existing] = await db3.query("SELECT * FROM user_accounts WHERE id = ?", [id]);
@@ -775,6 +819,7 @@ app.put("/update_registrar/:id", profileUpload.single("profile_picture"), async 
 
       const uploadPath = path.join(__dirname, "uploads", finalFilename);
 
+
       // Delete old file
       if (current.profile_picture) {
         const old = path.join(__dirname, "uploads", current.profile_picture);
@@ -798,7 +843,7 @@ app.put("/update_registrar/:id", profileUpload.single("profile_picture"), async 
         data.last_name || current.last_name,
         data.middle_name || current.middle_name,
         data.first_name || current.first_name,
-        data.role || current.role,
+        "registrar",
         data.email.toLowerCase(),
         data.status ?? current.status,
         deptValue,
@@ -834,6 +879,39 @@ app.put("/update_registrar/:id", profileUpload.single("profile_picture"), async 
     res.json({
       success: true,
       message: "Registrar updated successfully"
+    });
+
+  } catch (error) {
+    console.error("❌ Error updating registrar:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+app.post("/update_registrar/:id", profileUpload.single("profile_picture"), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [existing] = await db3.query("SELECT * FROM user_accounts WHERE id = ?", [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ message: "Registrar not found" });
+    }
+
+    let finalFilename = existing[0].profile_picture;
+
+    if (req.file) {
+      finalFilename = req.file.filename;
+    }
+
+    await db3.query(
+      `UPDATE user_accounts SET profile_picture=? WHERE id=?`,
+      [finalFilename, id]
+    );
+
+    res.json({
+      success: true,
+      message: "Profile picture updated",
+      filename: finalFilename
     });
 
   } catch (error) {
@@ -879,6 +957,397 @@ app.put("/update_registrar_status/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update status" });
   }
 });
+
+// ===============================
+// SAVE EXAM SCORE - POST /api/exam/save
+// ===============================
+app.post("/api/exam/save", async (req, res) => {
+  console.log("🔥 /api/exam/save HIT", req.body);
+
+  try {
+    const {
+      applicant_number,
+      english = null,
+      science = null,
+      filipino = null,
+      math = null,
+      abstract = null,
+      final_rating = null,
+      status = ""
+    } = req.body;
+
+    if (!applicant_number) {
+      return res.status(400).json({ error: "applicant_number is required" });
+    }
+
+    // 1) applicant_number -> person_id
+    const [rows] = await db.query(
+      "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ? LIMIT 1",
+      [applicant_number]
+    );
+
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ error: "Applicant number not found" });
+    }
+
+    const personId = rows[0].person_id;
+
+    // 2) Old data (for notifications)
+    const [oldRows] = await db.query(
+      "SELECT English, Science, Filipino, Math, Abstract, status FROM admission_exam WHERE person_id = ? LIMIT 1",
+      [personId]
+    );
+    const oldData = oldRows[0] || null;
+
+    // 3) Ensure numeric values or NULL
+    const e = english === null ? null : Number(english);
+    const s = science === null ? null : Number(science);
+    const f = filipino === null ? null : Number(filipino);
+    const m = math === null ? null : Number(math);
+    const a = abstract === null ? null : Number(abstract);
+    const fr = final_rating === null ? null : Number(final_rating);
+
+    // 4) INSERT or UPDATE
+    await db.query(
+      `INSERT INTO admission_exam
+     (person_id, English, Science, Filipino, Math, Abstract, final_rating, status, date_created)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+   ON DUPLICATE KEY UPDATE
+     English = VALUES(English),
+     Science = VALUES(Science),
+     Filipino = VALUES(Filipino),
+     Math = VALUES(Math),
+     Abstract = VALUES(Abstract),
+     final_rating = VALUES(final_rating),
+     status = VALUES(status),
+     date_created = NOW()`,
+      [
+        personId,
+        e,
+        s,
+        f,
+        m,
+        a,
+        fr,
+        status === "" ? null : status
+      ]
+    );
+
+
+    // 5) Notifications (only if changed)
+    const actorEmail = "earistmis@gmail.com";
+    const actorName = "SYSTEM";
+
+    if (oldData) {
+      const subjects = [
+        { key: "English", label: "English", newVal: e },
+        { key: "Science", label: "Science", newVal: s },
+        { key: "Filipino", label: "Filipino", newVal: f },
+        { key: "Math", label: "Math", newVal: m },
+        { key: "Abstract", label: "Abstract", newVal: a }
+      ];
+
+      for (const subj of subjects) {
+        const oldVal = oldData[subj.key];
+
+        if ((oldVal ?? null) != (subj.newVal ?? null)) {
+          const message = `📝 Entrance Exam updated (${subj.label}: ${oldVal ?? 0} → ${subj.newVal ?? 0}) for Applicant #${applicant_number}`;
+
+          await db.query(
+            `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
+             SELECT ?, ?, ?, ?, ?, NOW()
+             FROM DUAL
+             WHERE NOT EXISTS (
+               SELECT 1 FROM notifications
+               WHERE applicant_number = ?
+                 AND message = ?
+                 AND DATE(timestamp) = CURDATE()
+             )`,
+            ["update", message, applicant_number, actorEmail, actorName, applicant_number, message]
+          );
+
+          if (io && io.emit) {
+            io.emit("notification", {
+              type: "update",
+              message,
+              applicant_number,
+              actor_email: actorEmail,
+              actor_name: actorName,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+      }
+    }
+
+    // 6) Return fresh saved values (NORMALIZED TO LOWERCASE)
+    const [savedRows] = await db.query(
+      "SELECT person_id, English, Science, Filipino, Math, Abstract, final_rating, status, date_created FROM admission_exam WHERE person_id = ? LIMIT 1",
+      [personId]
+    );
+
+    const saved = savedRows[0] || null;
+
+    // 🔥 Normalize keys to lowercase so React UI updates instantly
+    const normalized = {
+      person_id: saved.person_id,
+      english: Number(saved.English),
+      science: Number(saved.Science),
+      filipino: Number(saved.Filipino),
+      math: Number(saved.Math),
+      abstract: Number(saved.Abstract),
+      final_rating: Number(saved.final_rating),
+      status: saved.status,
+      date_created: saved.date_created
+    };
+
+    return res.json({
+      success: true,
+      message: "Exam data saved!",
+      saved: normalized
+    });
+
+  } catch (err) {
+    console.error("🔥 ERROR saving exam:", err);
+    return res.status(500).json({
+      error: "Failed to save exam data",
+      details: String(err.message || err)
+    });
+  }
+});
+
+// ✅ Unified Save or Update for Qualifying / Interview Scores (with duplicate-safe notifications)
+app.post("/api/interview/save", async (req, res) => {
+  try {
+    const { applicant_number, qualifying_exam_score, qualifying_interview_score, user_person_id } = req.body;
+
+    // Find person_id
+    const [rows] = await db.query(
+      "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ?",
+      [applicant_number]
+    );
+    if (rows.length === 0) return res.status(400).json({ error: "Applicant number not found" });
+    const personId = rows[0].person_id;
+
+    // Fetch old results
+    const [oldRows] = await db.query(
+      "SELECT qualifying_result, interview_result, exam_result FROM person_status_table WHERE person_id = ?",
+      [personId]
+    );
+    const oldData = oldRows[0] || null;
+
+    // Compute new scores
+    const qExam = Number(qualifying_exam_score) || 0;
+    const qInterview = Number(qualifying_interview_score) || 0;
+    const totalAve = (qExam + qInterview) / 2;
+
+    // Upsert
+    await db.query(
+      `INSERT INTO person_status_table (person_id, qualifying_result, interview_result, exam_result)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         qualifying_result = VALUES(qualifying_result),
+         interview_result = VALUES(interview_result),
+         exam_result = VALUES(exam_result)`,
+      [personId, qExam, qInterview, totalAve]
+    );
+
+    // Get actor info
+    let actorEmail = "earistmis@gmail.com";
+    let actorName = "SYSTEM";
+    if (user_person_id) {
+      const [actorRows] = await db3.query(
+        `SELECT email, role, employee_id, last_name, first_name, middle_name
+         FROM user_accounts WHERE person_id = ? LIMIT 1`,
+        [user_person_id]
+      );
+      if (actorRows.length > 0) {
+        const u = actorRows[0];
+        const role = u.role?.toUpperCase() || "UNKNOWN";
+        const empId = u.employee_id || "";
+        actorEmail = u.email || "earistmis@gmail.com";
+        actorName = `${role} (${empId}) - ${u.last_name}, ${u.first_name} ${u.middle_name}`.trim();
+      }
+    }
+
+    // Detect changes
+    if (oldData && (oldData.qualifying_result != qExam || oldData.interview_result != qInterview)) {
+      const oldExam = oldData.qualifying_result ?? 0;
+      const oldInterview = oldData.interview_result ?? 0;
+      const oldFinal = oldData.exam_result ?? ((oldExam + oldInterview) / 2).toFixed(2);
+      const newFinal = totalAve.toFixed(2);
+
+      // Build message text showing both scores
+      const message = `📝 Qualifying Exam: ${oldExam} → ${qExam} | Interview: ${oldInterview} → ${qInterview} | Final Rating: ${oldFinal} → ${newFinal} for Applicant #${applicant_number}`;
+
+      // One single notification per applicant per day
+      await db.query(
+        `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
+         SELECT ?, ?, ?, ?, ?, NOW()
+         FROM DUAL
+         WHERE NOT EXISTS (
+           SELECT 1 FROM notifications
+           WHERE applicant_number = ?
+             AND message = ?
+             AND DATE(timestamp) = CURDATE()
+         )`,
+        ["update", message, applicant_number, actorEmail, actorName, applicant_number, message]
+      );
+
+      io.emit("notification", {
+        type: "update",
+        message,
+        applicant_number,
+        actor_email: actorEmail,
+        actor_name: actorName,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    res.json({ success: true, message: "Qualifying/Interview results saved successfully!" });
+  } catch (err) {
+    console.error("Error saving qualifying/interview results:", err);
+    res.status(500).json({ error: "Failed to save qualifying/interview results" });
+  }
+});
+
+
+
+app.post("/api/exam/import", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    // 1️⃣ Collect applicant numbers
+    const applicantNumbers = rows
+      .map(r => r["Applicant ID"] || r["applicant_number"])
+      .filter(n => n);
+
+    if (applicantNumbers.length === 0) {
+      return res.status(400).json({ error: "No valid applicant numbers" });
+    }
+
+    // 2️⃣ Map applicant_number -> person_id
+    const [matches] = await db.query(
+      `SELECT person_id, applicant_number 
+       FROM applicant_numbering_table 
+       WHERE applicant_number IN (?)`,
+      [applicantNumbers]
+    );
+
+    const applicantMap = {};
+    matches.forEach(m => {
+      applicantMap[m.applicant_number] = m.person_id;
+    });
+
+    const now = new Date();
+
+    // 3️⃣ LOOP & INSERT/UPDATE PER RECORD
+    for (const row of rows) {
+      const applicantNumber = row["Applicant ID"] || row["applicant_number"];
+      const personId = applicantMap[applicantNumber];
+      if (!personId) continue;
+
+      const english = Number(row["English"] || 0);
+      const science = Number(row["Science"] || 0);
+      const filipino = Number(row["Filipino"] || 0);
+      const math = Number(row["Math"] || 0);
+      const abstract = Number(row["Abstract"] || 0);
+
+      const finalRating =
+        (english + science + filipino + math + abstract) / 5;
+
+      // Status
+      let status = row["Status"]?.toUpperCase();
+      if (status !== "PASSED" && status !== "FAILED") {
+        status = null;
+      }
+
+      // Check existing record
+      const [existing] = await db.query(
+        "SELECT id FROM admission_exam WHERE person_id = ? LIMIT 1",
+        [personId]
+      );
+
+      if (existing.length > 0) {
+        // UPDATE (NO USER)
+        await db.query(
+          `UPDATE admission_exam SET 
+              English = ?, 
+              Science = ?, 
+              Filipino = ?, 
+              Math = ?, 
+              Abstract = ?, 
+              final_rating = ?, 
+              status = ?, 
+              date_created = ?
+           WHERE person_id = ?`,
+          [
+            english,
+            science,
+            filipino,
+            math,
+            abstract,
+            finalRating,
+            status,
+            now,
+            personId
+          ]
+        );
+      } else {
+        // INSERT (NO USER)
+        await db.query(
+          `INSERT INTO admission_exam
+            (person_id, English, Science, Filipino, Math, Abstract, final_rating, status, date_created)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            personId,
+            english,
+            science,
+            filipino,
+            math,
+            abstract,
+            finalRating,
+            status,
+            now
+          ]
+        );
+      }
+    }
+
+    // 4️⃣ Notification (SYSTEM)
+    const actorEmail = "earistmis@gmail.com";
+    const actorName = "SYSTEM";
+
+    await db.query(
+      "INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name) VALUES (?, ?, ?, ?, ?)",
+      ["upload", "📊 Bulk Entrance Exam Scores uploaded", null, actorEmail, actorName]
+    );
+
+    io.emit("notification", {
+      type: "upload",
+      message: "📊 Bulk Entrance Exam Scores uploaded",
+      applicant_number: null,
+      actor_email: actorEmail,
+      actor_name: actorName,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json({ success: true, message: "Excel imported successfully!" });
+
+  } catch (err) {
+    console.error("❌ Excel import error:", err);
+    res.status(500).json({ error: "Failed to import Excel" });
+  }
+});
+
+
 
 
 // ✅ Get user_accounts.id using person_id
@@ -5697,537 +6166,6 @@ WHERE proctor LIKE ?
   });
 
 
-  // ✅ Unified Save or Update for Qualifying / Interview Scores (with duplicate-safe notifications)
-  app.post("/api/interview/save", async (req, res) => {
-    try {
-      const { applicant_number, qualifying_exam_score, qualifying_interview_score, user_person_id } = req.body;
-
-      // Find person_id
-      const [rows] = await db.query(
-        "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ?",
-        [applicant_number]
-      );
-      if (rows.length === 0) return res.status(400).json({ error: "Applicant number not found" });
-      const personId = rows[0].person_id;
-
-      // Fetch old results
-      const [oldRows] = await db.query(
-        "SELECT qualifying_result, interview_result, exam_result FROM person_status_table WHERE person_id = ?",
-        [personId]
-      );
-      const oldData = oldRows[0] || null;
-
-      // Compute new scores
-      const qExam = Number(qualifying_exam_score) || 0;
-      const qInterview = Number(qualifying_interview_score) || 0;
-      const totalAve = (qExam + qInterview) / 2;
-
-      // Upsert
-      await db.query(
-        `INSERT INTO person_status_table (person_id, qualifying_result, interview_result, exam_result)
-       VALUES (?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         qualifying_result = VALUES(qualifying_result),
-         interview_result = VALUES(interview_result),
-         exam_result = VALUES(exam_result)`,
-        [personId, qExam, qInterview, totalAve]
-      );
-
-      // Get actor info
-      let actorEmail = "earistmis@gmail.com";
-      let actorName = "SYSTEM";
-      if (user_person_id) {
-        const [actorRows] = await db3.query(
-          `SELECT email, role, employee_id, last_name, first_name, middle_name
-         FROM user_accounts WHERE person_id = ? LIMIT 1`,
-          [user_person_id]
-        );
-        if (actorRows.length > 0) {
-          const u = actorRows[0];
-          const role = u.role?.toUpperCase() || "UNKNOWN";
-          const empId = u.employee_id || "";
-          actorEmail = u.email || "earistmis@gmail.com";
-          actorName = `${role} (${empId}) - ${u.last_name}, ${u.first_name} ${u.middle_name}`.trim();
-        }
-      }
-
-      // Detect changes
-      if (oldData && (oldData.qualifying_result != qExam || oldData.interview_result != qInterview)) {
-        const oldExam = oldData.qualifying_result ?? 0;
-        const oldInterview = oldData.interview_result ?? 0;
-        const oldFinal = oldData.exam_result ?? ((oldExam + oldInterview) / 2).toFixed(2);
-        const newFinal = totalAve.toFixed(2);
-
-        // Build message text showing both scores
-        const message = `📝 Qualifying Exam: ${oldExam} → ${qExam} | Interview: ${oldInterview} → ${qInterview} | Final Rating: ${oldFinal} → ${newFinal} for Applicant #${applicant_number}`;
-
-        // One single notification per applicant per day
-        await db.query(
-          `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
-         SELECT ?, ?, ?, ?, ?, NOW()
-         FROM DUAL
-         WHERE NOT EXISTS (
-           SELECT 1 FROM notifications
-           WHERE applicant_number = ?
-             AND message = ?
-             AND DATE(timestamp) = CURDATE()
-         )`,
-          ["update", message, applicant_number, actorEmail, actorName, applicant_number, message]
-        );
-
-        io.emit("notification", {
-          type: "update",
-          message,
-          applicant_number,
-          actor_email: actorEmail,
-          actor_name: actorName,
-          timestamp: new Date().toISOString(),
-        });
-      }
-
-      res.json({ success: true, message: "Qualifying/Interview results saved successfully!" });
-    } catch (err) {
-      console.error("Error saving qualifying/interview results:", err);
-      res.status(500).json({ error: "Failed to save qualifying/interview results" });
-    }
-  });
-
-  
-app.post("/exam/save", async (req, res) => {
-    try {
-      const {
-        applicant_number,
-        english,
-        science,
-        filipino,
-        math,
-        abstract,
-        final_rating,
-        status
-      } = req.body;
-
-      // 1️⃣ Find person_id
-      const [rows] = await db.query(
-        "SELECT person_id FROM applicant_numbering_table WHERE applicant_number = ?",
-        [applicant_number]
-      );
-
-      if (rows.length === 0) {
-        return res.status(400).json({ error: "Applicant number not found" });
-      }
-
-      const personId = rows[0].person_id;
-
-      // 2️⃣ Load old exam data
-      const [oldRows] = await db.query(
-        "SELECT English, Science, Filipino, Math, Abstract, status FROM admission_exam WHERE person_id = ?",
-        [personId]
-      );
-
-      const oldData = oldRows[0] || null;
-
-      // 3️⃣ Insert or update exam results (NO user column)
-      await db.query(
-        `INSERT INTO admission_exam 
-        (person_id, English, Science, Filipino, Math, Abstract, final_rating, status, date_created)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE())
-       ON DUPLICATE KEY UPDATE
-         English = VALUES(English),
-         Science = VALUES(Science),
-         Filipino = VALUES(Filipino),
-         Math = VALUES(Math),
-         Abstract = VALUES(Abstract),
-         final_rating = VALUES(final_rating),
-         status = VALUES(status)`,
-        [
-          personId,
-          english,
-          science,
-          filipino,
-          math,
-          abstract,
-          final_rating,
-          status === "" ? null : status
-        ]
-      );
-
-      // 4️⃣ Actor is always SYSTEM now (since no user field exists)
-      const actorEmail = "earistmis@gmail.com";
-      const actorName = "SYSTEM";
-
-      // 5️⃣ Compare old vs new values → generate notifications
-      if (oldData) {
-        const subjects = [
-          { key: "English", label: "English", newVal: english },
-          { key: "Science", label: "Science", newVal: science },
-          { key: "Filipino", label: "Filipino", newVal: filipino },
-          { key: "Math", label: "Math", newVal: math },
-          { key: "Abstract", label: "Abstract", newVal: abstract }
-        ];
-
-        for (const subj of subjects) {
-          const oldVal = oldData[subj.key];
-
-          if (oldVal != subj.newVal) {
-            const message = `📝 Entrance Exam updated (${subj.label}: ${oldVal ?? 0} → ${subj.newVal}) for Applicant #${applicant_number}`;
-
-            await db.query(
-              `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
-             SELECT ?, ?, ?, ?, ?, NOW()
-             FROM DUAL
-             WHERE NOT EXISTS (
-               SELECT 1 FROM notifications
-               WHERE applicant_number = ?
-                 AND message = ?
-                 AND DATE(timestamp) = CURDATE()
-             )`,
-              ["update", message, applicant_number, actorEmail, actorName, applicant_number, message]
-            );
-
-            io.emit("notification", {
-              type: "update",
-              message,
-              applicant_number,
-              actor_email: actorEmail,
-              actor_name: actorName,
-              timestamp: new Date().toISOString(),
-            });
-          }
-        }
-      }
-
-      res.json({ success: true, message: "Exam data saved (with status)!" });
-
-    } catch (err) {
-      console.error("❌ Save error:", err);
-      res.status(500).json({ error: "Failed to save exam data" });
-    }
-  });
-
-  // ======================= EMAIL NOTIFICATION LOGGER =======================
-  app.post("/api/log-email", async (req, res) => {
-    try {
-      const { applicant_number, user_person_id, subject, customMessage } = req.body;
-
-      if (!applicant_number) {
-        return res.status(400).json({ error: "Applicant number is required" });
-      }
-
-      // 1️⃣ Get applicant’s person_id
-      const personId = await getPersonIdByApplicantNumber(applicant_number);
-      if (!personId) {
-        return res.status(404).json({ error: "Applicant not found" });
-      }
-
-      // 2️⃣ Get actor info (email + role) from user_accounts in db3
-      let actorEmail = "earistmis@gmail.com";
-      let actorFullName = "System";
-
-      if (user_person_id) {
-        const [actorRows] = await db3.query(
-          "SELECT email, role FROM user_accounts WHERE person_id = ? LIMIT 1",
-          [user_person_id]
-        );
-
-        if (actorRows.length > 0) {
-          const actor = actorRows[0];
-          actorEmail = actor.email;
-          actorFullName = actor.role ? actor.role.toUpperCase() : actor.email;
-        }
-      }
-
-      // 3️⃣ Build message
-      const message =
-        customMessage ||
-        `📧 ${subject || "Email"} sent for Applicant #${applicant_number}`;
-
-      // 4️⃣ Insert into notifications
-      await db.query(
-        `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
-       VALUES (?, ?, ?, ?, ?, NOW())`,
-        ["email", message, applicant_number, actorEmail, actorFullName]
-      );
-
-      // 5️⃣ Emit via socket
-      io.emit("notification", {
-        type: "email",
-        message,
-        applicant_number,
-        actor_email: actorEmail,
-        actor_name: actorFullName,
-        timestamp: new Date().toISOString(),
-      });
-
-      res.json({ success: true, message: "Email notification logged" });
-    } catch (err) {
-      console.error("❌ Email log error:", err);
-      res.status(500).json({ error: "Failed to log email notification" });
-    }
-  });
-
-
-
-  // ======================= EMAIL NOTIFICATION LOGGER =======================
-  app.post("/api/log-email", async (req, res) => {
-    try {
-      const { applicant_number, user_person_id, subject, customMessage } = req.body;
-
-      if (!applicant_number) {
-        return res.status(400).json({ error: "Applicant number is required" });
-      }
-
-      // 1️⃣ Get applicant’s person_id
-      const personId = await getPersonIdByApplicantNumber(applicant_number);
-      if (!personId) {
-        return res.status(404).json({ error: "Applicant not found" });
-      }
-
-      // 2️⃣ Get actor info (email + role) from user_accounts in db3
-      let actorEmail = "earistmis@gmail.com";
-      let actorFullName = "System";
-
-      if (user_person_id) {
-        const [actorRows] = await db3.query(
-          "SELECT email, role FROM user_accounts WHERE person_id = ? LIMIT 1",
-          [user_person_id]
-        );
-
-        if (actorRows.length > 0) {
-          const actor = actorRows[0];
-          actorEmail = actor.email;
-          actorFullName = actor.role ? actor.role.toUpperCase() : actor.email;
-        }
-      }
-
-      // 3️⃣ Build message
-      const message =
-        customMessage ||
-        `📧 ${subject || "Email"} sent for Applicant #${applicant_number}`;
-
-      // 4️⃣ Insert into notifications
-      await db.query(
-        `INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name, timestamp)
-       VALUES (?, ?, ?, ?, ?, NOW())`,
-        ["email", message, applicant_number, actorEmail, actorFullName]
-      );
-
-      // 5️⃣ Emit via socket
-      io.emit("notification", {
-        type: "email",
-        message,
-        applicant_number,
-        actor_email: actorEmail,
-        actor_name: actorFullName,
-        timestamp: new Date().toISOString(),
-      });
-
-      res.json({ success: true, message: "Email notification logged" });
-    } catch (err) {
-      console.error("❌ Email log error:", err);
-      res.status(500).json({ error: "Failed to log email notification" });
-    }
-  });
-
-
-  // 🔹 Bulk Excel Import Exam Scores
-  app.post("/api/exam/import", upload.single("file"), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-
-      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet);
-
-      const loggedInUserId = req.body.userID;
-
-      // 1️⃣ Collect applicant numbers
-      const applicantNumbers = rows
-        .map(r => r["Applicant ID"] || r["applicant_number"])
-        .filter(n => n);
-
-      if (applicantNumbers.length === 0) {
-        return res.status(400).json({ error: "No valid applicant numbers" });
-      }
-
-      // 2️⃣ Get person_id mappings
-      const [matches] = await db.query(
-        `SELECT person_id, applicant_number 
-       FROM applicant_numbering_table 
-       WHERE applicant_number IN (?)`,
-        [applicantNumbers]
-      );
-
-      const applicantMap = {};
-      matches.forEach(m => {
-        applicantMap[m.applicant_number] = m.person_id;
-      });
-
-      // 3️⃣ Prepare bulk insert values
-      const values = [];
-      const now = new Date();
-
-      for (const row of rows) {
-        const applicantNumber = row["Applicant ID"] || row["applicant_number"];
-        const personId = applicantMap[applicantNumber];
-        if (!personId) continue;
-
-        const english = Number(row["English"] || 0);
-        const science = Number(row["Science"] || 0);
-        const filipino = Number(row["Filipino"] || 0);
-        const math = Number(row["Math"] || 0);
-        const abstract = Number(row["Abstract"] || 0);
-
-        const finalRating =
-          (english + science + filipino + math + abstract) / 5;
-
-        // Excel status field
-        let status = row["Status"]?.toUpperCase();
-        if (status !== "PASSED" && status !== "FAILED") status = null;
-
-        values.push([
-          personId,
-          english,
-          science,
-          filipino,
-          math,
-          abstract,
-          finalRating,
-          status,
-          loggedInUserId,
-          now,
-        ]);
-      }
-
-      if (values.length === 0) {
-        return res.status(400).json({ error: "No valid data to import" });
-      }
-
-      // 4️⃣ INSERT or UPDATE (NO UNIQUE KEY REQUIRED)
-      for (const v of values) {
-        const [
-          personId,
-          english,
-          science,
-          filipino,
-          math,
-          abstract,
-          finalRating,
-          status,
-          loggedInUserId,
-          now
-        ] = v;
-
-        // Check if record already exists
-        const [existing] = await db.query(
-          "SELECT id FROM admission_exam WHERE person_id = ? LIMIT 1",
-          [personId]
-        );
-
-        if (existing.length > 0) {
-          // Update existing record
-          await db.query(
-            `UPDATE admission_exam SET 
-            English = ?, 
-            Science = ?, 
-            Filipino = ?, 
-            Math = ?, 
-            Abstract = ?, 
-            final_rating = ?, 
-            status = ?, 
-            user = ?, 
-            date_created = ?
-           WHERE person_id = ?`,
-            [
-              english,
-              science,
-              filipino,
-              math,
-              abstract,
-              finalRating,
-              status,
-              loggedInUserId,
-              now,
-              personId
-            ]
-          );
-        } else {
-          // Insert new record
-          await db.query(
-            `INSERT INTO admission_exam
-            (person_id, English, Science, Filipino, Math, Abstract, final_rating, status, user, date_created)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              personId,
-              english,
-              science,
-              filipino,
-              math,
-              abstract,
-              finalRating,
-              status,
-              loggedInUserId,
-              now
-            ]
-          );
-        }
-      }
-
-      // 5️⃣ Actor info & notifications
-      let actorEmail = "earistmis@gmail.com";
-      let actorName = "SYSTEM";
-
-      if (loggedInUserId) {
-        const [actorRows] = await db3.query(
-          "SELECT email, role, employee_id, last_name, first_name, middle_name FROM user_accounts WHERE person_id = ? LIMIT 1",
-          [loggedInUserId]
-        );
-
-        if (actorRows.length > 0) {
-          const u = actorRows[0];
-          const role = u.role?.toUpperCase() || "UNKNOWN";
-          const empId = u.employee_id || "";
-          const lname = u.last_name || "";
-          const fname = u.first_name || "";
-          const mname = u.middle_name || "";
-          const email = u.email || "";
-
-          actorEmail = email;
-          actorName = `${role} (${empId}) - ${lname}, ${fname} ${mname}`.trim();
-        }
-      }
-
-      const message = `📊 Bulk Entrance Exam Scores uploaded`;
-
-      await db.query(
-        "INSERT INTO notifications (type, message, applicant_number, actor_email, actor_name) VALUES (?, ?, ?, ?, ?)",
-        ["upload", message, null, actorEmail, actorName]
-      );
-
-      io.emit("notification", {
-        type: "upload",
-        message,
-        applicant_number: null,
-        actor_email: actorEmail,
-        actor_name: actorName,
-        timestamp: new Date().toISOString(),
-      });
-
-      res.json({
-        success: true,
-        message: "Excel imported successfully!"
-      });
-
-    } catch (err) {
-      console.error("❌ Excel import error:", err);
-      res.status(500).json({ error: "Failed to import Excel" });
-    }
-  });
-
-
-
 
   // 🔹 Get Notifications
   app.get("/api/notifications", async (req, res) => {
@@ -6438,9 +6376,9 @@ app.post("/exam/save", async (req, res) => {
       );
 
       await db3.query(`
-      INSERT INTO person_table (person_id, student_number, profile_img, campus, academicProgram, classifiedAs, applyingAs, program, program2, program3, yearLevel, last_name, first_name, middle_name, extension, nickname, height, weight, lrnNumber, nolrnNumber, gender, pwdMember, pwdType, pwdId, birthOfDate, age, birthPlace, languageDialectSpoken, citizenship, religion, civilStatus, tribeEthnicGroup, cellphoneNumber, emailAddress, presentStreet, presentBarangay, presentZipCode, presentRegion, presentProvince, presentMunicipality, presentDswdHouseholdNumber, sameAsPresentAddress, permanentStreet, permanentBarangay, permanentZipCode, permanentRegion, permanentProvince, permanentMunicipality, permanentDswdHouseholdNumber, solo_parent, father_deceased, father_family_name, father_given_name, father_middle_name, father_ext, father_nickname, father_education, father_education_level, father_last_school, father_course, father_year_graduated, father_school_address, father_contact, father_occupation, father_employer, father_income, father_email, mother_deceased, mother_family_name, mother_given_name, mother_middle_name, mother_ext, mother_nickname, mother_education, mother_education_level, mother_last_school, mother_course, mother_year_graduated, mother_school_address, mother_contact, mother_occupation, mother_employer, mother_income, mother_email, guardian, guardian_family_name, guardian_given_name, guardian_middle_name, guardian_ext, guardian_nickname, guardian_address, guardian_contact, guardian_email, annual_income, schoolLevel, schoolLastAttended, schoolAddress, courseProgram, honor, generalAverage, yearGraduated, schoolLevel1, schoolLastAttended1, schoolAddress1, courseProgram1, honor1, generalAverage1, yearGraduated1, strand, cough, colds, fever, asthma, faintingSpells, heartDisease, tuberculosis, frequentHeadaches, hernia, chronicCough, headNeckInjury, hiv, highBloodPressure, diabetesMellitus, allergies, cancer, smokingCigarette, alcoholDrinking, hospitalized, hospitalizationDetails, medications, hadCovid, covidDate, vaccine1Brand, vaccine1Date, vaccine2Brand, vaccine2Date, booster1Brand, booster1Date, booster2Brand, booster2Date, chestXray, cbc, urinalysis, otherworkups, symptomsToday, remarks, termsOfAgreement, created_at, current_step)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [person_data.person_id, person_data.student_number, person_data.profile_img, person_data.campus, person_data.academicProgram, person_data.classifiedAs, person_data.applyingAs, person_data.program, person_data.program2, person_data.program3, person_data.yearLevel, person_data.last_name, person_data.first_name, person_data.middle_name, person_data.extension, person_data.nickname, person_data.height, person_data.weight, person_data.lrnNumber, person_data.nolrnNumber, person_data.gender, person_data.pwdMember, person_data.pwdType, person_data.pwdId, person_data.birthOfDate, person_data.age, person_data.birthPlace, person_data.languageDialectSpoken, person_data.citizenship, person_data.religion, person_data.civilStatus, person_data.tribeEthnicGroup, person_data.cellphoneNumber, person_data.emailAddress, person_data.presentStreet, person_data.presentBarangay, person_data.presentZipCode, person_data.presentRegion, person_data.presentProvince, person_data.presentMunicipality, person_data.presentDswdHouseholdNumber, person_data.sameAsPresentAddress, person_data.permanentStreet, person_data.permanentBarangay, person_data.permanentZipCode, person_data.permanentRegion, person_data.permanentProvince, person_data.permanentMunicipality, person_data.permanentDswdHouseholdNumber, person_data.solo_parent, person_data.father_deceased, person_data.father_family_name, person_data.father_given_name, person_data.father_middle_name, person_data.father_ext, person_data.father_nickname, person_data.father_education, person_data.father_education_level, person_data.father_last_school, person_data.father_course, person_data.father_year_graduated, person_data.father_school_address, person_data.father_contact, person_data.father_occupation, person_data.father_employer, person_data.father_income, person_data.father_email, person_data.mother_deceased, person_data.mother_family_name, person_data.mother_given_name, person_data.mother_middle_name, person_data.mother_ext, person_data.mother_nickname, person_data.mother_education, person_data.mother_education_level, person_data.mother_last_school, person_data.mother_course, person_data.mother_year_graduated, person_data.mother_school_address, person_data.mother_contact, person_data.mother_occupation, person_data.mother_employer, person_data.mother_income, person_data.mother_email, person_data.guardian, person_data.guardian_family_name, person_data.guardian_given_name,
+      INSERT INTO person_table (person_id, profile_img, campus, academicProgram, classifiedAs, applyingAs, program, program2, program3, yearLevel, last_name, first_name, middle_name, extension, nickname, height, weight, lrnNumber, nolrnNumber, gender, pwdMember, pwdType, pwdId, birthOfDate, age, birthPlace, languageDialectSpoken, citizenship, religion, civilStatus, tribeEthnicGroup, cellphoneNumber, emailAddress, presentStreet, presentBarangay, presentZipCode, presentRegion, presentProvince, presentMunicipality, presentDswdHouseholdNumber, sameAsPresentAddress, permanentStreet, permanentBarangay, permanentZipCode, permanentRegion, permanentProvince, permanentMunicipality, permanentDswdHouseholdNumber, solo_parent, father_deceased, father_family_name, father_given_name, father_middle_name, father_ext, father_nickname, father_education, father_education_level, father_last_school, father_course, father_year_graduated, father_school_address, father_contact, father_occupation, father_employer, father_income, father_email, mother_deceased, mother_family_name, mother_given_name, mother_middle_name, mother_ext, mother_nickname, mother_education, mother_education_level, mother_last_school, mother_course, mother_year_graduated, mother_school_address, mother_contact, mother_occupation, mother_employer, mother_income, mother_email, guardian, guardian_family_name, guardian_given_name, guardian_middle_name, guardian_ext, guardian_nickname, guardian_address, guardian_contact, guardian_email, annual_income, schoolLevel, schoolLastAttended, schoolAddress, courseProgram, honor, generalAverage, yearGraduated, schoolLevel1, schoolLastAttended1, schoolAddress1, courseProgram1, honor1, generalAverage1, yearGraduated1, strand, cough, colds, fever, asthma, faintingSpells, heartDisease, tuberculosis, frequentHeadaches, hernia, chronicCough, headNeckInjury, hiv, highBloodPressure, diabetesMellitus, allergies, cancer, smokingCigarette, alcoholDrinking, hospitalized, hospitalizationDetails, medications, hadCovid, covidDate, vaccine1Brand, vaccine1Date, vaccine2Brand, vaccine2Date, booster1Brand, booster1Date, booster2Brand, booster2Date, chestXray, cbc, urinalysis, otherworkups, symptomsToday, remarks, termsOfAgreement, created_at, current_step)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [person_data.person_id, person_data.profile_img, person_data.campus, person_data.academicProgram, person_data.classifiedAs, person_data.applyingAs, person_data.program, person_data.program2, person_data.program3, person_data.yearLevel, person_data.last_name, person_data.first_name, person_data.middle_name, person_data.extension, person_data.nickname, person_data.height, person_data.weight, person_data.lrnNumber, person_data.nolrnNumber, person_data.gender, person_data.pwdMember, person_data.pwdType, person_data.pwdId, person_data.birthOfDate, person_data.age, person_data.birthPlace, person_data.languageDialectSpoken, person_data.citizenship, person_data.religion, person_data.civilStatus, person_data.tribeEthnicGroup, person_data.cellphoneNumber, person_data.emailAddress, person_data.presentStreet, person_data.presentBarangay, person_data.presentZipCode, person_data.presentRegion, person_data.presentProvince, person_data.presentMunicipality, person_data.presentDswdHouseholdNumber, person_data.sameAsPresentAddress, person_data.permanentStreet, person_data.permanentBarangay, person_data.permanentZipCode, person_data.permanentRegion, person_data.permanentProvince, person_data.permanentMunicipality, person_data.permanentDswdHouseholdNumber, person_data.solo_parent, person_data.father_deceased, person_data.father_family_name, person_data.father_given_name, person_data.father_middle_name, person_data.father_ext, person_data.father_nickname, person_data.father_education, person_data.father_education_level, person_data.father_last_school, person_data.father_course, person_data.father_year_graduated, person_data.father_school_address, person_data.father_contact, person_data.father_occupation, person_data.father_employer, person_data.father_income, person_data.father_email, person_data.mother_deceased, person_data.mother_family_name, person_data.mother_given_name, person_data.mother_middle_name, person_data.mother_ext, person_data.mother_nickname, person_data.mother_education, person_data.mother_education_level, person_data.mother_last_school, person_data.mother_course, person_data.mother_year_graduated, person_data.mother_school_address, person_data.mother_contact, person_data.mother_occupation, person_data.mother_employer, person_data.mother_income, person_data.mother_email, person_data.guardian, person_data.guardian_family_name, person_data.guardian_given_name,
       person_data.guardian_middle_name, person_data.guardian_ext, person_data.guardian_nickname, person_data.guardian_address, person_data.guardian_contact, person_data.guardian_email, person_data.annual_income, person_data.schoolLevel, person_data.schoolLastAttended, person_data.schoolAddress, person_data.courseProgram, person_data.honor, person_data.generalAverage, person_data.yearGraduated, person_data.schoolLevel1, person_data.schoolLastAttended1, person_data.schoolAddress1, person_data.courseProgram1, person_data.honor1, person_data.generalAverage1, person_data.yearGraduated1, person_data.strand, person_data.cough, person_data.colds, person_data.fever, person_data.asthma, person_data.faintingSpells, person_data.heartDisease, person_data.tuberculosis, person_data.frequentHeadaches, person_data.hernia, person_data.chronicCough, person_data.headNeckInjury, person_data.hiv, person_data.highBloodPressure, person_data.diabetesMellitus, person_data.allergies, person_data.cancer, person_data.smokingCigarette, person_data.alcoholDrinking, person_data.hospitalized, person_data.hospitalizationDetails, person_data.medications, person_data.hadCovid, person_data.covidDate, person_data.vaccine1Brand, person_data.vaccine1Date, person_data.vaccine2Brand, person_data.vaccine2Date, person_data.booster1Brand, person_data.booster1Date, person_data.booster2Brand, person_data.booster2Date, person_data.chestXray, person_data.cbc, person_data.urinalysis, person_data.otherworkups, person_data.symptomsToday, person_data.remarks, person_data.termsOfAgreement, person_data.created_at, person_data.current_step
       ])
 
@@ -8758,79 +8696,87 @@ app.delete("/school_years/:id", async (req, res) => {
   }
 });
 
-// ROOM CREATION (UPDATED!)
+// ADD ROOM (Prevent Duplicate)
 app.post("/room", async (req, res) => {
-  const { building_name, room_name } = req.body;
+  const { room_name, building_name } = req.body;
 
-  if (!building_name || !room_name) {
-    return res.status(400).send({ message: "Room name and building name are required" });
+  if (!room_name || !building_name) {
+    return res.status(400).json({ message: "Missing fields" });
   }
 
   try {
-    const insertQuery = `
-      INSERT INTO room_table (building_description, room_description) 
-      VALUES (?, ?)
-    `;
-    const [result] = await db3.query(insertQuery, [building_name, room_name]);
+    // Check duplicate
+    const [exists] = await db3.query(
+      `SELECT * FROM room_table 
+       WHERE room_description = ? AND building_description = ? LIMIT 1`,
+      [room_name, building_name]
+    );
 
-    res.status(200).send({
-      message: "Room Successfully Created",
-      result
-    });
-  } catch (error) {
-    console.error("Error inserting room:", error);
-    res.status(500).send(error);
+    if (exists.length > 0) {
+      return res.status(400).json({ message: "Room already exists in this building" });
+    }
+
+    await db3.query(
+      `INSERT INTO room_table (room_description, building_description)
+       VALUES (?, ?)`,
+      [room_name, building_name]
+    );
+
+    res.json({ message: "Room added successfully" });
+  } catch (err) {
+    console.error("Error adding room:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 
-// UPDATE ROOM
+// UPDATE ROOM (Prevent Duplicate)
 app.put("/room/:id", async (req, res) => {
   const { id } = req.params;
-  const { building_name, room_name } = req.body;
+  const { room_name, building_name } = req.body;
 
-  if (!building_name || !room_name) {
-    return res.status(400).send({ message: "Building name and room name are required" });
+  if (!room_name || !building_name) {
+    return res.status(400).json({ message: "Missing fields" });
   }
 
   try {
-    const updateQuery = `
-      UPDATE room_table
-      SET building_description = ?, room_description = ?
-      WHERE room_id = ?
-    `;
-    const [result] = await db3.query(updateQuery, [building_name, room_name, id]);
+    // Check duplicate (but exclude current room)
+    const [exists] = await db3.query(
+      `SELECT * FROM room_table
+       WHERE room_description = ? AND building_description = ? AND room_id != ?
+       LIMIT 1`,
+      [room_name, building_name, id]
+    );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).send({ message: "Room not found" });
+    if (exists.length > 0) {
+      return res.status(400).json({ message: "Room already exists in this building" });
     }
 
-    res.status(200).send({ message: "Room successfully updated" });
-  } catch (error) {
-    console.error("Error updating room:", error);
-    res.status(500).send(error);
+    await db3.query(
+      `UPDATE room_table
+       SET room_description = ?, building_description = ?
+       WHERE room_id = ?`,
+      [room_name, building_name, id]
+    );
+
+    res.json({ message: "Room updated successfully" });
+  } catch (err) {
+    console.error("Error updating room:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // DELETE ROOM
 app.delete("/room/:id", async (req, res) => {
   const { id } = req.params;
-
   try {
-    const deleteQuery = `DELETE FROM room_table WHERE room_id = ?`;
-    const [result] = await db3.query(deleteQuery, [id]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).send({ message: "Room not found" });
-    }
-
-    res.status(200).send({ message: "Room successfully deleted" });
-  } catch (error) {
-    console.error("Error deleting room:", error);
-    res.status(500).send(error);
+    await db3.query(`DELETE FROM room_table WHERE room_id = ?`, [id]);
+    res.json({ message: "Room deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting room:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
-
 
 app.get("/room_list", async (req, res) => {
   try {
@@ -9948,82 +9894,6 @@ app.get("/api/accepted-students-count", async (req, res) => {
   }
 });
 
-
-// ASSIGN A STUDENT NUMBER TO THAT STUDENT (UPDATED!)
-app.post("/api/assign-student-number", async (req, res) => {
-  const connection = await db3.getConnection();
-
-  try {
-    const { person_id } = req.body;
-
-    if (!person_id) {
-      return res.status(400).send("person_id is required");
-    }
-
-    await connection.beginTransaction();
-
-    // Get active year
-    const [yearRows] = await connection.query("SELECT * FROM year_table WHERE status = 1 LIMIT 1");
-    if (yearRows.length === 0) {
-      await connection.rollback();
-      return res.status(400).send("No active year found");
-    }
-    const year = yearRows[0];
-
-    // Get counter
-    const [counterRows] = await connection.query("SELECT * FROM student_counter WHERE id = 1");
-    if (counterRows.length === 0) {
-      await connection.rollback();
-      return res.status(400).send("No counter found");
-    }
-    let que_number = counterRows[0].que_number;
-
-    // Fix: if que_number is 0, still generate '00001'
-    que_number = que_number + 1;
-
-    let numberStr = que_number.toString();
-    while (numberStr.length < 5) {
-      numberStr = "0" + numberStr;
-    }
-    const student_number = `${year.year_description}${numberStr}`;
-
-    // Check if already assigned
-    const [existingRows] = await connection.query("SELECT * FROM student_numbering_table WHERE person_id = ?", [person_id]);
-    if (existingRows.length > 0) {
-      await connection.rollback();
-      return res.status(400).send("Student number already assigned.");
-    }
-
-    // Insert into student_numbering
-    await connection.query("INSERT INTO student_numbering_table (student_number, person_id) VALUES (?, ?)", [student_number, person_id]);
-
-    // Update counter
-    await connection.query("UPDATE student_counter SET que_number = ?", [que_number]);
-
-    // Update person_status_table
-    await connection.query("UPDATE person_status_table SET student_registration_status = 1 WHERE person_id = ?", [person_id]);
-
-    const [activeSchoolYearRows] = await connection.query("SELECT * FROM active_school_year_table WHERE astatus = 1");
-    if (activeSchoolYearRows.length === 0) {
-      await connection.rollback();
-      return res.status(400).send("No active school year found");
-    }
-
-    const activeSchoolYear = activeSchoolYearRows[0];
-
-    await connection.query("INSERT INTO student_status_table (student_number, active_curriculum, enrolled_status, year_level_id, active_school_year_id, control_status) VALUES (?, ?, ?, ?, ?, ?)", [student_number, 0, 0, 0, activeSchoolYear.id, 0]);
-    await connection.commit();
-    res.json({ student_number });
-  } catch (err) {
-    await connection.rollback();
-    console.error("Server error:", err);
-    res.status(500).send("Server error");
-  } finally {
-    connection.release(); // Release the connection back to the pool
-  }
-});
-
-
 // Corrected route with parameter (UPDATED!)
 app.get("/courses/:currId", async (req, res) => {
   const { currId } = req.params;
@@ -10932,6 +10802,8 @@ app.get('/get_selecterd_year/:selectedSchoolYear/:selectedSchoolSemester', async
 });
 
 // UPDATED 09/06/2025
+
+
 app.get('/enrolled_student_list/:userID/:selectedCourse/:department_section_id/:activeSchoolYear', async (req, res) => {
   const { userID, selectedCourse, department_section_id, activeSchoolYear } = req.params;
 
@@ -10999,9 +10871,10 @@ app.get('/enrolled_student_list/:userID/:selectedCourse/:department_section_id/:
   }
 });
 
+
 function getFormattedTimestamp() {
   const now = new Date();
-  
+
   let month = now.getMonth() + 1; // Months start at 0
   let day = now.getDate();
   let year = now.getFullYear();
@@ -11009,7 +10882,7 @@ function getFormattedTimestamp() {
   let hours = now.getHours();
   const minutes = now.getMinutes();
   const seconds = now.getSeconds();
-  
+
   const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12;
   hours = hours ? hours : 12; // hour '0' should be '12'
@@ -11070,6 +10943,7 @@ app.put("/add_grades", async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 // API ROOM SCHEDULE
@@ -12440,12 +12314,12 @@ app.post("/api/insert-schedule-designation", async (req, res) => {
     `;
 
     const [timeResult] = await db3.query(checkTimeQuery, [
-  day, school_year_id, prof_id,   
-  startMinutes, startMinutes, endMinutes, endMinutes, 
-  startMinutes, endMinutes, startMinutes, endMinutes, 
-  startMinutes, endMinutes, startMinutes, endMinutes, 
-  startMinutes, endMinutes  
-]);
+      day, school_year_id, prof_id,
+      startMinutes, startMinutes, endMinutes, endMinutes,
+      startMinutes, endMinutes, startMinutes, endMinutes,
+      startMinutes, endMinutes, startMinutes, endMinutes,
+      startMinutes, endMinutes
+    ]);
 
     if (timeResult.length > 0) {
       return res.status(409).json({
@@ -13073,134 +12947,143 @@ app.get("/api/section_assigned_to/:userID/:selectedSchoolYear/:selectedSchoolSem
 
 
 app.post("/api/grades/import", upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No file uploaded" });
+        }
 
-    const { course_id, active_school_year_id, department_section_id } = req.body;
+        const { course_id, active_school_year_id, department_section_id } = req.body;
 
-    if (!course_id || !active_school_year_id || !department_section_id) {
-      return res.status(400).json({ error: "Please Select a class to upload the file on" });
-    }
+        if (!course_id || !active_school_year_id || !department_section_id) {
+            return res.status(400).json({ error: "Please Select a class to upload the file on" });
+        }
 
-    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet);
-    console.log("📄 Parsed Excel rows:", rows);
-    const studentNumbers = rows
-      .map(r => String(r["Student Number"] || r["student_number"]))
-      .filter(n => n);
+        const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        
+        // Start parsing headers from Row 3 (index 2)
+        const rows = XLSX.utils.sheet_to_json(sheet, { range: 2 }); 
+        
+        const studentNumbers = rows
+          .map(r => String(r["Student Number"]))
+          .filter(n => n && n !== 'undefined');
 
-    if (studentNumbers.length === 0) {
-      return res.status(400).json({ error: "No valid student numbers" });
-    }
+        if (studentNumbers.length === 0) {
+            return res.status(400).json({ error: "No valid student numbers" });
+        }
 
-    console.log("🔎 Matching with:", {
-      studentNumbers,
-      course_id,
-      active_school_year_id,
-      department_section_id
-    });
-
-    // Get existing students in DB that match identifiers
-    const [existingStudents] = await db3.query(
-      `SELECT student_number
-       FROM enrolled_subject
-       WHERE student_number IN (?) 
-         AND course_id = ? 
-         AND active_school_year_id = ? 
-         AND department_section_id = ?`,
-      [studentNumbers, course_id, active_school_year_id, department_section_id]
-    );
-
-    if (existingStudents.length === 0) {
-      return res.status(400).json({ error: "No matching students found in database" });
-    }
-
-    const existingStudentNumbers = existingStudents.map(s => s.student_number);
-    let skippedCount = 0;
-
-    console.log("🧠 existingStudentNumbers:", existingStudentNumbers);
-    for (const row of rows) {
-      const studentNumber = String(row["Student Number"] || row["student_number"]);
-
-      // Skip if student doesn't exist in DB
-      if (!existingStudentNumbers.includes(studentNumber)) {
-        skippedCount++;
-        continue;
-      }
-
-      let midterm = row["midterm"];
-      let finals = row["finals"];
-      let en_remarks = 0;
-
-      if (
-        String(midterm).toLowerCase() === "inc" ||
-        String(finals).toLowerCase() === "inc"
-      ) {
-        en_remarks = 3;
-        await db3.query(
-          `UPDATE enrolled_subject
-           SET midterm = ?, finals = ?, final_grade = "0.00", grades_status = "INC"
-           WHERE student_number = ? 
-             AND course_id = ? 
-             AND active_school_year_id = ? 
-             AND department_section_id = ?`,
-          [midterm, finals, studentNumber, course_id, active_school_year_id, department_section_id]
+        // 1. Database Validation (existing code is fine)
+        const [existingStudents] = await db3.query(
+            `SELECT student_number
+            FROM enrolled_subject
+            WHERE student_number IN (?) 
+              AND course_id = ? 
+              AND active_school_year_id = ? 
+              AND department_section_id = ?`,
+            [studentNumbers, course_id, active_school_year_id, department_section_id]
         );
-        continue;
-      }
 
-      midterm = parseFloat(midterm);
-      finals = parseFloat(finals);
-      if (!isNaN(midterm)) midterm = parseFloat(midterm.toFixed(2));
-      if (!isNaN(finals)) finals = parseFloat(finals.toFixed(2));
+        if (existingStudents.length === 0) {
+            return res.status(400).json({ error: "No matching students found in database" });
+        }
 
-      const finalGrade = ((midterm + finals) / 2).toFixed(2);
+        const existingStudentNumbers = existingStudents.map(s => s.student_number);
+        let skippedCount = 0;
+        
+        // 2. Processing and Updating Grades
+        for (const row of rows) {
+            const studentNumber = String(row["Student Number"]);
 
-      if (midterm === 5.0 || finals === 5.0) {
-        en_remarks = 2;
-      } else if (finalGrade == 0.0 || finals < 1.0 || midterm < 1.0 || isNaN(midterm) || isNaN(finals)) {
-        en_remarks = 0;
-      } else if (finalGrade >= 1.0 && finalGrade <= 3.0) {
-        en_remarks = 1;
-      } else if (finalGrade >= 3.25) {
-        en_remarks = 2;
-      } else {
-        en_remarks = 0;
-      }
+            if (!existingStudentNumbers.includes(studentNumber)) {
+                skippedCount++;
+                continue;
+            }
 
-      await db3.query(
-        `UPDATE enrolled_subject
-         SET midterm = ?, finals = ?, final_grade = ?, en_remarks = ?
-         WHERE student_number = ? 
-           AND course_id = ? 
-           AND active_school_year_id = ? 
-           AND department_section_id = ?`,
-        [
-          midterm,
-          finals,
-          finalGrade,
-          en_remarks,
-          studentNumber,
-          course_id,
-          active_school_year_id,
-          department_section_id
-        ]
-      );
+            let midterm = row["Midterm"];
+            let finals = row["Finals"];
+            let en_remarks = 0;
+            let finalGradeValue; // Will hold the numeric Finals score
+            let gradesStatus = null; 
+
+            const rawMidtermStr = String(midterm || "").trim().toUpperCase();
+            const rawFinalsStr = String(finals || "").trim().toUpperCase();
+            
+            // --- Special Case 1: INC ---
+            if (rawMidtermStr === "INC" || rawFinalsStr === "INC") {
+                en_remarks = 3; // New rule: INC = 3
+                finalGradeValue = "0.00"; 
+                gradesStatus = "INC";
+            } 
+            // --- Special Case 2: DROP/DRP ---
+            else if (rawMidtermStr === "DRP" || rawMidtermStr === "DROP" || rawFinalsStr === "DRP" || rawFinalsStr === "DROP") {
+                const dropValue = "DRP";
+                en_remarks = 4; // New rule: DROP = 4
+                midterm = dropValue;
+                finals = dropValue;
+                finalGradeValue = dropValue;
+                gradesStatus = "DRP";
+            } 
+            // --- Normal Numeric Processing (Whole Number Scale 0-100) ---
+            else {
+                // Convert raw input to whole numbers (0-100 score)
+                let numericMidterm = parseInt(rawMidtermStr, 10);
+                let numericFinals = parseInt(rawFinalsStr, 10);
+
+                // Handle NaN/Invalid numeric inputs
+                if (isNaN(numericMidterm)) numericMidterm = 0;
+                if (isNaN(numericFinals)) numericFinals = 0;
+                
+                // Rule: Final Grade = Finals Grade (using the raw score)
+                finalGradeValue = numericFinals;
+
+                // --- EN_REMARKS Logic (Whole Number Comparison) ---
+                if (finalGradeValue < 75 || numericMidterm < 75) {
+                    en_remarks = 2; // Failing (if Finals < 75 OR Midterm < 75)
+                } else if (finalGradeValue >= 75) {
+                    en_remarks = 1; // Passing (if Finals >= 75 AND Midterm >= 75)
+                } else {
+                    en_remarks = 0; // Default/Error
+                }
+
+                // Prepare values for database insertion (formatted as string)
+                midterm = String(numericMidterm);
+                finals = String(numericFinals);
+                finalGradeValue = String(finalGradeValue);
+            }
+            
+            // 3. Database Update (existing code is fine)
+            await db3.query(
+                `UPDATE enrolled_subject
+                SET midterm = ?, finals = ?, final_grade = ?, en_remarks = ?, grades_status = ?
+                WHERE student_number = ? 
+                  AND course_id = ? 
+                  AND active_school_year_id = ? 
+                  AND department_section_id = ?`,
+                [
+                    midterm,
+                    finals,
+                    finalGradeValue,
+                    en_remarks,
+                    gradesStatus,
+                    studentNumber,
+                    course_id,
+                    active_school_year_id,
+                    department_section_id
+                ]
+            );
+        }
+
+        res.json({
+            success: true,
+            message: `Grades updated successfully! Skipped: ${skippedCount} students.`
+        });
+    } catch (err) {
+        console.error("❌ Excel import error:", err);
+        res.status(500).json({ error: "Failed to import Excel" });
     }
-
-    res.json({
-      success: true,
-      message: `Grades updated successfully! Skipped: ${skippedCount}`
-    });
-  } catch (err) {
-    console.error("❌ Excel import error:", err);
-    res.status(500).json({ error: "Failed to import Excel" });
-  }
 });
+
 
 
 app.get("/api/section_assigned_to/:userID", async (req, res) => {
@@ -16754,6 +16637,159 @@ app.get("/api/ecat-summary", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+
+// ---------------------------- prereq
+// ✅ CHECK PREREQUISITE BEFORE ENROLLMENT
+app.post("/api/check-prerequisite", async (req, res) => {
+  try {
+    const { student_number, course_id } = req.body;
+
+    if (!student_number || !course_id) {
+      return res.status(400).json({
+        allowed: false,
+        status: "INVALID_REQUEST",
+        message: "student_number and course_id are required.",
+      });
+    }
+
+    // 1. Get prerequisite code(s) for this course
+    const [courseRows] = await db3.query(
+      "SELECT prereq, course_code FROM course_table WHERE course_id = ? LIMIT 1",
+      [course_id]
+    );
+
+    if (!courseRows.length) {
+      return res.status(404).json({
+        allowed: false,
+        status: "COURSE_NOT_FOUND",
+        message: "Course not found in course_table.",
+      });
+    }
+
+    const { prereq, course_code } = courseRows[0];
+
+    // If no prerequisite defined → allow enrollment
+    if (!prereq || String(prereq).trim() === "") {
+      return res.json({
+        allowed: true,
+        status: "NO_PREREQ",
+        message: `Course ${course_code} has no prerequisite.`,
+      });
+    }
+
+    // 2. Support comma-separated list of prerequisite course codes
+    const prereqCodes = String(prereq)
+      .split(",")
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0);
+
+    if (prereqCodes.length === 0) {
+      return res.json({
+        allowed: true,
+        status: "NO_PREREQ",
+        message: `Course ${course_code} has no prerequisite (empty prereq field).`,
+      });
+    }
+
+    // 3. Get course_id for each prerequisite course_code
+    const placeholders = prereqCodes.map(() => "?").join(", ");
+
+    const [prereqCourses] = await db3.query(
+      `
+      SELECT course_id, course_code
+      FROM course_table
+      WHERE course_code IN (${placeholders})
+      `,
+      prereqCodes
+    );
+
+    if (!prereqCourses.length) {
+      // Safety: if prereq codes don't map to any course, don't block enrollment
+      return res.json({
+        allowed: true,
+        status: "PREREQ_NOT_FOUND",
+        message:
+          "Prerequisite course codes do not exist in course_table. Enrollment is allowed but please verify your curriculum data.",
+      });
+    }
+
+    const failedPrereq = [];
+    const missingPrereq = [];
+
+    // 4. For each prerequisite, check student's grade history in enrolled_subject
+    for (const prereqCourse of prereqCourses) {
+      const prereqCourseId = prereqCourse.course_id;
+      const prereqCourseCode = prereqCourse.course_code;
+
+      const [gradeRows] = await db3.query(
+        `
+        SELECT 
+          MAX(CASE WHEN en_remarks = 1 THEN 1 ELSE 0 END) AS has_pass,
+          MAX(CASE WHEN en_remarks = 2 THEN 1 ELSE 0 END) AS has_fail
+        FROM enrolled_subject
+        WHERE student_number = ? AND course_id = ?
+        `,
+        [student_number, prereqCourseId]
+      );
+
+      const { has_pass, has_fail } = gradeRows[0];
+
+      // ❌ Has a failing record and never passed
+      if (!has_pass && has_fail) {
+        failedPrereq.push(prereqCourseCode);
+      }
+      // ❌ No pass and no fail → never enrolled or no final passing grade yet
+      else if (!has_pass && !has_fail) {
+        missingPrereq.push(prereqCourseCode);
+      }
+      // ✅ has_pass = 1 → OK
+    }
+
+    // 5. Decide overall result
+    if (failedPrereq.length > 0) {
+      return res.json({
+        allowed: false,
+        status: "FAILED_PREREQ",
+        failedPrereq,
+        missingPrereq, // might also exist if multiple prerequisites
+        message: `Student has FAILED prerequisite(s): ${failedPrereq.join(
+          ", "
+        )}. They must PASS these before enrolling in ${course_code}.`,
+      });
+    }
+
+    if (missingPrereq.length > 0) {
+      return res.json({
+        allowed: false,
+        status: "MISSING_PREREQ",
+        failedPrereq,
+        missingPrereq,
+        message: `Student must FIRST ENROLL and PASS prerequisite(s): ${missingPrereq.join(
+          ", "
+        )} before taking ${course_code}.`,
+      });
+    }
+
+    // ✅ All prereqs satisfied
+    return res.json({
+      allowed: true,
+      status: "OK",
+      failedPrereq: [],
+      missingPrereq: [],
+      message: `All prerequisites satisfied for ${course_code}.`,
+    });
+  } catch (err) {
+    console.error("Error in /api/check-prerequisite:", err);
+    return res.status(500).json({
+      allowed: false,
+      status: "SERVER_ERROR",
+      message: err.message,
+    });
+  }
+});
+
+//----------------------------prereq end
 
 const PORT = process.env.WEB_PORT || 5000;
 const HOST = getDbHost();

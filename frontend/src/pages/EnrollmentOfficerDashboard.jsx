@@ -556,7 +556,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                         marginTop: 2.5,
                         marginLeft: 1.5,
                         boxShadow: 3,
-              border: `2px solid ${borderColor}`,
+                        border: `2px solid ${borderColor}`,
                         background: "#ffffff",
                         display: "flex",
                         flexDirection: "column",
@@ -614,7 +614,8 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                 sx={{
                                     width: 120,
                                     p: 3,
-                                    background: "#f5f7fa",
+                                 background: "#FCBEBB",
+                                    border: "2px solid black",
                                     borderRadius: 2,
                                     textAlign: "center",
                                 }}
@@ -629,7 +630,8 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                 sx={{
                                     width: 120,
                                     p: 3,
-                                    background: "#f5f7fa",
+                                   background: "#FCBEBB",
+                                    border: "2px solid black",
                                     borderRadius: 2,
                                     textAlign: "center",
                                 }}
@@ -644,7 +646,8 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                 sx={{
                                     width: 120,
                                     p: 3,
-                                    background: "#f5f7fa",
+                                     background: "#FCBEBB",
+                                    border: "2px solid black",
                                     borderRadius: 2,
                                     textAlign: "center",
                                 }}
@@ -659,7 +662,8 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                 sx={{
                                     width: 120,
                                     p: 3,
-                                    background: "#f5f7fa",
+                                      background: "#FCBEBB",
+                                    border: "2px solid black",
                                     borderRadius: 2,
                                     textAlign: "center",
                                 }}
@@ -686,7 +690,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                             boxShadow: 3,
                             background: "#ffffff",
                             display: "flex",
-                   border: `2px solid ${borderColor}`,
+                            border: `2px solid ${borderColor}`,
                             flexDirection: "column",
                         }}
                     >
@@ -715,7 +719,9 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                     sx={{
                                         p: 1,
                                         borderRadius: 2,
-                                        background: "#f5f7fa",
+                                        backgroundColor: "#fef9e1",
+                                        border: "2px solid black",
+
                                         textAlign: "center",
                                         height: 90,
                                     }}
@@ -730,7 +736,9 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                     sx={{
                                         p: 1,
                                         borderRadius: 2,
-                                        background: "#f5f7fa",
+                                        backgroundColor: "#fef9e1",
+                                        border: "2px solid black",
+
                                         textAlign: "center",
                                         height: 90,
                                     }}
@@ -745,7 +753,9 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                     sx={{
                                         p: 1,
                                         borderRadius: 2,
-                                        background: "#f5f7fa",
+                                        backgroundColor: "#fef9e1",
+                                        border: "2px solid black",
+
                                         textAlign: "center",
                                         height: 90,
                                     }}
@@ -764,7 +774,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                             p: 3,
                             marginTop: 2.5,
                             marginLeft: 2,
-                          border: `2px solid ${borderColor}`,
+                            border: `2px solid ${borderColor}`,
                             borderRadius: 3,
                             boxShadow: 3,
                             background: "#ffffff",
@@ -796,9 +806,10 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                                             borderRadius: 2,
                                             cursor: "pointer",
                                             transition: "all 0.2s ease",
+                                            border: "2px solid black",
                                             "&:hover": {
                                                 backgroundColor: mainButtonColor,
-                                                transform: "scale(1.02)",
+
                                                 color: "white",
                                             },
                                         }}
@@ -975,7 +986,7 @@ const EnrollingOfficerDashboard = ({ profileImage, setProfileImage }) => {
                             p: 3,
                             borderRadius: 3,
                             boxShadow: 3,
-                border: `2px solid ${borderColor}`,
+                            border: `2px solid ${borderColor}`,
                             background: "#ffffff",
                             display: "flex",
                             flexDirection: "column",

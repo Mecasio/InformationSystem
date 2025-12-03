@@ -17,11 +17,13 @@ import {
   InputLabel,
   MenuItem,
   Button,
+  TextField
 } from "@mui/material";
 import axios from "axios";
 import API_BASE_URL from "../apiConfig";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FcPrint } from "react-icons/fc";
+import { FcPrint } from "react-icons/fc"; 
+import SearchIcon from "@mui/icons-material/Search";
 
 const FacultyMasterList = () => {
   const navigate = useNavigate();
@@ -195,18 +197,18 @@ const FacultyMasterList = () => {
   });
 
   useEffect(() => {
-  axios
-    .get(`${API_BASE_URL}/get_school_year`)
-    .then((res) => {
-      const currentYear = new Date().getFullYear();
-      const filteredYears = res.data.filter(
-        (yearObj) => Number(yearObj.current_year) <= currentYear
-      );
+    axios
+      .get(`${API_BASE_URL}/get_school_year`)
+      .then((res) => {
+        const currentYear = new Date().getFullYear();
+        const filteredYears = res.data.filter(
+          (yearObj) => Number(yearObj.current_year) <= currentYear
+        );
 
-      setSchoolYears(filteredYears);
-    })
-    .catch((err) => console.error(err));
-}, []);
+        setSchoolYears(filteredYears);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
 
   useEffect(() => {
@@ -253,20 +255,20 @@ const FacultyMasterList = () => {
   }, [userID]);
 
   useEffect(() => {
-  if (filteredCourses.length > 0) {
-    setSelectedCourse(filteredCourses[0].course_id);
-  } else {
-    setSelectedCourse("");
-  }
-}, [filteredCourses]);
+    if (filteredCourses.length > 0) {
+      setSelectedCourse(filteredCourses[0].course_id);
+    } else {
+      setSelectedCourse("");
+    }
+  }, [filteredCourses]);
 
-useEffect(() => {
-  if (filteredSections.length > 0) {
-    setSelectedSection(filteredSections[0].section_id);
-  } else {
-    setSelectedSection("");
-  }
-}, [filteredSections]);
+  useEffect(() => {
+    if (filteredSections.length > 0) {
+      setSelectedSection(filteredSections[0].section_id);
+    } else {
+      setSelectedSection("");
+    }
+  }, [filteredSections]);
 
   const handleSchoolYearChange = (event) => {
     setSelectedSchoolYear(event.target.value);
@@ -285,38 +287,22 @@ useEffect(() => {
   };
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchFilter, setSearchFilter] = useState("all"); 
 
-  
+
 
   const filteredStudents = classListAndDetails
     .filter((s) => {
+      const q = searchQuery.toLowerCase();
 
-      const searchLower = searchQuery.toLowerCase();
-
-      // 🔍 SEARCH FILTER
-      const matchesSearch = (() => {
-        if (searchQuery === "") return true;
-
-        if (searchFilter === "student_number") {
-          return s.student_number.toString().includes(searchQuery);
-        }
-
-        if (searchFilter === "name") {
-          const fullName1 = `${s.first_name} ${s.last_name}`.toLowerCase();
-          const fullName2 = `${s.last_name} ${s.first_name}`.toLowerCase();
-
-          return (
-            fullName1.includes(searchLower) ||
-            fullName2.includes(searchLower) ||
-            s.first_name.toLowerCase().includes(searchLower) ||
-            s.middle_name?.toLowerCase().includes(searchLower) ||
-            s.last_name.toLowerCase().includes(searchLower)
-          );
-        }
-
-        return true;
-      })();
+      // 🔍 SEARCH (name OR student number)
+      const matchesSearch =
+        q === "" ||
+        s.student_number?.toString().includes(q) ||
+        s.first_name?.toLowerCase().includes(q) ||
+        s.middle_name?.toLowerCase().includes(q) ||
+        s.last_name?.toLowerCase().includes(q) ||
+        `${s.first_name} ${s.last_name}`.toLowerCase().includes(q) ||
+        `${s.last_name} ${s.first_name}`.toLowerCase().includes(q);
 
       // 📌 OTHER FILTERS
       const matchesYear =
@@ -339,7 +325,6 @@ useEffect(() => {
         (selectedStatusFilter === "Regular" && Number(s.status) === 1) ||
         (selectedStatusFilter === "Irregular" && Number(s.status) !== 1);
 
-      // ❗ IMPORTANT: add matchesSearch here
       return (
         matchesSearch &&
         matchesYear &&
@@ -357,6 +342,7 @@ useEffect(() => {
         ? nameA.localeCompare(nameB)
         : nameB.localeCompare(nameA);
     });
+
 
   const groupedStudents = filteredStudents.reduce((acc, student) => {
     const key = student.student_number;
@@ -385,9 +371,9 @@ useEffect(() => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  
+
   const divToPrintRef = useRef();
-  
+
   const printDiv = () => {
     const iframe = document.createElement("iframe");
     iframe.style.position = "absolute";
@@ -470,76 +456,93 @@ useEffect(() => {
 
   return (
     <Box
+  sx={{
+    height: "calc(100vh - 150px)",
+    overflowY: "auto",
+    overflowX: "hidden",
+    pr: 1,
+    marginRight: "3rem",
+  }}
+>
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      mb: 2,
+      width: "100%",
+    }}
+  >
+    {/* LEFT SIDE — TITLE */}
+    <Typography
+      variant="h4"
       sx={{
-        height: "calc(100vh - 150px)",
-        overflowY: "auto",
-        paddingRight: 1,
-        backgroundColor: "transparent",
+        fontWeight: "bold",
+        color: titleColor,
+        fontSize: "36px",
       }}
     >
-      <Box
+      CLASS LIST
+    </Typography>
+
+    {/* RIGHT SIDE — SEARCH + PRINT */}
+    <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+      <TextField
+        size="small"
+        placeholder="Search Student Number / Student Name"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-          width: "100%",
-
+          width: 450,  // MATCHED WITH GRADING SHEET
+          backgroundColor: "#fff",
+          borderRadius: 1,
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "10px",
+          },
         }}
+        InputProps={{
+          startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+        }}
+      />
+
+      <button
+        onClick={printDiv}
+        style={{
+          width: "308px",   // MATCHED WITH GRADING SHEET
+          padding: "10px 20px",
+          border: "2px solid black",
+          backgroundColor: "#f0f0f0",
+          color: "black",
+          borderRadius: "5px",
+          cursor: "pointer",
+          fontSize: "16px",
+          fontWeight: "bold",
+          marginRight: "30px",
+          transition: "background-color 0.3s, transform 0.2s",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+        }}
+        onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+        onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+        onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+        onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
       >
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: "bold",
-            color: titleColor,
-            fontSize: "36px",
-          }}
-        >
-           CLASS LIST
-        </Typography>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
-        {/* Search Filter Dropdown */}
-        <select
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
-          style={{
-            padding: "8px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            marginTop: "10px",
-            outline: "none"
-          }}
-        >
-          <option value="all">Search All</option>
-          <option value="student_number">Student Number</option>
-          <option value="name">Name</option>
-        </select>
+        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <FcPrint size={20} />
+          Print Class List
+        </span>
+      </button>
+    </Box>
+  </Box>
 
-        {/* Search Bar */}
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{
-            padding: "8px",
-            width: "250px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            marginRight: "5.1rem",
-            outline: "none",
-            marginTop: "10px",
-          }}
-        />
-        
-      </div>
 
-      </Box>
-      <hr style={{ border: "1px solid #ccc", width: "95%" }} />
+      <hr style={{ border: "1px solid #ccc", width: "98%" }} />
 
       <br />
 
-      <TableContainer component={Paper} sx={{ width: "95%" }}>
+      <TableContainer component={Paper} sx={{ width: "98%" }}>
         <Table size="small">
           <TableHead sx={{ backgroundColor: "#6D2323", color: "white" }}>
             <TableRow>
@@ -744,7 +747,7 @@ useEffect(() => {
       </TableContainer>
       <TableContainer
         component={Paper}
-        sx={{ width: "95%", border: `2px solid ${borderColor}`, p: 2 }}
+        sx={{ width: "98%", border: `2px solid ${borderColor}`, p: 2 }}
       >
         <Box
           sx={{
@@ -760,7 +763,9 @@ useEffect(() => {
               display="flex"
               alignItems="center"
               gap={1}
-              sx={{ minWidth: 500, marginRight: "1rem" }}
+              sx={{ minWidth: 400, 
+
+              }}
             >
               <Typography fontSize={13} sx={{ minWidth: "100px" }}>
                 Course:{" "}
@@ -855,12 +860,12 @@ useEffect(() => {
             display="flex"
             flexDirection="column"
             gap={2}
-            sx={{ minWidth: "450px" }}
+            sx={{ minWidth: "350px" }}
           >
             <Box
               display="flex"
               gap={2}
-              sx={{ minWidth: "450px" }}
+              sx={{ minWidth: "350px" }}
             >
               <Box display="flex" alignItems="center" gap={1}>
                 <Typography fontSize={13} sx={{ minWidth: "100px" }}>
@@ -924,46 +929,14 @@ useEffect(() => {
               gap: 2,
               minWidth: "100px",
             }}>
-              <button
-                onClick={printDiv}
-                style={{
-                  width: "308px",
-                  padding: "10px 20px",
-                  border: "2px solid black",
-                  backgroundColor: "#f0f0f0",
-                  color: "black",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  transition: "background-color 0.3s, transform 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-                onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-                onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
-              >
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <FcPrint size={20} />
-                  Print Class List
-                </span>
-              </button>
+
             </Box>
           </Box>
         </Box>
       </TableContainer>
       <TableContainer
         component={Paper}
-        sx={{ width: "95%", marginTop: "2rem" }}
+        sx={{ width: "98%", marginTop: "2rem" }}
       >
         <Table size="small">
           <TableHead
@@ -1142,7 +1115,7 @@ useEffect(() => {
       </TableContainer>
 
       <div style={{ display: "none" }}>
-        <div ref={divToPrintRef} style={{margin: "0.5in"}}>
+        <div ref={divToPrintRef} style={{ margin: "0.5in" }}>
           <style>
             {`
               @media print {
@@ -1171,19 +1144,19 @@ useEffect(() => {
           >
             {/* Logo */}
             <div>
-            
-                <img
-                  src={fetchedLogo}
-                  alt="Logo"
-                  style={{ width: "80px", height: "80px", objectFit: "contain", marginTop: "-10px" }}
-                />
-            
+
+              <img
+                src={fetchedLogo}
+                alt="Logo"
+                style={{ width: "80px", height: "80px", objectFit: "contain", marginTop: "-10px" }}
+              />
+
             </div>
 
             {/* School Info */}
             <div style={{ textAlign: "center", flex: 1, marginLeft: "10px", marginRight: "10px" }}>
               <span style={{ margin: 0, fontSize: "12px" }}>Republic of the Philippines</span>
-              <h2 style={{ margin: 0, fontSize: "20px", letterSpacing: "-1px"}}>{companyName}</h2>
+              <h2 style={{ margin: 0, fontSize: "20px", letterSpacing: "-1px" }}>{companyName}</h2>
               <span style={{ margin: 0, fontSize: "12px" }}>{campusAddress || "Nagtahan St. Sampaloc, Manila"}</span>
             </div>
 
@@ -1192,17 +1165,17 @@ useEffect(() => {
           </div>
 
           {/* Document Title */}
-          <div style={{display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px"}}>
-            <span style={{fontSize: "20px"}}><b>{groupedList[0]?.course_description.toUpperCase() || ""}</b></span>
-            <span style={{fontSize: "15px"}}>{groupedList[0]?.dprtmnt_name || ""}</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px" }}>
+            <span style={{ fontSize: "20px" }}><b>{groupedList[0]?.course_description.toUpperCase() || ""}</b></span>
+            <span style={{ fontSize: "15px" }}>{groupedList[0]?.dprtmnt_name || ""}</span>
           </div>
 
-          <div style={{display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px", marginTop: "2rem", marginBottom: "1rem"}}>
-            <span style={{fontSize: "20px"}}><b>OFFICIAL LIST OF ENROLLED STUDENTS</b></span>
-            <div style={{display: "flex", alignItems: "end", justifyContent: "center"}}>
-              <span style={{marginRight: "0.5rem", fontSize: "15px"}}>Academic Year</span>
-              <span style={{fontSize: "15px"}}>
-                {groupedList[0]?.current_year || ""}- 
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px", marginTop: "2rem", marginBottom: "1rem" }}>
+            <span style={{ fontSize: "20px" }}><b>OFFICIAL LIST OF ENROLLED STUDENTS</b></span>
+            <div style={{ display: "flex", alignItems: "end", justifyContent: "center" }}>
+              <span style={{ marginRight: "0.5rem", fontSize: "15px" }}>Academic Year</span>
+              <span style={{ fontSize: "15px" }}>
+                {groupedList[0]?.current_year || ""}-
                 {groupedList[0]?.next_year || ""},&nbsp;&nbsp;
 
                 {groupedList[0]?.semester_description || ""}
@@ -1223,12 +1196,12 @@ useEffect(() => {
 
               {/* Subject Code + Class Section */}
               <tr>
-                <td colSpan={1} style={{ width: "80px", borderTop: "none", padding: "0px 2px"}}>Subject Code:</td>
-                <td colSpan={5} style={{ borderRight: "none", borderTop: "none" , padding: "0px 2px"}}>
+                <td colSpan={1} style={{ width: "80px", borderTop: "none", padding: "0px 2px" }}>Subject Code:</td>
+                <td colSpan={5} style={{ borderRight: "none", borderTop: "none", padding: "0px 2px" }}>
                   {groupedList[0]?.course_code || ""}
                 </td>
 
-                <td colSpan={1} style={{ borderLeft: "none", borderTop: "none" , padding: "0px 2px"}}>
+                <td colSpan={1} style={{ borderLeft: "none", borderTop: "none", padding: "0px 2px" }}>
                   <div style={{ display: "flex", justifyContent: "end" }}>Class Section:</div>
                 </td>
 
@@ -1256,22 +1229,22 @@ useEffect(() => {
 
               {/* Academic Units + Lab Units + Schedule */}
               <tr>
-                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Academic Units:</td>
+                <td colSpan={1} style={{ width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Academic Units:</td>
 
-                <td colSpan={1} style={{paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {groupedList[0]?.course_unit || "0"}
                 </td>
 
-                <td colSpan={1} style={{width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>Lab Units:</td>
+                <td colSpan={1} style={{ width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Lab Units:</td>
 
                 <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {groupedList[0]?.lab_unit || "0"}
                 </td>
 
-                <td colSpan={3} style={{ borderLeft: "none", borderTop: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                <td colSpan={3} style={{ borderLeft: "none", borderTop: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   <div style={{ display: "flex", justifyContent: "end" }}>Schedule:</div>
                 </td>
-                <td colSpan={2} style={{paddingRight: "2px", paddingLeft: "2px", borderBottom: "none", paddingBottom: "1px", paddingTop: "6px" }}>
+                <td colSpan={2} style={{ paddingRight: "2px", paddingLeft: "2px", borderBottom: "none", paddingBottom: "1px", paddingTop: "6px" }}>
                   {groupedList.length > 0 ? (
                     groupedList.map((student, index) => (
                       <div key={index}>
@@ -1290,35 +1263,35 @@ useEffect(() => {
 
               {/* Credit Units + Lab Units */}
               <tr>
-                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Credit Units:</td>
+                <td colSpan={1} style={{ width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Credit Units:</td>
 
-                <td colSpan={1} style={{paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {groupedList[0]?.course_unit || "0"}
                 </td>
 
-                <td colSpan={1} style={{width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>Lab Units:</td>
+                <td colSpan={1} style={{ width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Lab Units:</td>
 
                 <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {groupedList[0]?.lab_unit || "0"}
                 </td>
 
-                <td colSpan={3} style={{ borderLeft: "none", borderTop: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                <td colSpan={3} style={{ borderLeft: "none", borderTop: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   <div style={{ display: "flex", justifyContent: "end" }}></div>
                 </td>
-                <td colSpan={2} rowSpan={4} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>
+                <td colSpan={2} rowSpan={4} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>
                 </td>
               </tr>
 
               {/* Mode */}
               <tr>
-                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Mode:</td>
-                <td colSpan={6} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}></td>
+                <td colSpan={1} style={{ width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Mode:</td>
+                <td colSpan={6} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}></td>
               </tr>
 
               {/* Faculty */}
               <tr>
-                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Faculty:</td>
-                <td colSpan={6} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>{profData.fname} {profData.mname} {profData.lname}</td>
+                <td colSpan={1} style={{ width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>Faculty:</td>
+                <td colSpan={6} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none", paddingTop: "6px" }}>{profData.fname} {profData.mname} {profData.lname}</td>
               </tr>
             </thead>
           </table>
@@ -1327,12 +1300,12 @@ useEffect(() => {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginTop: "0.5rem" }}>
             <thead>
               <tr>
-                <th style={{ border: "1px solid black", padding: "6px 0px", width: "30px", textAlign: "center"}}>#</th>
-                <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center"}}>Student No.</th>
-                <th style={{ border: "1px solid black", padding: "6px", width: "280px", textAlign: "start"}}>Student Name</th>
-                <th style={{ border: "1px solid black", padding: "6px 0px", width: "50px", textAlign: "center"}}>Age</th>
-                <th style={{ border: "1px solid black", padding: "6px 0px", width: "50px", textAlign: "center"}}>Sex</th>
-                <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center"}}>Year Level</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "30px", textAlign: "center" }}>#</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center" }}>Student No.</th>
+                <th style={{ border: "1px solid black", padding: "6px", width: "280px", textAlign: "start" }}>Student Name</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "50px", textAlign: "center" }}>Age</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "50px", textAlign: "center" }}>Sex</th>
+                <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center" }}>Year Level</th>
                 <th style={{ border: "1px solid black", padding: "6px 0px", width: "80px", textAlign: "center" }}>Status</th>
               </tr>
             </thead>

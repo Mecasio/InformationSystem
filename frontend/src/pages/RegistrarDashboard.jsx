@@ -22,7 +22,7 @@ import GroupIcon from "@mui/icons-material/Groups";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Legend, PieChart, Pie} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Legend, PieChart, Pie } from "recharts";
 import { Tooltip } from "recharts";
 import MuiTooltip from "@mui/material/Tooltip";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
@@ -414,7 +414,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
       formData.append("profile_picture", file);
 
       // ✅ Use your backend route
-      await axios.post(
+      await axios.put(
         `${API_BASE_URL}/update_registrar/${user_account_id}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
@@ -454,7 +454,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
           { name: "Applied", value: 236 },
           { name: "Scheduled", value: 16 },
           { name: "Pending", value: 220 },
-          { name: "Finished", value: 215},
+          { name: "Finished", value: 215 },
         ]);
       })
       .catch((err) => console.error(err));
@@ -936,9 +936,10 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                     width: 125,
                     height: 90,
                     p: 2,
-                    background: "#f5f7fa",
+                  backgroundColor: "#fef9e1",
                     borderRadius: 2,
                     textAlign: "center",
+                     border: "2px solid black"
                   }}
                 >
                   <Typography variant="h5" fontWeight="bold">
@@ -952,9 +953,10 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                     width: 125,
                     height: 90,
                     p: 2,
-                    background: "#f5f7fa",
+                   backgroundColor: "#fef9e1",
                     borderRadius: 2,
                     textAlign: "center",
+                     border: "2px solid black"
                   }}
                 >
                   <Typography variant="h5" fontWeight="bold">
@@ -968,9 +970,10 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                     width: 125,
                     height: 90,
                     p: 2,
-                    background: "#f5f7fa",
+                     backgroundColor: "#fef9e1",
                     borderRadius: 2,
                     textAlign: "center",
+                    border: "2px solid black"
                   }}
                 >
                   <Typography variant="h5" fontWeight="bold">
@@ -984,9 +987,10 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                     width: 125,
                     height: 90,
                     p: 2,
-                    background: "#f5f7fa",
+                  backgroundColor: "#fef9e1",
                     borderRadius: 2,
                     textAlign: "center",
+                     border: "2px solid black"
                   }}
                 >
                   <Typography variant="h5" fontWeight="bold">
@@ -1068,10 +1072,11 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 <Box
                   sx={{
                     p: 2,
-                    background: "#f5f7fa",
+                    background: "#FCBEBB",
                     borderRadius: 2,
+                    border: "2px solid black",
                     textAlign: "center",
-                    height: 90,
+                    height: 100,
                   }}
                 >
                   <Typography variant="h5" fontWeight="bold">
@@ -1085,10 +1090,11 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 <Box
                   sx={{
                     p: 2,
-                    background: "#f5f7fa",
+                    background: "#FCBEBB",
                     borderRadius: 2,
                     textAlign: "center",
-                    height: 90,
+                    border: "2px solid black",
+                    height: 100,
                   }}
                 >
                   <Typography variant="h5" fontWeight="bold">
@@ -1102,10 +1108,11 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 <Box
                   sx={{
                     p: 2,
-                    background: "#f5f7fa",
+                    background: "#FCBEBB",
                     borderRadius: 2,
+                    border: "2px solid black",
                     textAlign: "center",
-                    height: 90,
+                    height: 100,
                   }}
                 >
                   <Typography variant="h5" fontWeight="bold">
@@ -1124,6 +1131,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               sx={{
                 flexGrow: 1,
                 background: "#f1f3f4",
+                border: "2px solid black",
                 borderRadius: 3,
                 border: "1px dashed #bfc4cc",
                 display: "flex",
@@ -1143,13 +1151,14 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      startAngle={180}
-                      endAngle={0}
                       outerRadius={110}
                       label
                     >
                       {pieData.map((_, i) => (
-                        <Cell key={i} fill={["#0088FE", "#00C49F", "#FFBB28", "#FF8042"][i]} />
+                        <Cell
+                          key={i}
+                          fill={["#0088FE", "#00C49F", "#FFBB28", "#FF8042"][i]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -1160,6 +1169,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                 <Typography>Loading chart...</Typography>
               )}
             </Box>
+
 
           </Card>
         </Grid>

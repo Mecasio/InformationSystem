@@ -967,48 +967,7 @@ const SuperAdminStudentDashboard1 = () => {
                         }}
                     />
 
-                    {/* Excel Import Section */}
-                    <Box display="flex" alignItems="center" gap={1}>
-                        <input
-                            type="file"
-                            accept=".xlsx,.xls"
-                            onChange={handleExcelChange}
-                            style={{ display: "none" }}
-                            id="excel-upload"
-                        />
 
-                        <button
-                            onClick={() => document.getElementById("excel-upload").click()}
-                            style={{
-                                padding: "5px 20px",
-                                border: "2px solid green",
-                                backgroundColor: "#f0fdf4",
-                                color: "green",
-                                borderRadius: "5px",
-                                cursor: "pointer",
-                                fontSize: "14px",
-                                fontWeight: "bold",
-                                height: "50px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                                userSelect: "none",
-                                width: "175px",
-                            }}
-                            type="button"
-                        >
-                            <FaFileExcel size={20} />
-                            Choose Excel
-                        </button>
-
-                        <Button
-                            onClick={handleImportExcel}
-                            variant="contained"
-                            sx={{ backgroundColor: settings?.header_color || "#1976d2", border: `2px solid ${borderColor}`, color: "white", height: "50px", width: "175px", }}
-                        >
-                            Import
-                        </Button>
-                    </Box>
                 </Box>
             </Box>
 
@@ -1016,6 +975,100 @@ const SuperAdminStudentDashboard1 = () => {
 
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
+
+            <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                width="100%"
+                mb={2}
+            >
+
+                {/* LEFT SIDE — Download Template */}
+                <div style={{ position: "relative", zIndex: 999999 }}>
+                    <button
+                        onClick={() => {
+                            window.location.href = `${API_BASE_URL}/student_data`;
+                        }}
+                        style={{
+                            padding: "5px 20px",
+                            border: "2px solid black",
+                            backgroundColor: "#f0f0f0",
+                            color: "black",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            height: "50px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            width: "225px",
+                        }}
+                    >
+                        📥 Download Template
+                    </button>
+                </div>
+
+                {/* RIGHT SIDE — Choose Excel + Import */}
+                <Box display="flex" alignItems="center" gap={2}>
+
+                    <input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleExcelChange}
+                        style={{ display: "none" }}
+                        id="excel-upload"
+                    />
+
+                    {/* Choose Excel Button */}
+                    <button
+                        onClick={() => document.getElementById("excel-upload").click()}
+                        style={{
+                            padding: "5px 20px",
+                            border: "2px solid green",
+                            backgroundColor: "#f0fdf4",
+                            color: "green",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            height: "50px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            width: "175px",
+                        }}
+                        type="button"
+                    >
+                        <FaFileExcel size={20} />
+                        Choose Excel
+                    </button>
+
+                    {/* Import Button */}
+                    <Button
+                        onClick={handleImportExcel}
+                        variant="contained"
+                        sx={{
+                            backgroundColor: settings?.header_color || "#1976d2",
+                            border: `2px solid ${borderColor}`,
+                            color: "white",
+                            height: "50px",
+                            width: "175px",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        Import
+                    </Button>
+
+                </Box>
+
+
+            </Box>
+            <br/>
+
 
             <TableContainer component={Paper} sx={{ width: '100%', mb: 1 }}>
                 <Table>
@@ -1325,7 +1378,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 <InputLabel id="campus-label">Campus (Manila/Cavite)</InputLabel>
 
                                 <Select
-                        
+
                                     labelId="campus-label"
                                     id="campus-select"
                                     name="campus"
@@ -1968,7 +2021,7 @@ const SuperAdminStudentDashboard1 = () => {
                                     onChange={handleChange}
                                     error={!!errors.age}
                                     helperText={errors.age ? "This field is required." : ""}
-                            
+
                                 />
                             </Box>
                             <Box flex={1}>
@@ -2399,7 +2452,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">Present Street</Typography>
                                 <TextField
                                     fullWidth
-                            
+
 
                                     size="small"
                                     name="presentStreet"
@@ -2415,7 +2468,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">Present Zip Code</Typography>
                                 <TextField
                                     fullWidth
-                               
+
 
                                     size="small"
                                     name="presentZipCode"
@@ -2439,7 +2492,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 <Select
                                     name="presentRegion"
                                     displayEmpty
-                                
+
                                     value={person.presentRegion || ""}
                                     onBlur={() => handleUpdate(person)}
                                     onChange={(e) => {
@@ -2473,7 +2526,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">Present Province</Typography>
 
                                 <Select
-                                  
+
                                     name="presentProvince"
                                     displayEmpty
                                     value={person.presentProvince || ""}
@@ -2513,7 +2566,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">Present Municipality</Typography>
 
                                 <Select
-                                    
+
                                     name="presentMunicipality"
                                     displayEmpty
                                     value={person.presentMunicipality || ""}
@@ -2546,7 +2599,7 @@ const SuperAdminStudentDashboard1 = () => {
                                 <Typography mb={1} fontWeight="medium">Present Barangay</Typography>
 
                                 <Select
-                                    
+
                                     name="presentBarangay"
                                     displayEmpty
                                     value={person.presentBarangay || ""}
@@ -2581,7 +2634,7 @@ const SuperAdminStudentDashboard1 = () => {
                         <Box mb={2}>
                             <Typography mb={1} fontWeight="medium">Present DSWD Household Number</Typography>
                             <TextField
-                           
+
 
                                 fullWidth
                                 size="small"

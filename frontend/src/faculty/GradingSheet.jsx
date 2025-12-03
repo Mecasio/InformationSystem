@@ -3,23 +3,24 @@ import { SettingsContext } from "../App";
 import '../styles/TempStyles.css';
 import axios from 'axios';
 import { FaFileExcel } from "react-icons/fa";
-import { Table, TableBody, TableCell, TableHead, TableRow, TableContainer, TextField, Button, FormControl, Select, InputLabel, MenuItem, Box, Typography, Paper, Snackbar, Alert, Autocomplete} from "@mui/material";
+import * as XLSX from "xlsx-js-style";
+import { saveAs } from "file-saver"
+import { Table, TableBody, TableCell, TableHead, TableRow, TableContainer, TextField, Button, FormControl, Select, InputLabel, MenuItem, Box, Typography, Paper, Snackbar, Alert, Autocomplete } from "@mui/material";
 import API_BASE_URL from "../apiConfig";
 import { useLocation } from "react-router-dom";
 import { FcPrint } from "react-icons/fc";
-const GradingSheet = () => {
+import SearchIcon from "@mui/icons-material/Search";
 
+const GradingSheet = () => {
   const settings = useContext(SettingsContext);
   const location = useLocation();
   const { course_id, section_id, school_year_id } = location.state || {};
-
   const [titleColor, setTitleColor] = useState("#000000");
   const [subtitleColor, setSubtitleColor] = useState("#555555");
   const [borderColor, setBorderColor] = useState("#000000");
   const [mainButtonColor, setMainButtonColor] = useState("#1976d2");
   const [subButtonColor, setSubButtonColor] = useState("#ffffff");   // ✅ NEW
   const [stepperColor, setStepperColor] = useState("#000000");       // ✅ NEW
-
   const [fetchedLogo, setFetchedLogo] = useState(null);
   const [companyName, setCompanyName] = useState("");
   const [shortTerm, setShortTerm] = useState("");
@@ -48,7 +49,7 @@ const GradingSheet = () => {
     if (settings.short_term) setShortTerm(settings.short_term);
     if (settings.campus_address) setCampusAddress(settings.campus_address);
 
-  }, [settings]); 
+  }, [settings]);
 
   const [userID, setUserID] = useState("");
   const [user, setUser] = useState("");
@@ -161,7 +162,6 @@ const GradingSheet = () => {
       .catch((err) => console.error(err));
   }, []);
 
-
   useEffect(() => {
     axios
       .get(`${API_BASE_URL}/get_school_semester/`)
@@ -198,7 +198,7 @@ const GradingSheet = () => {
 
   const handleFetchStudents = async (department_section_id) => {
     if (!selectedActiveSchoolYear) return;
-    
+
     try {
       const response = await fetch(
         `${API_BASE_URL}/enrolled_student_list/${userID}/${selectedCourse}/${department_section_id}/${selectedActiveSchoolYear}`
@@ -229,88 +229,66 @@ const GradingSheet = () => {
       setMessage("Fetch error");
     }
   };
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchFilter, setSearchFilter] = useState("all"); 
   
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredStudents = students
+    .filter((s) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
 
-  const filteredStudents = students.filter((s) => {
-      const searchLower = searchQuery.toLowerCase();
-
-      // 🔍 SEARCH FILTER
-      const matchesSearch = (() => {
-        if (searchQuery === "") return true;
-
-        if (searchFilter === "student_number") {
-          return s.student_number.toString().includes(searchQuery);
-        }
-
-        if (searchFilter === "name") {
-          const fullName1 = `${s.first_name} ${s.last_name}`.toLowerCase();
-          const fullName2 = `${s.last_name} ${s.first_name}`.toLowerCase();
-
-          return (
-            fullName1.includes(searchLower) ||
-            fullName2.includes(searchLower) ||
-            s.first_name.toLowerCase().includes(searchLower) ||
-            s.middle_name?.toLowerCase().includes(searchLower) ||
-            s.last_name.toLowerCase().includes(searchLower)
-          );
-        }
-
-        return true;
-      })();
-
-      // 📌 OTHER FILTERS
-      const matchesYear =
-        selectedSchoolYear === "" ||
-        String(s.year_id) === String(selectedSchoolYear);
-
-      const matchesSemester =
-        selectedSchoolSemester === "" ||
-        String(s.semester_id) === String(selectedSchoolSemester);
-
-      const matchesCourse =
-        selectedCourse === "" || String(s.course_id) === String(selectedCourse);
-
-      const matchesSection =
-        selectedSectionID === "" ||
-        String(s.department_section_id) === String(selectedSectionID);
-
-      // ❗ IMPORTANT: add matchesSearch here
       return (
-        matchesSearch &&
-        matchesYear &&
-        matchesSemester &&
-        matchesCourse &&
-        matchesSection
+        s.student_number?.toString().includes(q) ||
+        s.first_name?.toLowerCase().includes(q) ||
+        s.middle_name?.toLowerCase().includes(q) ||
+        s.last_name?.toLowerCase().includes(q)
       );
+    })
+    .sort((a, b) => {
+      if (!searchQuery) return 0;
+      const q = searchQuery.toLowerCase();
+
+      const aMatch =
+        a.student_number?.toString().includes(q) ||
+        a.first_name?.toLowerCase().includes(q) ||
+        a.middle_name?.toLowerCase().includes(q) ||
+        a.last_name?.toLowerCase().includes(q);
+
+      const bMatch =
+        b.student_number?.toString().includes(q) ||
+        b.first_name?.toLowerCase().includes(q) ||
+        b.middle_name?.toLowerCase().includes(q) ||
+        b.last_name?.toLowerCase().includes(q);
+
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return 0;
     })
 
   const gradeStats = filteredStudents.reduce(
-  (acc, student) => {
-    switch (student.en_remarks) {
-      case 0:
-        acc.noGrade += 1;
-        break;
-      case 1:
-        acc.passed += 1;
-        break;
-      case 2:
-        acc.failed += 1;
-        break;
-      case 3:
-        acc.incomplete += 1;
-        break;
-      case 4:
-        acc.drop += 1;
-        break;
-      default:
-        break;
-    }
-    return acc;
-  },
-  { noGrade: 0, passed: 0, failed: 0, incomplete: 0, drop: 0 }
-);
+    (acc, student) => {
+      switch (student.en_remarks) {
+        case 0:
+          acc.noGrade += 1;
+          break;
+        case 1:
+          acc.passed += 1;
+          break;
+        case 2:
+          acc.failed += 1;
+          break;
+        case 3:
+          acc.incomplete += 1;
+          break;
+        case 4:
+          acc.drop += 1;
+          break;
+        default:
+          break;
+      }
+      return acc;
+    },
+    { noGrade: 0, passed: 0, failed: 0, incomplete: 0, drop: 0 }
+  );
 
   const gradeOptions = [
     ...Array.from({ length: 41 }, (_, i) => (100 - i).toString()), // "100" -> "60"
@@ -318,157 +296,294 @@ const GradingSheet = () => {
     "DRP",
   ];
 
+  const exportToExcel = () => {
+    if (!students || students.length === 0) {
+      alert("No students found to export.");
+      return;
+    }
+
+    // 1. Prepare Dynamic Data
+    // We grab the course info from the first student record to build the Title
+    const firstRecord = students[0];
+    const program = firstRecord.program_code || "PROGRAM"; // e.g., BSINFOTECH
+    const section = firstRecord.section_description || "SECTION"; // e.g., 1A
+    const sheetTitle = `${program} - ${section} GRADING SHEET`;
+
+    // 2. Create Workbook and Worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([]);
+
+    // ---------------------------------------------------------
+    // DEFINE STYLES
+    // ---------------------------------------------------------
+    const styles = {
+      title: {
+        font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "333333" } }, // Dark Grey Background
+        alignment: { horizontal: "center", vertical: "center" }
+      },
+      header: {
+        font: { bold: true, sz: 11 },
+        fill: { fgColor: { rgb: "F2F2F2" } }, // Light Beige/Grey
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" }, bottom: { style: "thin" },
+          left: { style: "thin" }, right: { style: "thin" }
+        }
+      },
+      cellCenter: {
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+          top: { style: "thin" }, bottom: { style: "thin" },
+          left: { style: "thin" }, right: { style: "thin" }
+        }
+      },
+      cellLeft: {
+        alignment: { horizontal: "left", vertical: "center" },
+        border: {
+          top: { style: "thin" }, bottom: { style: "thin" },
+          left: { style: "thin" }, right: { style: "thin" }
+        }
+      }
+    };
+
+    // ---------------------------------------------------------
+    // BUILD ROWS
+    // ---------------------------------------------------------
+    
+    // Row 1: Main Title
+    XLSX.utils.sheet_add_aoa(ws, [[sheetTitle]], { origin: "A1" });
+
+    // Row 2: (Empty - handled by merge below to make title taller)
+    
+    // Row 3: Headers
+    const headers = [["#", "Student Number", "Student Name", "Midterm", "Finals"]];
+    XLSX.utils.sheet_add_aoa(ws, headers, { origin: "A3" });
+
+    // Row 4+: Student Data
+    // Map your SQL data to the Excel structure
+    const dataRows = students.map((s, index) => [
+      index + 1,                                       // #
+      s.student_number,                                // Student Number
+      `${s.last_name}, ${s.first_name} ${s.middle_name || ""}`.trim(), // Name
+      s.midterm || "",                                 // Midterm
+      s.finals || ""                                   // Finals
+    ]);
+
+    XLSX.utils.sheet_add_aoa(ws, dataRows, { origin: "A4" });
+
+    // ---------------------------------------------------------
+    // MERGES & COLUMNS
+    // ---------------------------------------------------------
+    
+    // Merge A1:E2 for the big Title Bar
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 4 } } 
+    ];
+
+    // Set Column Widths
+    ws["!cols"] = [
+      { wch: 5 },  // A: #
+      { wch: 15 }, // B: Student Number
+      { wch: 40 }, // C: Name (Wide)
+      { wch: 10 }, // D: Midterm
+      { wch: 10 }  // E: Finals
+    ];
+
+    // ---------------------------------------------------------
+    // APPLY STYLES TO CELLS
+    // ---------------------------------------------------------
+    
+    // 1. Apply Title Style (A1:E2)
+    for (let r = 0; r <= 1; r++) {
+      for (let c = 0; c <= 4; c++) {
+        const ref = XLSX.utils.encode_cell({ r, c });
+        if (!ws[ref]) ws[ref] = { t: 's', v: '' }; // Ensure cell exists
+        ws[ref].s = styles.title;
+      }
+    }
+
+    // 2. Apply Header Style (Row 3, A3:E3)
+    const headerRowIndex = 2; // 0-based index for Row 3
+    for (let c = 0; c <= 4; c++) {
+      const ref = XLSX.utils.encode_cell({ r: headerRowIndex, c });
+      ws[ref].s = styles.header;
+    }
+
+    // 3. Apply Data Style (Row 4 onwards)
+    const startDataRow = 3; // 0-based index for Row 4
+    const endDataRow = startDataRow + dataRows.length;
+
+    for (let r = startDataRow; r < endDataRow; r++) {
+      for (let c = 0; c <= 4; c++) {
+        const ref = XLSX.utils.encode_cell({ r, c });
+        if (!ws[ref]) continue;
+
+        // Apply Left align for Name (Column C / index 2), Center for others
+        ws[ref].s = (c === 2) ? styles.cellLeft : styles.cellCenter;
+      }
+    }
+
+    // ---------------------------------------------------------
+    // EXPORT
+    // ---------------------------------------------------------
+    XLSX.utils.book_append_sheet(wb, ws, "Grading Sheet");
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([wbout], { type: "application/octet-stream" }), "GradingSheet.xlsx");
+  };
+
+
   function validateGradeInput(rawValue) {
-  if (rawValue === null || rawValue === undefined) return "";
+    if (rawValue === null || rawValue === undefined) return "";
 
-  let value = String(rawValue).trim().toUpperCase();
+    let value = String(rawValue).trim().toUpperCase();
 
-  // Auto-correct variations of INC
-  if (/^INC/.test(value)) return "INC";
+    // Auto-correct variations of INC
+    if (/^INC/.test(value)) return "INC";
 
-  // Auto-correct variations of DROP
-  if (/^DRP/.test(value)) return "DRP";
+    // Auto-correct variations of DROP
+    if (/^DRP/.test(value)) return "DRP";
 
-  // If the user typed letters (gibberish)
-  if (/^[A-Z]+$/.test(value)) {
-    return "60"; // fallback to minimum passing grade
+    // If the user typed letters (gibberish)
+    if (/^[A-Z]+$/.test(value)) {
+      return "60"; // fallback to minimum passing grade
+    }
+
+    // Only digits allowed
+    if (!/^\d{1,3}$/.test(value)) {
+      return "60"; // fallback instead of resetting
+    }
+
+    let num = Number(value);
+    if (isNaN(num)) return "60";
+
+    // clamp 60–100
+    if (num > 100) num = 100;
+    if (num < 60) num = 60;
+
+    return String(num);
   }
 
-  // Only digits allowed
-  if (!/^\d{1,3}$/.test(value)) {
-    return "60"; // fallback instead of resetting
-  }
-
-  let num = Number(value);
-  if (isNaN(num)) return "60";
-
-  // clamp 60–100
-  if (num > 100) num = 100;
-  if (num < 60) num = 60;
-
-  return String(num);
-}
-
-const setRemarksFromRating = (rating) => {
-  switch (rating) {
-    case "1.00":
-    case "1.25":
-    case "1.50":
-    case "1.75":
-    case "2.00":
-    case "2.25":
-    case "2.50":
-    case "2.75":
-    case "3.00":
-      return 1; // PASSED
-    case "5.00":
-      return 2; // FAILED
-    default:
-      return 3; // INCOMPLETE or others
-  }
-};
+  const setRemarksFromRating = (rating) => {
+    switch (rating) {
+      case "1.00":
+      case "1.25":
+      case "1.50":
+      case "1.75":
+      case "2.00":
+      case "2.25":
+      case "2.50":
+      case "2.75":
+      case "3.00":
+        return 1; // PASSED
+      case "5.00":
+        return 2; // FAILED
+      default:
+        return 3; // INCOMPLETE or others
+    }
+  };
 
   // ----------------- GradeSelect component -----------------
-const GradeSelect = ({ value, onChange, placeholder = "" }) => {
-  const [inputValue, setInputValue] = React.useState(value ?? "");
+  const GradeSelect = ({ value, onChange, placeholder = "" }) => {
+    const [inputValue, setInputValue] = React.useState(value ?? "");
 
-  useEffect(() => {
-    setInputValue(value ?? "");
-  }, [value]);
+    useEffect(() => {
+      setInputValue(value ?? "");
+    }, [value]);
 
-  return (
-    <Autocomplete
-  freeSolo
-  disableClearable
-  options={gradeOptions}
-  inputValue={inputValue}
-  value={inputValue}
-  onInputChange={(event, newInputValue, reason) => {
-    if (reason === "input") {
-      setInputValue(newInputValue.toUpperCase());
-    }
-  }}
-  onChange={(event, newValue) => {
-    if (newValue !== null) {
-      const validated = validateGradeInput(newValue);
-      setInputValue(validated);
-      onChange(validated);
-    }
-  }}
-  renderInput={(params) => (
-    <TextField
-      {...params}
-      placeholder={placeholder}
-      size="small"
-      variant="outlined"
-      onBlur={() => {
-        const validated = validateGradeInput(inputValue);
-        setInputValue(validated);
-        onChange(validated);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          e.preventDefault(); // prevent form submission
-          const validated = validateGradeInput(inputValue);
-          setInputValue(validated);
-          onChange(validated); // ← this triggers selection
-        }
-      }}
-      sx={{ textAlign: "center", width: "80px" }}
-    />
-  )}
-  sx={{
-    "& .MuiAutocomplete-inputRoot": {
-      textAlign: "center",
-      fontFamily: "Poppins",
-    },
-  }}
-/>
+    return (
+      <Autocomplete
+        freeSolo
+        disableClearable
+        options={gradeOptions}
+        inputValue={inputValue}
+        value={inputValue}
+        onInputChange={(event, newInputValue, reason) => {
+          if (reason === "input") {
+            setInputValue(newInputValue.toUpperCase());
+          }
+        }}
+        onChange={(event, newValue) => {
+          if (newValue !== null) {
+            const validated = validateGradeInput(newValue);
+            setInputValue(validated);
+            onChange(validated);
+          }
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            placeholder={placeholder}
+            size="small"
+            variant="outlined"
+            onBlur={() => {
+              const validated = validateGradeInput(inputValue);
+              setInputValue(validated);
+              onChange(validated);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault(); // prevent form submission
+                const validated = validateGradeInput(inputValue);
+                setInputValue(validated);
+                onChange(validated); // ← this triggers selection
+              }
+            }}
+            sx={{ textAlign: "center", width: "80px" }}
+          />
+        )}
+        sx={{
+          "& .MuiAutocomplete-inputRoot": {
+            textAlign: "center",
+            fontFamily: "Poppins",
+          },
+        }}
+      />
 
-  );
-};
+    );
+  };
 
 
 
 
   const handleChanges = (index, field, value) => {
-  const updatedStudents = [...students];
-  updatedStudents[index][field] = value?.toUpperCase();
+    const updatedStudents = [...students];
+    updatedStudents[index][field] = value?.toUpperCase();
 
-  // ----------------------------
-  // AUTO-SYNC DRP BETWEEN MID/FIN
-  // ----------------------------
-  if (value?.toUpperCase() === "DRP") {
-    if (field === "midterm") {
-      updatedStudents[index].finals = "DRP";   // autofill finals
-    } else if (field === "finals") {
-      updatedStudents[index].midterm = "DRP";   // autofill midterm
+    // ----------------------------
+    // AUTO-SYNC DRP BETWEEN MID/FIN
+    // ----------------------------
+    if (value?.toUpperCase() === "DRP") {
+      if (field === "midterm") {
+        updatedStudents[index].finals = "DRP";   // autofill finals
+      } else if (field === "finals") {
+        updatedStudents[index].midterm = "DRP";   // autofill midterm
+      }
     }
-  }
 
-  // After auto-sync, re-read the values
-  const midterm = updatedStudents[index].midterm;
-  const finals = updatedStudents[index].finals;
+    // After auto-sync, re-read the values
+    const midterm = updatedStudents[index].midterm;
+    const finals = updatedStudents[index].finals;
 
-  // ---------------------------------------
-  // Your grading and remarks logic (unchanged)
-  // ---------------------------------------
+    // ---------------------------------------
+    // Your grading and remarks logic (unchanged)
+    // ---------------------------------------
 
-  updatedStudents[index].final_grade = finals;
+    updatedStudents[index].final_grade = finals;
 
-  if (midterm === "DRP" || finals === "DRP") {
-    updatedStudents[index].en_remarks = 4;
-  } else if (midterm === "INC" || finals === "INC") {
-    updatedStudents[index].en_remarks = 3;
-  } else if (finals === "0.00") {
-    updatedStudents[index].en_remarks = 0;
-  } else {
-    const rating = convertRawToRating(finals); 
-    updatedStudents[index].en_remarks = setRemarksFromRating(rating);
-  }
+    if (midterm === "DRP" || finals === "DRP") {
+      updatedStudents[index].en_remarks = 4;
+    } else if (midterm === "INC" || finals === "INC") {
+      updatedStudents[index].en_remarks = 3;
+    } else if (finals === "0.00") {
+      updatedStudents[index].en_remarks = 0;
+    } else {
+      const rating = convertRawToRating(finals);
+      updatedStudents[index].en_remarks = setRemarksFromRating(rating);
+    }
 
-  setStudents(updatedStudents);
-};
+    setStudents(updatedStudents);
+  };
 
 
   const addStudentInfo = async (student) => {
@@ -492,11 +607,11 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
           const page_name = "Grading Sheet";
           const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
           const type = "submit"
-    
+
           await axios.post(`${API_BASE_URL}/insert-logs/faculty/${profData.prof_id}`, {
             message: `User #${profData.prof_id} - ${fullName} successfully submit the student grades in ${page_name}`, type: type,
           });
-    
+
         } catch (err) {
           console.error("Error inserting audit log");
         }
@@ -565,7 +680,7 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
 
   const handleSelectCourseChange = (event) => {
     setSelectedCourse(event.target.value);
-  };  
+  };
 
   const handleSchoolYearChange = (event) => {
     setSelectedSchoolYear(event.target.value);
@@ -608,11 +723,11 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
           const page_name = "Grading Sheet";
           const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
           const type = "upload"
-    
+
           await axios.post(`${API_BASE_URL}/insert-logs/faculty/${profData.prof_id}`, {
             message: `User #${profData.prof_id} - ${fullName} successfully upload file in ${page_name}`, type: type,
           });
-    
+
         } catch (err) {
           console.error("Error inserting audit log");
         }
@@ -633,11 +748,11 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
           const page_name = "Grading Sheet";
           const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
           const type = "upload"
-    
+
           await axios.post(`${API_BASE_URL}/insert-logs/faculty/${profData.prof_id}`, {
             message: `User #${profData.prof_id} - ${fullName} tried to upload file in ${page_name}`, type: type,
           });
-    
+
         } catch (err) {
           console.error("Error inserting audit log");
         }
@@ -653,11 +768,11 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
         const page_name = "Grading Sheet";
         const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
         const type = "upload"
-  
+
         await axios.post(`${API_BASE_URL}/insert-logs/faculty/${profData.prof_id}`, {
           message: `User #${profData.prof_id} - ${fullName} failed to upload file in ${page_name}`, type: type,
         });
-  
+
       } catch (err) {
         console.error("Error inserting audit log");
       }
@@ -696,20 +811,20 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
     setStudents(sorted);
   };
 
-   const divToPrintRef = useRef();
-    
-    const printDiv = () => {
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "absolute";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-      document.body.appendChild(iframe);
-  
-      const doc = iframe.contentWindow.document;
-      doc.open();
-  
-      doc.write(`
+  const divToPrintRef = useRef();
+
+  const printDiv = () => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+
+    doc.write(`
         <html>
           <head>
             <title>Print</title>
@@ -750,13 +865,12 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
           </body>
         </html>
       `);
-  
-      doc.close();
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      document.body.removeChild(iframe);
-    };
 
+    doc.close();
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    document.body.removeChild(iframe);
+  };
 
   // 🔒 Disable right-click
   document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -778,100 +892,77 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
 
   return (
     <Box sx={{ height: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', pr: 1, marginRight: "3rem" }}>
-
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 2,
-         
+          width: "100%",
         }}
       >
+        {/* LEFT SIDE — TITLE */}
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 'bold',
+            fontWeight: "bold",
             color: titleColor,
-            fontSize: '36px',
+            fontSize: "36px",
           }}
         >
-         GRADING SHEET
+          GRADING SHEET
         </Typography>
 
-          <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
-        {/* Search Filter Dropdown */}
-        <select
-          value={searchFilter}
-          onChange={(e) => setSearchFilter(e.target.value)}
-          style={{
-            padding: "8px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            marginTop: "10px",
-            outline: "none"
-          }}
-        >
-          <option value="all">Search All</option>
-          <option value="student_number">Student Number</option>
-          <option value="name">Name</option>
-        </select>
+        {/* RIGHT SIDE — SEARCH + PRINT */}
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <TextField
+            size="small"
+            placeholder="Search Student Number / Name"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{
+              width: 450,
+              backgroundColor: "#fff",
+              borderRadius: 1,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "10px",
+              },
+            }}
+            InputProps={{
+              startAdornment: <SearchIcon sx={{ mr: 1, color: "gray" }} />,
+            }}
+          />
 
-        {/* Search Bar */}
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{
-            padding: "8px",
-            width: "250px",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            outline: "none",
-            marginTop: "10px",
-          }}
-        />
-        
-      </div>
-
-      <button
-        onClick={printDiv}
-        style={{
-          width: "308px",
-          padding: "10px 20px",
-          border: "2px solid black",
-          backgroundColor: "#f0f0f0",
-          color: "black",
-          borderRadius: "5px",
-          cursor: "pointer",
-          fontSize: "16px",
-          fontWeight: "bold",
-          transition: "background-color 0.3s, transform 0.2s",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
-        onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
-        onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
-        onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
-      >
-        <span
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <FcPrint size={20} />
-          Print Grade
-        </span>
-      </button>
-
-
+          <button
+            onClick={printDiv}
+            style={{
+              width: "308px",
+              padding: "10px 20px",
+              border: "2px solid black",
+              backgroundColor: "#f0f0f0",
+              color: "black",
+              borderRadius: "5px",
+              cursor: "pointer",
+              fontSize: "16px",
+              fontWeight: "bold",
+              transition: "background-color 0.3s, transform 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#d3d3d3")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#f0f0f0")}
+            onMouseDown={(e) => (e.target.style.transform = "scale(0.95)")}
+            onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <FcPrint size={20} />
+              Print Grade
+            </span>
+          </button>
+        </Box>
       </Box>
+
       <hr style={{ border: "1px solid #ccc", width: "100%" }} />
 
       <br />
@@ -1169,55 +1260,26 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
                 </Button>
               </Box>
             </Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
-              <Box display="flex" alignItems="center" gap={1} >
-                <FormControl fullWidth>
-                  <InputLabel id="demo-simple-select-label">School Years</InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select"
-                    value={selectedSchoolYear}
-                    label="School Years"
-                    sx={{ minWidth: '230px' }}
-                    onChange={handleSchoolYearChange}
-                  >
-                    {schoolYears.length > 0 ? (
-                      schoolYears.map((sy) => (
-                        <MenuItem value={sy.year_id} key={sy.year_id}>
-                          {sy.current_year} - {sy.next_year}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>School Year is not found</MenuItem>
-                    )
-                    }
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box display="flex" alignItems="center" gap={1}>
-                <FormControl fullWidth>
-                  <InputLabel id="demo-simple-select-label">School Semester</InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select"
-                    value={selectedSchoolSemester}
-                    label="School Semester"
-                    sx={{ minWidth: '200px' }}
-                    onChange={handleSchoolSemesterChange}
-                  >
-                    {schoolSemester.length > 0 ? (
-                      schoolSemester.map((sem) => (
-                        <MenuItem value={sem.semester_id} key={sem.semester_id}>
-                          {sem.semester_description}
-                        </MenuItem>
-                      ))
-                    ) : (
-                      <MenuItem disabled>School Semester is not found</MenuItem>
-                    )
-                    }
-                  </Select>
-                </FormControl>
-              </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+              <Typography style={{width: "230px", fontSize: "13px"}}>
+                Export GradeSheet:
+              </Typography>
+              <button
+                onClick={exportToExcel}
+                style={{
+                  width: "200px",
+                  padding: "10px",
+                  background: "#4CAF50",
+                  color: "white",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  border: "none"
+                }}
+              >
+                Export XLSX
+              </button>
             </Box>
           </Box>
         </Box>
@@ -1278,7 +1340,7 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
                       placeholder="Enter grade"
                     />
                   </TableCell>
-                  <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center"}}>
+                  <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
                     {convertRawToRating(student.finals)}
                   </TableCell>
                   <TableCell sx={{ border: `2px solid ${borderColor}` }}>
@@ -1297,7 +1359,7 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
                     />
                   </TableCell>
                   <TableCell sx={{ border: `2px solid ${borderColor}` }}>
-                    <span 
+                    <span
                       className="w-full inline-block text-center"
                       style={{ width: 100 }}
                     >
@@ -1322,9 +1384,9 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
           </TableBody>
         </Table>
       </TableContainer>
-      
+
       <div style={{ display: "none" }}>
-        <div ref={divToPrintRef} style={{margin: "0.5in"}}>
+        <div ref={divToPrintRef} style={{ margin: "0.5in" }}>
           <style>
             {`
               @media print {
@@ -1353,19 +1415,19 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
           >
             {/* Logo */}
             <div>
-            
-                <img
-                  src={fetchedLogo}
-                  alt="Logo"
-                  style={{ width: "80px", height: "80px", objectFit: "contain", marginTop: "-10px" }}
-                />
-            
+
+              <img
+                src={fetchedLogo}
+                alt="Logo"
+                style={{ width: "80px", height: "80px", objectFit: "contain", marginTop: "-10px" }}
+              />
+
             </div>
 
             {/* School Info */}
             <div style={{ textAlign: "center", flex: 1, marginLeft: "10px", marginRight: "10px" }}>
               <span style={{ margin: 0, fontSize: "12px" }}>Republic of the Philippines</span>
-              <h2 style={{ margin: 0, fontSize: "20px", letterSpacing: "-1px"}}>{companyName}</h2>
+              <h2 style={{ margin: 0, fontSize: "20px", letterSpacing: "-1px" }}>{companyName}</h2>
               <span style={{ margin: 0, fontSize: "12px" }}>{campusAddress || "Nagtahan St. Sampaloc, Manila"}</span>
             </div>
 
@@ -1373,8 +1435,8 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
             <div style={{ width: "80px" }}></div>
           </div>
 
-          <div style={{display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px", marginTop: "2rem", marginBottom: "1rem"}}>
-            <span style={{fontSize: "20px"}}><b>GRADE SHEET</b></span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", lineSpacing: "-1px", marginTop: "2rem", marginBottom: "1rem" }}>
+            <span style={{ fontSize: "20px" }}><b>GRADE SHEET</b></span>
           </div>
 
           {/* School Info Table */}
@@ -1387,11 +1449,11 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
                   {filteredStudents[0]?.course_code || ""}
                 </td>
 
-                <td colSpan={1} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
+                <td colSpan={1} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   <div style={{ display: "flex", justifyContent: "end" }}>Ac. Year & Term:</div>
                 </td>
 
-                <td colSpan={1} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
+                <td colSpan={1} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {filteredStudents[0]?.current_year || ""}-{filteredStudents[0]?.next_year || ""}, {filteredStudents[0]?.semester_description || ""},
                 </td>
               </tr>
@@ -1415,32 +1477,32 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
 
               {/* Academic Units + Lab Units + Schedule */}
               <tr>
-                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Lec Units:</td>
+                <td colSpan={1} style={{ width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Lec Units:</td>
 
-                <td colSpan={1} style={{paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {filteredStudents[0]?.course_unit || "0"}
                 </td>
 
-                <td colSpan={1} style={{width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>Lab Units:</td>
+                <td colSpan={1} style={{ width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Lab Units:</td>
 
                 <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {filteredStudents[0]?.lab_unit || "0"}
                 </td>
 
-                <td colSpan={1} style={{width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>Credit Units:</td>
+                <td colSpan={1} style={{ width: "80px", borderLeft: "none", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>Credit Units:</td>
 
                 <td colSpan={1} style={{ paddingRight: "2px", textAlign: "center", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   {filteredStudents[0]?.lab_unit + filteredStudents[0]?.course_unit}
                 </td>
 
-                <td colSpan={2} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px"  }}>
+                <td colSpan={2} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   <div style={{ display: "flex", justifyContent: "end" }}></div>
                 </td>
 
                 <td colSpan={1} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", paddingTop: "6px" }}>
                   <div style={{ display: "flex", justifyContent: "end" }}>Session:</div>
                 </td>
-                <td colSpan={1} style={{paddingRight: "2px", paddingLeft: "2px", borderBottom: "none", paddingBottom: "1px", paddingTop: "6px", width: "60px"}}>
+                <td colSpan={1} style={{ paddingRight: "2px", paddingLeft: "2px", borderBottom: "none", paddingBottom: "1px", paddingTop: "6px", width: "60px" }}>
                   {/* {filteredStudents.length > 0 ? (
                     filteredStudents.map((student, index) => (
                       <div key={index}>
@@ -1458,10 +1520,10 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
               </tr>
               {/* Faculty */}
               <tr>
-                <td colSpan={1} style={{width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none" }}>Faculty:</td>
-                <td colSpan={7} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px" }}>{profData.fname} {profData.mname} {profData.lname}</td>
-                <td colSpan={1} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px" }}><div style={{ display: "flex", justifyContent: "end" }}>Date Posted:</div></td>
-                <td colSpan={1} style={{paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px" }}></td>
+                <td colSpan={1} style={{ width: "80px", paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px", borderTop: "none" }}>Faculty:</td>
+                <td colSpan={7} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px" }}>{profData.fname} {profData.mname} {profData.lname}</td>
+                <td colSpan={1} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px" }}><div style={{ display: "flex", justifyContent: "end" }}>Date Posted:</div></td>
+                <td colSpan={1} style={{ paddingRight: "2px", paddingLeft: "2px", paddingBottom: "1px" }}></td>
               </tr>
             </thead>
           </table>
@@ -1470,17 +1532,17 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", marginTop: "0.5rem" }}>
             <thead>
               <tr>
-                <th rowSpan={2} style={{ border: "1px solid black", padding: "2px 0px", width: "30px", textAlign: "center"}}>#</th>
-                <th rowSpan={2} style={{ border: "1px solid black", padding: "2px 0px", width: "80px", textAlign: "center"}}>Student No.</th>
-                <th rowSpan={2} style={{ border: "1px solid black", padding: "2px", width: "200px", textAlign: "start"}}>Student Name</th>
-                <th colSpan={5} style={{ border: "1px solid black", padding: "2px 0px", textAlign: "center"}}>GRADES</th>
+                <th rowSpan={2} style={{ border: "1px solid black", padding: "2px 0px", width: "30px", textAlign: "center" }}>#</th>
+                <th rowSpan={2} style={{ border: "1px solid black", padding: "2px 0px", width: "80px", textAlign: "center" }}>Student No.</th>
+                <th rowSpan={2} style={{ border: "1px solid black", padding: "2px", width: "200px", textAlign: "start" }}>Student Name</th>
+                <th colSpan={5} style={{ border: "1px solid black", padding: "2px 0px", textAlign: "center" }}>GRADES</th>
               </tr>
               <tr>
-                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center"}}>Mid</th>
-                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center"}}>Final</th>
-                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center"}}>Final Grade</th>
-                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center"}}>Re exam</th>
-                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center"}}>Remarks</th>
+                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center" }}>Mid</th>
+                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center" }}>Final</th>
+                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center" }}>Final Grade</th>
+                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center" }}>Re exam</th>
+                <th style={{ border: "1px solid black", padding: "2px 0px", fontSize: "10px", width: "50px", textAlign: "center" }}>Remarks</th>
               </tr>
             </thead>
             <tbody>
@@ -1506,56 +1568,56 @@ const GradeSelect = ({ value, onChange, placeholder = "" }) => {
               )}
             </tbody>
           </table>
-          <div style={{display: "flex", alignItems: "center", gap: "2rem"}}>
-            <div style={{marginTop:"1rem", padding: "1.7rem", fontSize: "12px", border: "1px solid black", maxWidth: "170px"}}>
-              <div style={{textDecoration: "underline", textUnderlineOffset: "2px"}}>Grade Sheet Statistic</div>
-              <div style={{display: "flex", alignItems: "center"}}>
-                <span style={{marginLeft: "16px", width: "10rem"}}>Passed</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
+            <div style={{ marginTop: "1rem", padding: "1.7rem", fontSize: "12px", border: "1px solid black", maxWidth: "170px" }}>
+              <div style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}>Grade Sheet Statistic</div>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span style={{ marginLeft: "16px", width: "10rem" }}>Passed</span>
                 <span>{gradeStats.passed}</span>
               </div>
-              <div style={{display: "flex", alignItems: "center"}}>
-                <span style={{marginLeft: "16px", width: "10rem"}}>Failed</span>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span style={{ marginLeft: "16px", width: "10rem" }}>Failed</span>
                 <span>{gradeStats.failed}</span>
               </div>
-              <div style={{display: "flex", alignItems: "center"}}>
-                <span style={{marginLeft: "16px", width: "10rem"}}>Incomplete</span>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span style={{ marginLeft: "16px", width: "10rem" }}>Incomplete</span>
                 <span>{gradeStats.incomplete}</span>
               </div>
-              <div style={{display: "flex", alignItems: "center"}}>
-                <span style={{marginLeft: "16px", width: "10rem"}}>Drop</span>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span style={{ marginLeft: "16px", width: "10rem" }}>Drop</span>
                 <span>{gradeStats.drop}</span>
               </div>
-              <div style={{display: "flex", alignItems: "center"}}>
-                <span style={{marginLeft: "16px", width: "10rem"}}>No Grade</span>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <span style={{ marginLeft: "16px", width: "10rem" }}>No Grade</span>
                 <span>{gradeStats.noGrade}</span>
               </div>
-              <div style={{display: "flex", alignItems: "center", borderTop: "1px solid black"}}>
-                <span style={{marginLeft: "16px", width: "10rem"}}>Total # of Students</span>
+              <div style={{ display: "flex", alignItems: "center", borderTop: "1px solid black" }}>
+                <span style={{ marginLeft: "16px", width: "10rem" }}>Total # of Students</span>
                 <span>{filteredStudents.length}</span>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2rem", marginTop:"0.5rem"}}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2rem", marginTop: "0.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", width: "450px" }}>
                 <div style={{ textAlign: "center", width: "45%" }}>
-                  <div style={{fontSize: "12px"}}>{profData.fname} {profData.mname[0] || ""}. {profData.lname}</div>
-                  <div style={{borderTop:"solid 1px black", fontSize: "12px"}}>Instructor</div>
+                  <div style={{ fontSize: "12px" }}>{profData.fname} {profData.mname[0] || ""}. {profData.lname}</div>
+                  <div style={{ borderTop: "solid 1px black", fontSize: "12px" }}>Instructor</div>
                 </div>
 
                 <div style={{ textAlign: "center", width: "45%" }}>
                   <div>&nbsp;</div>
-                  <div style={{borderTop:"solid 1px black", fontSize: "12px"}}>Department Chairperson</div>
+                  <div style={{ borderTop: "solid 1px black", fontSize: "12px" }}>Department Chairperson</div>
                 </div>
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", width: "450px" }}>
                 <div style={{ textAlign: "center", width: "45%" }}>
                   <div>&nbsp;</div>
-                  <div style={{borderTop:"solid 1px black", fontSize: "12px"}}>Dean, {filteredStudents[0]?.dprtmnt_name}</div>
+                  <div style={{ borderTop: "solid 1px black", fontSize: "12px" }}>Dean, {filteredStudents[0]?.dprtmnt_name}</div>
                 </div>
 
                 <div style={{ textAlign: "center", width: "45%" }}>
                   <div>&nbsp;</div>
-                  <div style={{borderTop:"solid 1px black", fontSize: "12px"}}>Registrar</div>
+                  <div style={{ borderTop: "solid 1px black", fontSize: "12px" }}>Registrar</div>
                 </div>
               </div>
             </div>

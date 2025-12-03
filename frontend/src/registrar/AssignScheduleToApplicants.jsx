@@ -599,6 +599,8 @@ const AssignScheduleToApplicants = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchError, setSearchError] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
 
   useEffect(() => {
     const delayDebounce = setTimeout(async () => {
@@ -609,7 +611,9 @@ const AssignScheduleToApplicants = () => {
           params: { query: searchQuery }
         });
 
-        setPerson(res.data); // ❌ don't do this
+        setSearchError("");
+        setSearchResults(res.data);
+
       } catch (err) {
         setSearchError("Applicant not found");
       }
@@ -622,6 +626,7 @@ const AssignScheduleToApplicants = () => {
   const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState("");
   const [selectedProgramFilter, setSelectedProgramFilter] = useState("");
   const [department, setDepartment] = useState([]);
+
 
 
   // ✅ Step 1: Filtering
@@ -665,12 +670,35 @@ const AssignScheduleToApplicants = () => {
 
 
   const sortedPersons = [...filteredPersons].sort((a, b) => {
-    const dateA = new Date(a.created_at);
-    const dateB = new Date(b.created_at);
+    let valueA, valueB;
 
-    // 🧭 Sort newest first if "desc", oldest first if "asc"
-    return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    switch (sortBy) {
+      case "name":
+        valueA = `${a.last_name} ${a.first_name}`.toLowerCase();
+        valueB = `${b.last_name} ${b.first_name}`.toLowerCase();
+        break;
+
+      case "id":
+        valueA = a.applicant_number?.toString() || "";
+        valueB = b.applicant_number?.toString() || "";
+        break;
+
+      case "email":
+        valueA = a.emailAddress?.toLowerCase() || "";
+        valueB = b.emailAddress?.toLowerCase() || "";
+        break;
+
+      default:
+        valueA = a.created_at;
+        valueB = b.created_at;
+        break;
+    }
+
+    if (valueA < valueB) return sortOrder === "asc" ? -1 : 1;
+    if (valueA > valueB) return sortOrder === "asc" ? 1 : -1;
+    return 0;
   });
+
 
 
   // ✅ Step 3: Pagination (use sortedPersons instead of filteredPersons)
@@ -1456,10 +1484,23 @@ const AssignScheduleToApplicants = () => {
                       {person.emailAddress ?? "N/A"}
                     </TableCell>
 
-                    <TableCell sx={{ textAlign: "center", border: `2px solid ${borderColor}`, fontSize: "12px" }}>
-                      {person.created_at ?? "N/A"}
-                    </TableCell>
+                    <TableCell
+                      sx={{ textAlign: "center", border: `2px solid ${borderColor}`, fontSize: "12px" }}
+                    >
+                      {(() => {
+                        if (!person.created_at) return "";
 
+                        const date = new Date(person.created_at + "T00:00:00");
+
+                        if (isNaN(date)) return person.created_at;
+
+                        return date.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        });
+                      })()}
+                    </TableCell>
                     {/* Action Buttons (from AssignScheduleToApplicants) */}
                     {/* Action Buttons (from AssignScheduleToApplicants) */}
                     <TableCell

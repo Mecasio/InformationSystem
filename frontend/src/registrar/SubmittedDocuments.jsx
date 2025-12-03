@@ -220,7 +220,7 @@ const MedicalRequirements = () => {
     const [loading, setLoading] = useState(false);
 
 
-    const pageId = 30;
+    const pageId = 106;
 
     const [employeeID, setEmployeeID] = useState("");
 

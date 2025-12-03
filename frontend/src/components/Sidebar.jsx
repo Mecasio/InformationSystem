@@ -228,10 +228,10 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
   };
 
   const ROLE_PAGE_ACCESS = {
-    admission: [103, 92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98],
-    enrollment: [102, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60,],
+    admission: [103, 92, 96, 73, 1, 2, 3, 4, 5, 7, 8, 9, 11, 33, 48, 52, 61, 66, 98,],
+    enrollment: [102, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60, 92],
     clinic: [101, 92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
-    registrar: [80, 104, 38, 39, 40, 41, 42, 30, 56, 13, 50, 62, 96, 92, 59, 105, 15, 101],
+    registrar: [80, 104, 38, 73, 39, 40, 41, 42, 56, 13, 50, 62, 96, 92, 59, 105, 15, 101],
     superadmin: ALL
   };
 
@@ -393,7 +393,7 @@ const SideBar = ({ setIsAuthenticated, profileImage, setProfileImage }) => {
 
                     const formData = new FormData();
                     formData.append("profile_picture", file);
-
+                    console.log(user_account_id);
                     await axios.post(
                       `${API_BASE_URL}/update_registrar/${user_account_id}`,
                       formData,

@@ -563,7 +563,7 @@ const ApplicantScoring = () => {
 
         /* 🔽 SORTING */
         .sort((a, b) => {
-            /* ⭐ FINAL RATING SORT FIRST */
+            /* ⭐ FINAL RATING */
             const aFinal =
                 (Number(a.english || 0) +
                     Number(a.science || 0) +
@@ -578,16 +578,18 @@ const ApplicantScoring = () => {
                     Number(b.math || 0) +
                     Number(b.abstract || 0)) / 5;
 
-            if (bFinal !== aFinal) {
-                return bFinal - aFinal; // highest first
+            /* ⭐ SORT BY HIGHEST FINAL FIRST */
+            if (aFinal !== bFinal) {
+                return bFinal - aFinal;  // highest first
             }
 
-            /* ⭐ IF FINAL RATING TIES → SORT BY CREATED_AT ASC (first come first served) */
+            /* ⭐ IF TIE → FIRST COME FIRST SERVE */
             const dateA = new Date(a.created_at + "T00:00:00");
             const dateB = new Date(b.created_at + "T00:00:00");
 
-            return dateA - dateB;
+            return dateA - dateB;  // earliest submission first
         });
+
 
     const [itemsPerPage, setItemsPerPage] = useState(100);
 
@@ -659,45 +661,8 @@ const ApplicantScoring = () => {
 
 
 
-    const handleStatusChange = (person, newStatus) => {
-        const payload = {
-            applicant_number: person.applicant_number,
-            english: person.english,
-            science: person.science,
-            filipino: person.filipino,
-            math: person.math,
-            abstract: person.abstract,
-            final_rating: person.final_rating,
-            status: newStatus,
-        };
-
-        // 🔥 Update applicants instantly (single source of truth)
-        setApplicants((prev) =>
-            prev.map((p) =>
-                p.person_id === person.person_id
-                    ? { ...p, status: newStatus }
-                    : p
-            )
-        );
-
-        // 🔥 IMPORTANT — Fix Select not showing new value:
-        // Force React to re-render by updating editScores as well
-        setEditScores((prev) => ({
-            ...prev,
-            [person.person_id]: {
-                ...(prev[person.person_id] || {}),
-                status: newStatus,
-            },
-        }));
-
-        // 🔥 Save to backend
-        autoSaveScore(payload);
-    };
-
     const [applicants, setApplicants] = useState([]);
     const divToPrintRef = useRef();
-
-
 
 
     const printDiv = () => {
@@ -885,34 +850,29 @@ th, td {
     const [file, setFile] = useState(null);
 
     const [selectedFile, setSelectedFile] = useState(null);
+    const [editScores, setEditScores] = useState({});
+    const [saving, setSaving] = useState(false);
 
-    // when file chosen
+    // When a file is chosen
     const handleFileChange = (e) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setSelectedFile(e.target.files[0]);
-        }
+        if (e.target.files && e.target.files.length > 0) setSelectedFile(e.target.files[0]);
     };
 
-    // when import button clicked
+    // IMPORT (leave as you had it)
     const handleImport = async (userID) => {
         try {
             if (!selectedFile) {
                 setSnack({ open: true, message: "Please choose a file first!", severity: "warning" });
                 return;
             }
-
-            const formData = new FormData();
-            formData.append("file", selectedFile);
-            formData.append("userID", userID);
-
-            const res = await axios.post(`${API_BASE_URL}/api/exam/import`, formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-
+            const fd = new FormData();
+            fd.append("file", selectedFile);
+            fd.append("userID", userID);
+            const res = await axios.post(`${API_BASE_URL}/api/exam/import`, fd, { headers: { "Content-Type": "multipart/form-data" } });
             if (res.data.success) {
                 setSnack({ open: true, message: "Excel imported successfully!", severity: "success" });
-                fetchApplicants(); // ✅ refresh scores
-                setSelectedFile(null); // reset file input
+                fetchApplicants();
+                setSelectedFile(null);
             } else {
                 setSnack({ open: true, message: res.data.error || "Failed to import", severity: "error" });
             }
@@ -922,117 +882,130 @@ th, td {
         }
     };
 
-    const [editScores, setEditScores] = useState({});
-
-
-    // run on mount + when online again (to sync pending scores)
-    // ✅ Debounced save (1s after last change)
-    const debouncedSave = useRef(
-        _.debounce(async (payload) => {
-            try {
-                await axios.post(`${API_BASE_URL}/exam/save`, payload);
-                console.log("✅ Debounced save:", payload);
-            } catch (error) {
-                console.error("❌ Debounced save failed:", error);
-                const pending = JSON.parse(localStorage.getItem("pendingScores") || "[]");
-                localStorage.setItem("pendingScores", JSON.stringify([...pending, payload]));
-            }
-        }, 1000)
-    ).current;
-
-    useEffect(() => {
-        const beforeUnloadHandler = () => {
-            const pending = JSON.parse(localStorage.getItem("pendingScores") || "[]");
-            if (pending.length > 0) navigator.sendBeacon(`${API_BASE_URL}/exam/save`, JSON.stringify(pending[pending.length - 1]));
-        };
-
-        window.addEventListener("beforeunload", beforeUnloadHandler);
-        return () => window.removeEventListener("beforeunload", beforeUnloadHandler);
-    }, []);
-
-
-    const autoSaveScore = async (payload) => {
-        try {
-            await axios.post(`${API_BASE_URL}/exam/save`, payload);
-            console.log("💾 Auto-saved:", payload);
-        } catch (error) {
-            console.error("❌ Auto-save failed:", error);
-
-            const pending = JSON.parse(localStorage.getItem("pendingScores") || "[]");
-            localStorage.setItem("pendingScores", JSON.stringify([...pending, payload]));
-        }
-    };
-
+    // typed changes: update editScores and UI only (no auto-save)
+    // typed changes: update editScores and UI only (no auto-save)
     const handleScoreChange = (person, field, value) => {
-        const updatedScores = {
-            ...person,
-            [field]: Number(value),
-        };
-
-        const final_rating =
-            (Number(updatedScores.english || 0) +
-                Number(updatedScores.science || 0) +
-                Number(updatedScores.filipino || 0) +
-                Number(updatedScores.math || 0) +
-                Number(updatedScores.abstract || 0)) / 5;
-
-        const payload = {
-            applicant_number: person.applicant_number,
-            english: updatedScores.english,
-            science: updatedScores.science,
-            filipino: updatedScores.filipino,
-            math: updatedScores.math,
-            abstract: updatedScores.abstract,
-            final_rating,
-            status: person.status ?? "",
-        };
-
-        // 🔥 UPDATE UI INSTANTLY
-        setApplicants((prev) =>
-            prev.map((p) =>
-                p.person_id === person.person_id
-                    ? { ...p, ...updatedScores, final_rating }
-                    : p
-            )
-        );
-
-        // update temporary editing state
-        setEditScores((prev) => ({
+        setEditScores(prev => ({
             ...prev,
             [person.person_id]: {
                 ...prev[person.person_id],
-                [field]: value,
-            },
+                [field]: Number(value)
+            }
         }));
 
-        // Save with debounce
-        debouncedSave(payload);
+        // update UI immediately (so table shows typed value)
+        // <-- UPDATE persons (table source) instead of applicants
+        setPersons(prev => prev.map(p => p.person_id === person.person_id ? { ...p, [field]: Number(value) } : p));
     };
 
-    // Save only after user leaves the input (onBlur)
-    const handleScoreBlur = async (person) => {
-        const updated = editScores[person.person_id] || person;
+    const buildPayload = (person) => {
+        const scores = editScores[person.person_id] || {};
 
-        const payload = {
-            applicant_number: person.applicant_number,
-            english: Number(updated.english || 0),
-            science: Number(updated.science || 0),
-            filipino: Number(updated.filipino || 0),
-            math: Number(updated.math || 0),
-            abstract: Number(updated.abstract || 0),
+        return {
+            applicant_number: person.applicant_number,   // REQUIRED BY BACKEND
+            english: Number(scores.english ?? person.english ?? 0),
+            science: Number(scores.science ?? person.science ?? 0),
+            filipino: Number(scores.filipino ?? person.filipino ?? 0),
+            math: Number(scores.math ?? person.math ?? 0),
+            abstract: Number(scores.abstract ?? person.abstract ?? 0),
             final_rating:
-                (Number(updated.english || 0) +
-                    Number(updated.science || 0) +
-                    Number(updated.filipino || 0) +
-                    Number(updated.math || 0) +
-                    Number(updated.abstract || 0)) / 5,
-            status: person.status ?? "",
+                (Number(scores.english ?? person.english ?? 0) +
+                    Number(scores.science ?? person.science ?? 0) +
+                    Number(scores.filipino ?? person.filipino ?? 0) +
+                    Number(scores.math ?? person.math ?? 0) +
+                    Number(scores.abstract ?? person.abstract ?? 0)) / 5,
+            status: scores.status ?? person.status ?? ""
         };
+    };
 
-        await autoSaveScore(payload);
+    const saveSingleRow = async (person) => {
+        try {
+            setSaving(true);
+
+            const payload = buildPayload(person);
+            const res = await axios.post(`${API_BASE_URL}/api/exam/save`, payload);
+
+            if (!res.data?.success) {
+                throw new Error(res.data?.error || "Save failed");
+            }
+
+            const saved = res.data.saved;
+
+            // Normalize saved just in case (backend returns lowercase already)
+            const normalized = {
+                person_id: saved.person_id ?? person.person_id,
+                english: saved.english != null ? Number(saved.english) : Number(person.english || 0),
+                science: saved.science != null ? Number(saved.science) : Number(person.science || 0),
+                filipino: saved.filipino != null ? Number(saved.filipino) : Number(person.filipino || 0),
+                math: saved.math != null ? Number(saved.math) : Number(person.math || 0),
+                abstract: saved.abstract != null ? Number(saved.abstract) : Number(person.abstract || 0),
+                final_rating: saved.final_rating != null ? Number(saved.final_rating) : (
+                    (Number(saved.english ?? person.english ?? 0) +
+                        Number(saved.science ?? person.science ?? 0) +
+                        Number(saved.filipino ?? person.filipino ?? 0) +
+                        Number(saved.math ?? person.math ?? 0) +
+                        Number(saved.abstract ?? person.abstract ?? 0)) / 5
+                ),
+                status: saved.status ?? person.status,
+                date_created: saved.date_created ?? person.date_created
+            };
+
+            // 1) Update persons (table source) immediately with normalized saved values
+            setPersons(prev =>
+                prev.map(p =>
+                    p.person_id === normalized.person_id
+                        ? { ...p, ...normalized }
+                        : p
+                )
+            );
+
+            // 2) Clear edit buffer AFTER persons updated
+            setEditScores(prev => {
+                const copy = { ...prev };
+                delete copy[person.person_id];
+                return copy;
+            });
+
+            setSnack({ open: true, message: "Row saved successfully!", severity: "success" });
+        } catch (err) {
+            console.error("SAVE ERROR:", err);
+            setSnack({
+                open: true,
+                message: "Save failed: " + (err.response?.data?.error || err.message),
+                severity: "error"
+            });
+        } finally {
+            setSaving(false);
+        }
     };
 
 
+    const saveAllRows = async () => {
+        try {
+            setSaving(true);
+
+            // iterate over persons (table data), not applicants
+            for (const person of persons) {
+                const payload = buildPayload(person);
+                await axios.post(`${API_BASE_URL}/api/exam/save`, payload);
+            }
+
+            // refresh table source from server to ensure consistency
+            await fetchApplicants(); // this sets persons via setPersons
+
+            setSnack({ open: true, message: "All scores saved!", severity: "success" });
+
+        } catch (err) {
+            console.error("SAVE ALL ERROR:", err);
+            setSnack({
+                open: true,
+                message: "Save All failed: " + (err.response?.data?.error || err.message),
+                severity: "error"
+            });
+        } finally {
+            setSaving(false);
+        }
+    };
 
 
     // Put this at the very bottom before the return 
@@ -1151,6 +1124,7 @@ th, td {
                     <Box display="flex" flexDirection="column" gap={2}>
                         {/* From Date + Print Button */}
                         <Box display="flex" alignItems="flex-end" gap={2}>
+
                             {/* From Date */}
                             <FormControl size="small" sx={{ width: 200 }}>
                                 <InputLabel shrink htmlFor="from-date">From Date</InputLabel>
@@ -1165,37 +1139,37 @@ th, td {
                                 />
                             </FormControl>
 
+                            <div style={{ position: "relative", zIndex: 999999 }}>
+                                <button
+                                    onClick={() => {
+                                        window.location.href = `${API_BASE_URL}/ecat_scores_template`;
+                                    }}
+                                    style={{
+                                        padding: "5px 20px",
+                                        border: "2px solid black",
+                                        backgroundColor: "#f0f0f0",
+                                        color: "black",
+                                        borderRadius: "5px",
+                                        cursor: "pointer",
+                                        fontSize: "14px",
+                                        fontWeight: "bold",
+                                        height: "40px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                        width: "225px",
+                                        pointerEvents: "auto",
+                                    }}
+                                >
+                                    📥 Download Template
+                                </button>
+                            </div>
 
-                            <button
-                                onClick={printDiv}
-                                style={{
-                                    padding: "5px 20px",
-                                    border: "2px solid black",
-                                    backgroundColor: "#f0f0f0",
-                                    color: "black",
-                                    borderRadius: "5px",
-                                    cursor: "pointer",
-                                    fontSize: "14px",
-                                    fontWeight: "bold",
-                                    transition: "background-color 0.3s, transform 0.2s",
-                                    height: "40px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    textAlign: "center",
-                                    gap: "8px",
-                                    userSelect: "none",
-                                    width: "200px", // ✅ same width as Import
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#d3d3d3"}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
-                                onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
-                                onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-                                type="button"
-                            >
-                                <FcPrint size={20} />
-                                Print ECAT Score
-                            </button>
+
+
+
                         </Box>
+
 
                         {/* To Date + Import Button */}
                         <Box display="flex" alignItems="flex-end" gap={2}>
@@ -1267,26 +1241,67 @@ th, td {
                     </Box>
 
                     {/* Right Side: Campus Dropdown */}
-                    <Box display="flex" flexDirection="column" gap={1} sx={{ minWidth: 200 }}>
-                        <Typography fontSize={13}>Campus:</Typography>
-                        <FormControl size="small" sx={{ width: "200px" }}>
-                            <InputLabel id="campus-label">Campus</InputLabel>
-                            <Select
-                                labelId="campus-label"
-                                id="campus-select"
-                                name="campus"
-                                value={person.campus ?? ""}
-                                onChange={(e) => {
-                                    setPerson(prev => ({ ...prev, campus: e.target.value }));
-                                    setCurrentPage(1);
+                    <Box display="flex" alignItems="flex-end" gap={2}>
+
+                        {/* Campus Dropdown */}
+                        <Box display="flex" flexDirection="column" gap={1}>
+                            <Typography fontSize={13}>Campus:</Typography>
+
+                            <FormControl size="small" sx={{ width: "200px" }}>
+                                <InputLabel id="campus-label">Campus</InputLabel>
+                                <Select
+                                    labelId="campus-label"
+                                    id="campus-select"
+                                    name="campus"
+                                    value={person.campus ?? ""}
+                                    onChange={(e) => {
+                                        setPerson(prev => ({ ...prev, campus: e.target.value }));
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    <MenuItem value=""><em>All Campuses</em></MenuItem>
+                                    <MenuItem value="0">MANILA</MenuItem>
+                                    <MenuItem value="1">CAVITE</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+
+                        {/* Print ECAT Score */}
+                        <div style={{ position: "relative", zIndex: 999 }}>
+                            <button
+                                onClick={printDiv}
+                                style={{
+                                    padding: "5px 20px",
+                                    border: "2px solid black",
+                                    backgroundColor: "#f0f0f0",
+                                    color: "black",
+                                    borderRadius: "5px",
+                                    cursor: "pointer",
+                                    fontSize: "14px",
+                                    fontWeight: "bold",
+                                    transition: "background-color 0.3s, transform 0.2s",
+                                    height: "40px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    textAlign: "center",
+                                    gap: "8px",
+                                    userSelect: "none",
+                                    width: "200px",
+                                    pointerEvents: "auto",
                                 }}
+                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#d3d3d3")}
+                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f0f0f0")}
+                                onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
+                                onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                                type="button"
                             >
-                                <MenuItem value=""><em>All Campuses</em></MenuItem>
-                                <MenuItem value="0">MANILA</MenuItem>
-                                <MenuItem value="1">CAVITE</MenuItem>
-                            </Select>
-                        </FormControl>
+                                <FcPrint size={20} />
+                                Print ECAT Score
+                            </button>
+                        </div>
+
                     </Box>
+
                 </Box>
             </TableContainer>
 
@@ -1496,7 +1511,15 @@ th, td {
 
 
 
-
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={saveAllRows}
+                            sx={{ width: "300px" }}
+                            disabled={saving}
+                        >
+                            SAVE ALL SCORES
+                        </Button>
                     </Box>
 
                     {/* MIDDLE COLUMN: SY & Semester */}
@@ -1570,6 +1593,8 @@ th, td {
                                     ))}
                                 </Select>
                             </FormControl>
+
+
                         </Box>
 
                         <Box display="flex" alignItems="center" gap={1}>
@@ -1644,6 +1669,9 @@ th, td {
                             <TableCell sx={{ color: "white", textAlign: "center", width: "12%", py: 0.5, fontSize: "12px", border: `2px solid ${borderColor}` }}>
                                 Status
                             </TableCell>
+                            <TableCell sx={{ color: "white", textAlign: "center", width: "12%", py: 0.5, fontSize: "12px", border: `2px solid ${borderColor}` }}>
+                                Action
+                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -1662,125 +1690,82 @@ th, td {
                                     (editScores[person.person_id]?.math ?? math) +
                                     (editScores[person.person_id]?.abstract ?? abstract)
                                 ) / 5;
-
-
                             return (
                                 <TableRow key={person.person_id}>
-                                    {/* # */}
+                                    <TableCell sx={{
+                                        color: "black",
+                                        textAlign: "center",
+                                        border: `2px solid ${borderColor}`,
+                                        py: 0.5,
+                                        fontSize: "15px",
+                                    }}
+                                    >{index + 1}</TableCell>
+
                                     <TableCell
+                                        onClick={() => handleRowClick(person.person_id)}
                                         sx={{
                                             color: "black",
                                             textAlign: "center",
                                             border: `2px solid ${borderColor}`,
-                                            borderLeft: "2px solid maroon",
                                             py: 0.5,
-                                            fontSize: "12px",
+                                            fontSize: "15px",
                                         }}
                                     >
-                                        {index + 1}
+
+
+                                        {person.applicant_number}
                                     </TableCell>
 
-                                    {/* Applicant Number */}
                                     <TableCell
+                                        onClick={() => handleRowClick(person.person_id)}
                                         sx={{
+                                            color: "black",
                                             textAlign: "center",
                                             border: `2px solid ${borderColor}`,
-                                            color: "blue",
-                                            cursor: "pointer",
+                                            py: 0.5,
+                                            fontSize: "15px",
                                         }}
-                                        onClick={() => handleRowClick(person.person_id)}
                                     >
-                                        {person.applicant_number ?? "N/A"}
+
+                                        {`${person.last_name}, ${person.first_name} ${person.middle_name ?? ""}`}
                                     </TableCell>
 
-                                    {/* Applicant Name */}
-                                    <TableCell
-                                        sx={{
-                                            textAlign: "left",
-                                            border: `2px solid ${borderColor}`,
-                                            color: "blue",
-                                            cursor: "pointer",
-                                        }}
-                                        onClick={() => handleRowClick(person.person_id)}
-                                    >
-                                        {`${person.last_name}, ${person.first_name} ${person.middle_name ?? ""} ${person.extension ?? ""}`}
-                                    </TableCell>
-
-                                    {/* Program */}
                                     <TableCell
                                         sx={{
                                             color: "black",
                                             textAlign: "center",
                                             border: `2px solid ${borderColor}`,
                                             py: 0.5,
-                                            fontSize: "12px",
+                                            fontSize: "15px",
                                         }}
                                     >
                                         {curriculumOptions.find(
-                                            (item) =>
-                                                item.curriculum_id?.toString() === person.program?.toString()
+                                            (item) => item.curriculum_id?.toString() === person.program?.toString()
                                         )?.program_code ?? "N/A"}
                                     </TableCell>
 
-                                    {/* Editable Exam Scores */}
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
-                                        <TextField
-                                            value={editScores[person.person_id]?.english ?? english}
-                                            onChange={(e) => handleScoreChange(person, "english", Number(e.target.value))}
-                                            onBlur={() => handleScoreBlur(person)}
-                                            size="small"
-                                            type="number"
-                                            sx={{ width: 70 }}
-                                        />
-                                    </TableCell>
+                                    {/* SCORE INPUTS */}
+                                    {["english", "science", "filipino", "math", "abstract"].map((field) => (
+                                        <TableCell
+                                            sx={{
+                                                color: "black",
+                                                textAlign: "center",
+                                                border: `2px solid ${borderColor}`,
+                                                py: 0.5,
+                                                fontSize: "15px",
+                                            }}
+                                        >
+                                            <TextField
+                                                value={editScores[person.person_id]?.[field] ?? person[field] ?? 0}
+                                                onChange={(e) => handleScoreChange(person, field, e.target.value)}
+                                                size="small"
+                                                type="number"
+                                                sx={{ width: 70 }}
+                                            />
+                                        </TableCell>
+                                    ))}
 
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
-                                        <TextField
-                                            value={editScores[person.person_id]?.science ?? science}
-                                            onChange={(e) => handleScoreChange(person, "science", Number(e.target.value))}
-                                            onBlur={() => handleScoreBlur(person)}
-                                            size="small"
-                                            type="number"
-                                            sx={{ width: 70 }}
-                                        />
-                                    </TableCell>
-
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
-                                        <TextField
-                                            value={editScores[person.person_id]?.filipino ?? filipino}
-                                            onChange={(e) => handleScoreChange(person, "filipino", Number(e.target.value))}
-                                            onBlur={() => handleScoreBlur(person)}
-                                            size="small"
-                                            type="number"
-                                            sx={{ width: 70 }}
-                                        />
-                                    </TableCell>
-
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
-                                        <TextField
-                                            value={editScores[person.person_id]?.math ?? math}
-                                            onChange={(e) => handleScoreChange(person, "math", Number(e.target.value))}
-                                            onBlur={() => handleScoreBlur(person)}
-                                            size="small"
-                                            type="number"
-                                            sx={{ width: 70 }}
-                                        />
-                                    </TableCell>
-
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
-                                        <TextField
-                                            value={editScores[person.person_id]?.abstract ?? abstract}
-                                            onChange={(e) => handleScoreChange(person, "abstract", Number(e.target.value))}
-                                            onBlur={() => handleScoreBlur(person)}
-                                            size="small"
-                                            type="number"
-                                            sx={{ width: 70 }}
-                                        />
-                                    </TableCell>
-
-                                    {/* ✅ Computed Final Rating (read-only) */}
-
-                                    {/* ✅ Computed Final Rating (read-only) */}
+                                    {/* FINAL RATING */}
                                     <TableCell
                                         sx={{
                                             color: "black",
@@ -1793,8 +1778,9 @@ th, td {
                                         {computedFinalRating}
                                     </TableCell>
 
+                                    {/* DATE APPLIED */}
                                     <TableCell
-                                        sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}
+                                        sx={{ textAlign: "center", border: `2px solid ${borderColor}`, fontSize: "12px" }}
                                     >
                                         {(() => {
                                             if (!person.created_at) return "";
@@ -1810,49 +1796,61 @@ th, td {
                                             });
                                         })()}
                                     </TableCell>
-
-
+                                    {/* STATUS */}
                                     <TableCell
                                         sx={{
                                             color: "black",
                                             textAlign: "center",
                                             border: `2px solid ${borderColor}`,
-                                            borderRight: "2px solid maroon",
                                             py: 0.5,
-                                            fontSize: "12px",
+                                            fontSize: "15px",
                                         }}
                                     >
                                         <FormControl fullWidth size="small">
                                             <Select
                                                 value={editScores[person.person_id]?.status ?? person.status ?? ""}
-                                                displayEmpty
-                                                onChange={(e) => handleStatusChange(person, e.target.value)}
-                                                sx={{ fontSize: "15px" }}
-                                                renderValue={(selected) => {
-                                                    if (selected === "") {
-                                                        return <span style={{ color: "#888" }}>Select Status</span>;
+                                                onChange={(e) => setEditScores(prev => ({
+                                                    ...prev,
+                                                    [person.person_id]: {
+                                                        ...prev[person.person_id],
+                                                        status: e.target.value
                                                     }
-                                                    return selected;
-                                                }}
+                                                }))}
                                             >
-                                                <MenuItem value="">
-                                                    <em>Select Status</em>
-                                                </MenuItem>
+                                                <MenuItem value=""><em>Select Status</em></MenuItem>
                                                 <MenuItem value="PASSED">PASSED</MenuItem>
                                                 <MenuItem value="FAILED">FAILED</MenuItem>
                                             </Select>
-
                                         </FormControl>
                                     </TableCell>
 
+                                    {/* SAVE ROW BUTTON */}
+                                    <TableCell
+                                        sx={{
+                                            color: "black",
+                                            textAlign: "center",
+                                            border: `2px solid ${borderColor}`,
+                                            py: 0.5,
+                                            fontSize: "15px",
+                                        }}
+                                    >
+                                        <Button
+                                            variant="contained"
+                                            color="success"
+                                            size="small"
+                                            onClick={() => saveSingleRow(person)}
+                                            disabled={saving}
+                                        >
+                                            Save Row
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
                             );
                         })}
                     </TableBody>
-
-
                 </Table>
             </TableContainer>
+
 
 
             <Snackbar

@@ -1619,35 +1619,32 @@ Thank you, best regards
                             </FormControl>
 
 
+                            <div style={{ position: "relative", zIndex: 999999 }}>
+                                <button
+                                    onClick={() => {
+                                        window.location.href = `${API_BASE_URL}/qualifying_interview_template`;
+                                    }}
+                                    style={{
+                                        padding: "5px 20px",
+                                        border: "2px solid black",
+                                        backgroundColor: "#f0f0f0",
+                                        color: "black",
+                                        borderRadius: "5px",
+                                        cursor: "pointer",
+                                        fontSize: "14px",
+                                        fontWeight: "bold",
+                                        height: "40px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                        width: "225px",
+                                        pointerEvents: "auto",
+                                    }}
+                                >
+                                    📥 Download Template
+                                </button>
+                            </div>
 
-                            <button
-                                onClick={printDiv}
-                                style={{
-                                    padding: "5px 20px",
-                                    border: "2px solid black",
-                                    backgroundColor: "#f0f0f0",
-                                    color: "black",
-                                    borderRadius: "5px",
-                                    cursor: "pointer",
-                                    fontSize: "14px",
-                                    fontWeight: "bold",
-                                    transition: "background-color 0.3s, transform 0.2s",
-                                    height: "40px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "8px",
-                                    userSelect: "none",
-                                    width: "315px", // ✅ same width as Import
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#d3d3d3"}
-                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
-                                onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
-                                onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-                                type="button"
-                            >
-                                <FcPrint size={20} />
-                                Print Qualfying / Interview Scores
-                            </button>
                         </Box>
 
                         {/* To Date + Import Button */}
@@ -1722,27 +1719,62 @@ Thank you, best regards
                         </Box>
                     </Box>
 
-                    {/* Right Side: Campus Dropdown */}
-                    <Box display="flex" flexDirection="column" gap={1} sx={{ minWidth: 200 }}>
-                        <Typography fontSize={13}>Campus:</Typography>
-                        <FormControl size="small" sx={{ width: "200px" }}>
-                            <InputLabel id="campus-label">Campus</InputLabel>
-                            <Select
-                                labelId="campus-label"
-                                id="campus-select"
-                                name="campus"
-                                value={person.campus ?? ""}
-                                onChange={(e) => {
-                                    setPerson(prev => ({ ...prev, campus: e.target.value }));
-                                    setCurrentPage(1);
-                                }}
-                            >
-                                <MenuItem value=""><em>All Campuses</em></MenuItem>
-                                <MenuItem value="0">MANILA</MenuItem>
-                                <MenuItem value="1">CAVITE</MenuItem>
-                            </Select>
-                        </FormControl>
+                    <Box display="flex" alignItems="flex-end" gap={2}>
+
+                        {/* Campus Dropdown */}
+                        <Box display="flex" flexDirection="column" gap={1}>
+                            <Typography fontSize={13}>Campus:</Typography>
+
+                            <FormControl size="small" sx={{ width: "200px" }}>
+                                <InputLabel id="campus-label">Campus</InputLabel>
+                                <Select
+                                    labelId="campus-label"
+                                    id="campus-select"
+                                    name="campus"
+                                    value={person.campus ?? ""}
+                                    onChange={(e) => {
+                                        setPerson(prev => ({ ...prev, campus: e.target.value }));
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    <MenuItem value=""><em>All Campuses</em></MenuItem>
+                                    <MenuItem value="0">MANILA</MenuItem>
+                                    <MenuItem value="1">CAVITE</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+
+                        <button
+                            onClick={printDiv}
+                            style={{
+                                padding: "5px 20px",
+                                border: "2px solid black",
+                                backgroundColor: "#f0f0f0",
+                                color: "black",
+                                borderRadius: "5px",
+                                cursor: "pointer",
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                transition: "background-color 0.3s, transform 0.2s",
+                                height: "40px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                userSelect: "none",
+                                width: "315px", // ✅ same width as Import
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#d3d3d3"}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#f0f0f0"}
+                            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.95)"}
+                            onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+                            type="button"
+                        >
+                            <FcPrint size={20} />
+                            Print Qualfying / Interview Scores
+                        </button>
+
                     </Box>
+
                 </Box>
             </TableContainer>
 
@@ -2183,6 +2215,9 @@ Thank you, best regards
                             <TableCell sx={{ color: "white", textAlign: "center", width: "10%", py: 0.5, fontSize: "12px", border: `2px solid ${borderColor}` }}>
                                 SHS GWA
                             </TableCell>
+                            <TableCell sx={{ color: "white", textAlign: "center", width: "10%", py: 0.5, fontSize: "12px", border: `2px solid ${borderColor}` }}>
+                                Final Rating
+                            </TableCell>
                             {/* Exam Columns */}
                             <TableCell sx={{ color: "white", textAlign: "center", width: "10%", py: 0.5, fontSize: "12px", border: `2px solid ${borderColor}` }}>
                                 Qualifying Exam Score
@@ -2215,65 +2250,31 @@ Thank you, best regards
                             const computedTotalAve = (Number(qualifyingExam) + Number(qualifyingInterview)) / 2;
                             const applicantId = person.applicant_number;
                             const isAssigned = !!person.schedule_id; // ✅ check if already assigned
-
+                            const finalRating = Number(person.final_rating) || 0; // ✅ use backend value
 
                             return (
                                 <TableRow key={person.person_id}>
                                     {/* # */}
-                                    <TableCell
-                                        sx={{
-                                            color: "black",
-                                            textAlign: "center",
-                                            border: `2px solid ${borderColor}`,
-                                            borderLeft: "2px solid maroon",
-                                            py: 0.5,
-                                            fontSize: "12px",
-                                        }}
-                                    >
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
                                         {index + 1}
                                     </TableCell>
 
                                     {/* Applicant Number */}
-                                    <TableCell
-                                        sx={{
-                                            color: "blue",
-                                            cursor: "pointer",
-                                            textAlign: "center",
-                                            border: `2px solid ${borderColor}`,
-                                            borderLeft: "2px solid maroon",
-                                            py: 0.5,
-                                            fontSize: "12px",
-                                        }}
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", color: "blue" }}
                                         onClick={() => handleRowClick(person.person_id)}
                                     >
                                         {person.applicant_number ?? "N/A"}
                                     </TableCell>
 
                                     {/* Applicant Name */}
-                                    <TableCell
-                                        sx={{
-                                            color: "blue",
-                                            cursor: "pointer",
-                                            textAlign: "left",
-                                            border: `2px solid ${borderColor}`,
-                                            borderLeft: "2px solid maroon",
-                                            py: 0.5,
-                                            fontSize: "12px",
-                                        }}
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", color: "blue" }}
                                         onClick={() => handleRowClick(person.person_id)}
                                     >
                                         {`${person.last_name}, ${person.first_name} ${person.middle_name ?? ""} ${person.extension ?? ""}`}
                                     </TableCell>
 
                                     {/* Program */}
-                                    <TableCell
-                                        sx={{
-                                            color: "black",
-                                            textAlign: "center",
-                                            border: `2px solid ${borderColor}`,
-                                            py: 0.5,
-                                            fontSize: "12px",
-                                        }}
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}
                                     >
                                         {curriculumOptions.find(
                                             (item) =>
@@ -2281,23 +2282,19 @@ Thank you, best regards
                                         )?.program_code ?? "N/A"}
                                     </TableCell>
 
-                                    <TableCell
-                                        sx={{
-
-                                            cursor: "pointer",
-                                            textAlign: "center",
-                                            border: `2px solid ${borderColor}`,
-                                            borderLeft: "2px solid maroon",
-                                            py: 0.5,
-                                            fontSize: "14px",
-                                        }}
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}
                                         onClick={() => handleRowClick(person.person_id)}
                                     >
                                         {person.generalAverage1}
                                     </TableCell>
 
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
+                                        {finalRating.toFixed(2)}
+                                    </TableCell>
+
+
                                     {/* Qualifying Exam Score */}
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
                                         <TextField
                                             value={qualifyingExam}
                                             onChange={(e) =>
@@ -2310,7 +2307,7 @@ Thank you, best regards
                                     </TableCell>
 
                                     {/* Qualifying Interview Score */}
-                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center" }}>
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
                                         <TextField
                                             value={qualifyingInterview}
                                             onChange={(e) =>
@@ -2323,24 +2320,10 @@ Thank you, best regards
                                     </TableCell>
 
                                     {/* ✅ Total Average (read-only, comes from DB or recomputed) */}
-                                    <TableCell
-                                        sx={{
-                                            color: "black",
-                                            textAlign: "center",
-                                            border: `2px solid ${borderColor}`,
-                                            py: 0.5,
-                                            fontSize: "15px",
-                                        }}
-                                    >
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
                                         {computedTotalAve.toFixed(2)}
                                     </TableCell>
-                                    <TableCell
-                                        sx={{
-                                            textAlign: "center",
-                                            border: `2px solid ${borderColor}`,
-                                            fontSize: "12px",
-                                        }}
-                                    >
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
                                         <FormControl fullWidth size="small">
                                             <Select
                                                 value={
@@ -2363,9 +2346,7 @@ Thank you, best regards
 
 
 
-                                    <TableCell
-                                        sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}
-                                    >
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
                                         {(() => {
                                             if (!person.created_at) return "";
 
@@ -2382,15 +2363,7 @@ Thank you, best regards
                                     </TableCell>
 
 
-
-                                    <TableCell
-                                        sx={{
-                                            textAlign: "center",
-                                            border: `2px solid ${borderColor}`,
-
-                                            verticalAlign: "middle",
-                                        }}
-                                    >
+                                    <TableCell sx={{ border: `2px solid ${borderColor}`, textAlign: "center", fontSize: "13px", }}>
                                         {person.interview_status === "Accepted" ? (
                                             <Box
                                                 display="flex"

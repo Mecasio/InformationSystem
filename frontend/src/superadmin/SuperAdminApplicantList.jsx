@@ -465,9 +465,11 @@ const SuperAdminApplicantList = () => {
                 String(personData.campus) === String(person.campus);
 
             /* 📄 DOCUMENT STATUS */
+            const applicantStatus = getApplicantStatus(personData); // use your derived status
+
             const matchesApplicantStatus =
                 selectedApplicantStatus === "" ||
-                normalize(personData.document_status) === normalize(selectedApplicantStatus);
+                normalize(applicantStatus) === normalize(selectedApplicantStatus);
 
             /* 📝 REGISTRAR STATUS */
             const matchesRegistrarStatus =
@@ -539,35 +541,30 @@ const SuperAdminApplicantList = () => {
             const dateA = new Date(a.created_at + "T00:00:00");
             const dateB = new Date(b.created_at + "T00:00:00");
 
-            // FIRST: ALWAYS SORT BY CREATED_AT
-            if (dateA < dateB) return -1;
-            if (dateA > dateB) return 1;
-
-            // SECOND: SORT BY SELECTED OPTION
+            // 🔽 Primary Sorting (what user selects)
             if (sortBy === "name") {
-                const fieldA = `${a.last_name} ${a.first_name} ${a.middle_name || ""}`.toLowerCase();
-                const fieldB = `${b.last_name} ${b.first_name} ${b.middle_name || ""}`.toLowerCase();
-                return sortOrder === "asc"
-                    ? fieldA.localeCompare(fieldB)
-                    : fieldB.localeCompare(fieldA);
+                const A = `${a.last_name} ${a.first_name} ${a.middle_name || ""}`.toLowerCase();
+                const B = `${b.last_name} ${b.first_name} ${b.middle_name || ""}`.toLowerCase();
+                const comp = A.localeCompare(B);
+                if (comp !== 0) return sortOrder === "asc" ? comp : -comp;
             }
 
             if (sortBy === "id") {
-                return sortOrder === "asc"
-                    ? a.applicant_number.localeCompare(b.applicant_number)
-                    : b.applicant_number.localeCompare(a.applicant_number);
+                const comp = a.applicant_number.localeCompare(b.applicant_number);
+                if (comp !== 0) return sortOrder === "asc" ? comp : -comp;
             }
 
             if (sortBy === "email") {
-                const fieldA = a.emailAddress?.toLowerCase() || "";
-                const fieldB = b.emailAddress?.toLowerCase() || "";
-                return sortOrder === "asc"
-                    ? fieldA.localeCompare(fieldB)
-                    : fieldB.localeCompare(fieldA);
+                const A = a.emailAddress?.toLowerCase() || "";
+                const B = b.emailAddress?.toLowerCase() || "";
+                const comp = A.localeCompare(B);
+                if (comp !== 0) return sortOrder === "asc" ? comp : -comp;
             }
 
-            return 0;
+            // 🔽 Secondary: fallback sorting by date
+            return dateA - dateB;
         });
+
 
 
 
@@ -1317,10 +1314,9 @@ th {
                                     displayEmpty
                                 >
                                     <MenuItem value="">Select status</MenuItem>
-                                    <MenuItem value="On process">On process</MenuItem>
+                                    <MenuItem value="On Process">On Process</MenuItem>
                                     <MenuItem value="Documents Verified & ECAT">Documents Verified & ECAT</MenuItem>
-                                    <MenuItem value="Disapproved">Disapproved</MenuItem>
-                                    <MenuItem value="Program Closed">Program Closed</MenuItem>
+                                    <MenuItem value="Disapproved / Program Closed">Disapproved / Program Closed</MenuItem>
                                 </Select>
                             </FormControl>
                         </Box>
@@ -1605,7 +1601,7 @@ th {
 
                                 {/* Created Date */}
                                 <TableCell
-                                    sx={{ textAlign: "center", border: `2px solid ${borderColor}` }}
+                                    sx={{ textAlign: "center", border: `2px solid ${borderColor}`, fontSize: "12px" }}
                                 >
                                     {(() => {
                                         if (!person.created_at) return "";
@@ -1621,7 +1617,6 @@ th {
                                         });
                                     })()}
                                 </TableCell>
-
 
 
 
