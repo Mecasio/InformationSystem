@@ -105,17 +105,17 @@ const StudentList = () => {
 
 const handleRowClick = (person) => {
   if (!person) return;
-  const key = person.person_id ?? person.student_number;
-  sessionStorage.setItem("admin_edit_person_id", String(key));
-  sessionStorage.setItem("admin_edit_person_id_source", "student_list");
-  sessionStorage.setItem("admin_edit_person_id_ts", String(Date.now()));
 
-  if (person.person_id) {
-    navigate(`/readmission_dashboard1?person_id=${person.person_id}`);
-  } else {
-    navigate(`/readmission_dashboard1?student_number=${person.student_number}`);
-  }
+  sessionStorage.setItem("edit_person_id", person.person_id || "");
+  sessionStorage.setItem("edit_student_number", person.student_number || "");
+
+  navigate(
+    person.person_id
+      ? `/readmission_dashboard1?person_id=${person.person_id}`
+      : `/readmission_dashboard1?student_number=${person.student_number}`
+  );
 };
+
 
 
 
@@ -135,12 +135,15 @@ const handleRowClick = (person) => {
 
     const handleStepClick = (index, to) => {
         setActiveStep(index);
-        const pid = sessionStorage.getItem("admin_edit_person_id");
+        const pid = sessionStorage.getItem("edit_person_id");
+        const sn = sessionStorage.getItem("edit_student_number");
 
-        if (pid && to !== "/student_list") {
-            navigate(`${to}?person_id=${pid}`);
+        if (pid) {
+        navigate(`${to}?person_id=${pid}`);
+        } else if (sn) {
+        navigate(`${to}?student_number=${sn}`);
         } else {
-            navigate(to);
+        navigate(to); // no id → open without query
         }
     };
 
@@ -537,14 +540,6 @@ const handleRowClick = (person) => {
                 setCurriculumOptions(res.data);
             });
     }, []);
-
-    useEffect(() => {
-        if (department.length > 0 && !selectedDepartmentFilter) {
-            const firstDept = department[0].dprtmnt_name;
-            setSelectedDepartmentFilter(firstDept);
-            handleDepartmentChange(firstDept); // if you also want to trigger it
-        }
-    }, [department, selectedDepartmentFilter]);
 
     const handleDepartmentChange = (selectedDept) => {
         setSelectedDepartmentFilter(selectedDept);

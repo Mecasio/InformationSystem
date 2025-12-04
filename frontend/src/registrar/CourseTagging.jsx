@@ -39,7 +39,7 @@ import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import API_BASE_URL from "../apiConfig";
 import { useNavigate } from "react-router-dom";
-
+import ScoreIcon from '@mui/icons-material/Score';
 const CourseTagging = () => {
   const settings = useContext(SettingsContext);
 
@@ -147,37 +147,15 @@ const CourseTagging = () => {
   };
 
   const tabs = [
-    {
-      label: "Admission Process For College",
-      to: "/applicant_list",
-      icon: <SchoolIcon fontSize="large" />,
-    },
-    {
-      label: "Applicant Form",
-      to: "/registrar_dashboard1",
-      icon: <AssignmentIcon fontSize="large" />,
-    },
-    {
-      label: "Student Requirements",
-      to: "/registrar_requirements",
-      icon: <AssignmentTurnedInIcon fontSize="large" />,
-    },
+      { label: "Admission Process For College", to: "/applicant_list", icon: <SchoolIcon fontSize="large" /> },
+    { label: "Applicant Form", to: "/registrar_dashboard1", icon: <AssignmentIcon fontSize="large" /> },
+    { label: "Student Requirements", to: "/registrar_requirements", icon: <AssignmentTurnedInIcon fontSize="large" /> },
+    { label: "Qualifying / Interview Exam Score", to: "/qualifying_interview_exam_scores", icon: <ScoreIcon fontSize="large" /> },
+    { label: "Student Numbering", to: "/student_numbering_per_college", icon: <DashboardIcon fontSize="large" /> },
+    { label: "Course Tagging", to: "/course_tagging", icon: <MenuBookIcon fontSize="large" /> },
+    { label: "Certificate of Registration", to: "/search_cor_for_college", icon: <MenuBookIcon fontSize="large" /> },
 
-    {
-      label: "Qualifying / Interview Exam Score",
-      to: "/qualifying_interview_exam_scores",
-      icon: <PersonSearchIcon fontSize="large" />,
-    },
-    {
-      label: "Student Numbering",
-      to: "/student_numbering_per_college",
-      icon: <DashboardIcon fontSize="large" />,
-    },
-    {
-      label: "Course Tagging",
-      to: "/course_tagging",
-      icon: <MenuBookIcon fontSize="large" />,
-    },
+
   ];
 
   const navigate = useNavigate();
@@ -1456,7 +1434,7 @@ const CourseTagging = () => {
               onClick={() => {
                 if (studentNumber) {
                   localStorage.setItem("studentNumberForCOR", studentNumber);
-                  window.open("/search_cor", "_blank");
+                  window.open("/search_cor_for_college", "_blank");
                 } else {
                   setSnack({
                     open: true,

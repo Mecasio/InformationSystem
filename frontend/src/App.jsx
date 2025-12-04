@@ -135,6 +135,9 @@ import AnnouncementForAdmission from './registrar/AnnouncementForAdmission';
 import StudentList from './registrar/StudentList';
 import SubmittedDocuments from './registrar/SubmittedDocuments';
 
+import SearchCORForCollege from './registrar/SearchCORForCollege';
+import CORForCollege from './registrar/CORForCollege';
+
 import GradingEvaluationForRegistrar from './registrar/GradingEvaluationForRegistrar';
 
 
@@ -509,7 +512,8 @@ function App() {
                     <Route path="/office_of_the_registrar" element={<ProtectedRoute allowedRoles={['applicant']}><OfficeOfTheRegistrar /></ProtectedRoute>} />
 
                     <Route path="/department_curriculum_panel" element={<ProtectedRoute><DepartmentCurriculumPanel /></ProtectedRoute>} />
-
+                    <Route path="/cor_for_college" element={<ProtectedRoute ><CORForCollege /></ProtectedRoute>} />
+                    <Route path="/search_cor_for_college" element={<ProtectedRoute ><SearchCORForCollege /></ProtectedRoute>} />
                     <Route path="/class_roster" element={<ProtectedRoute ><ClassRoster /></ProtectedRoute>} />
                     <Route path="/transcript_of_records" element={<ProtectedRoute ><TranscriptOfRecords /></ProtectedRoute>} />
                     <Route path="/tosf_crud" element={<ProtectedRoute ><TOSFCrud /></ProtectedRoute>} />

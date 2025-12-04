@@ -1684,6 +1684,7 @@ const AdminApplicantList = () => {
                                         textAlign: "center",
                                         border: `2px solid ${borderColor}`,
                                         cursor: "pointer",
+                                         color: "blue"
                                     }}
                                     onClick={() => handleRowClick(person.person_id)}
                                 >
@@ -1696,6 +1697,7 @@ const AdminApplicantList = () => {
                                         textAlign: "left",
                                         border: `2px solid ${borderColor}`,
                                         cursor: "pointer",
+                                         color: "blue"
                                     }}
                                     onClick={() => handleRowClick(person.person_id)}
                                 >

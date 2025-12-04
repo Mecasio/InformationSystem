@@ -71,12 +71,6 @@ const ProgramEvaluationForRegistrar = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [gradeEdits, setGradeEdits] = useState({});
   const [isEditing, setIsEditing] = useState(false);
-  const [profData, setPerson] = useState({
-    prof_id: "",
-    fname: "",
-    mname: "",
-    lname: "",
-  });
 
   const [hasAccess, setHasAccess] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -197,6 +191,17 @@ const ProgramEvaluationForRegistrar = () => {
         student_number: studentNumber,
         course_id: courseId,
       });
+
+      try {
+        const page_name = "Grading Evaluation For Registrar";
+        const fullName = `${user}`;
+        const type = "submit"
+        await axios.post(`${API_BASE_URL}/insert-logs/${userID}`, {
+          message: `User #${userID} - ${fullName} successfully submit the student grades in ${page_name}`, type: type,
+        });
+      } catch (err) {
+        console.error("Error inserting audit log");
+      }
     } catch (error) {
       console.error("Failed to save grade:", error);
     }
@@ -249,13 +254,13 @@ const ProgramEvaluationForRegistrar = () => {
   };
 
   // Put this at the very bottom before the return
-  if (loading || hasAccess === null) {
-    return <LoadingOverlay open={loading} message="Check Access" />;
-  }
+  //if (loading || hasAccess === null) {
+  //  return <LoadingOverlay open={loading} message="Check Access" />;
+  //}
 
-  if (!hasAccess) {
-    return <Unauthorized />;
-  }
+  //if (!hasAccess) {
+  //  return <Unauthorized />;
+  //}
 
   return (
     <Box
@@ -342,8 +347,8 @@ const ProgramEvaluationForRegistrar = () => {
           </Box>
         </Box>
 
-        {/* Divider and spacing below */}
-        <hr style={{ border: "1px solid #ccc", width: "100%" }} />
+        {/* Divider and spacing below - CHANGED to span full width */}
+        <hr style={{ border: "1px solid #ccc", width: "100%", margin: "0" }} />
         <br />
       </Box>
 
@@ -368,7 +373,7 @@ const ProgramEvaluationForRegistrar = () => {
                 @media print {
                     @page {
                         margin: 0; 
-                        padding-right: 3rem
+                        padding-right: 5rem
                     }
                 
                     body * {
@@ -377,7 +382,7 @@ const ProgramEvaluationForRegistrar = () => {
                     }
 
                     .body{
-                        margin-top: -22rem;
+                        margin-top: -30rem; /* Adjusted to push content higher */
                         margin-left: -27rem;
                         overflow: visible !important;  /* show all content */
                         height: auto !important;       /* expand height */
@@ -394,7 +399,7 @@ const ProgramEvaluationForRegistrar = () => {
                         top: 0%;
                         width: 100%;
                         font-family: "Poppins", sans-serif;
-                        margin-top: -4.5rem;
+                        margin-top: -8rem; /* Adjusted to push content higher */
                         padding: 0;
                     }
                     button {
@@ -408,9 +413,9 @@ const ProgramEvaluationForRegistrar = () => {
           className="print-container"
           style={{
             paddingRight: "1.5rem",
-            marginTop: "3rem",
+            marginTop: "-1rem",
             paddingBottom: "1.5rem",
-            maxWidth: "600px",
+            maxWidth: "100%",
           }}
           ref={divToPrintRef}
         >
@@ -418,8 +423,8 @@ const ProgramEvaluationForRegistrar = () => {
             style={{
               display: "flex",
               alignItems: "center",
-              width: "70rem",
-              justifyContent: "center",
+              width: "100%",
+              justifyContent: "center"
             }}
           >
             {/* LEFT - Logo */}
@@ -509,31 +514,39 @@ const ProgramEvaluationForRegistrar = () => {
               </div>
             </Box>
           </Box>
-          <Typography
-            style={{
-              marginLeft: "1rem",
-              textAlign: "center",
-              width: "80rem",
-              fontSize: "1.6rem",
-              letterSpacing: "-1px",
-              fontWeight: "500",
-            }}
-          >
-            OFFICE OF THE REGISTRAR
-          </Typography>
-          <Typography
-            style={{
-              marginLeft: "1rem",
-              marginTop: "-0.2rem",
-              width: "80rem",
-              textAlign: "center",
-              fontSize: "1.8rem",
-              letterSpacing: "-1px",
-              fontWeight: "600",
-            }}
-          >
-            ACADEMIC PROGRAM EVALUATION
-          </Typography>
+          
+          {/* Centered Headers */}
+          <Box style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+            <Typography
+              style={{
+                width: "100%",
+                fontSize: "1.6rem",
+                letterSpacing: "-1px",
+                fontWeight: "500",
+                marginLeft: "11rem",
+                textAlign: "center"
+              }}
+            >
+              OFFICE OF THE REGISTRAR
+            </Typography>
+          </Box>
+          
+          <Box style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+            <Typography
+              style={{
+                width: "100%",
+                marginTop: "-0.2rem",
+                fontSize: "1.8rem",
+                letterSpacing: "-1px",
+                fontWeight: "600",
+                textAlign:"center",
+                marginLeft: "11rem",
+              }}
+            >
+              ACADEMIC PROGRAM EVALUATION
+            </Typography>
+          </Box>
+          
           <Box style={{ display: "flex" }}>
             <Box>
               <Box
@@ -541,7 +554,7 @@ const ProgramEvaluationForRegistrar = () => {
                   padding: "1rem",
                   marginLeft: "1rem",
                   borderBottom: "solid black 1px",
-                  width: "80rem",
+                  width: "100%",
                 }}
               >
                 <Box style={{ display: "flex" }}>
@@ -654,14 +667,15 @@ const ProgramEvaluationForRegistrar = () => {
                       paddingLeft: "1rem",
                       marginBottom: "1rem",
                       boxSizing: "border-box",
+                      width: "100%",
                     }}
                     key={key}
                   >
-                    <table>
+                    <table style={{ width: "100%" }}>
                       <thead>
                         <tr>
                           <td style={{ textAlign: "center" }}>
-                            {getLevelBySection(courses[0].section)} -{" "}
+                            {courses[0].year_level_description} {" "}
                             {courses[0].semester_description}
                           </td>
                         </tr>

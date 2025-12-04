@@ -1013,29 +1013,30 @@ const ReadmissionDashboard1 = () => {
 
   const handleStepClick = (index, to) => {
     setActiveStep(index);
+    const pid = sessionStorage.getItem("edit_person_id");
+const sn = sessionStorage.getItem("edit_student_number");
 
-    const pid = localStorage.getItem("admin_edit_person_id");
-    console.log(pid);
-    if (pid && pid !== "undefined" && pid !== "null" && pid.length >= 9) {
-      navigate(`${to}?student_number=${pid}`);
-    } else {
-      navigate(to);
-    }
+if (pid) {
+  navigate(`${to}?person_id=${pid}`);
+} else if (sn) {
+  navigate(`${to}?student_number=${sn}`);
+} else {
+  navigate(to); // no id → open without query
+}
   };
 
   useEffect(() => {
-    const storedId = localStorage.getItem("admin_edit_person_id");
+    const storedId = sessionStorage.getItem("edit_student_number");
 
-    if (storedId && storedId !== "undefined" && storedId !== "null" && storedId.length >= 9) {
+    if (storedId) {
       setSearchQuery(storedId);
     }
   }, []);
 
-
-
-  const [studentNumber, setStudentNumber] = useState(() => {
+const [studentNumber, setStudentNumber] = useState(() => {
     return localStorage.getItem("studentNumberForCOR") || localStorage.getItem("admin_edit_person_id") || "";
   });
+  
   const [debouncedStudentNumber, setDebouncedStudentNumber] = useState("");
 
 

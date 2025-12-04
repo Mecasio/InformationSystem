@@ -751,13 +751,7 @@ const SuperAdminApplicantList = () => {
             });
     }, []);
 
-    useEffect(() => {
-        if (department.length > 0 && !selectedDepartmentFilter) {
-            const firstDept = department[0].dprtmnt_name;
-            setSelectedDepartmentFilter(firstDept);
-            handleDepartmentChange(firstDept); // if you also want to trigger it
-        }
-    }, [department, selectedDepartmentFilter]);
+    
 
     const handleDepartmentChange = (selectedDept) => {
         setSelectedDepartmentFilter(selectedDept);
@@ -1627,6 +1621,7 @@ th {
                                         textAlign: "left",
                                         border: `2px solid ${borderColor}`,
                                         cursor: "pointer",
+                                         color: "blue"
                                     }}
                                     onClick={() => handleRowClick(person.person_id)}
                                 >

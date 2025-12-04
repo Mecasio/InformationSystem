@@ -30,10 +30,6 @@ import ExaminationProfile from "../registrar/ExaminationProfile";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import API_BASE_URL from "../apiConfig";
 import EaristLogo from "../assets/EaristLogo.png";
-import Unauthorized from "../components/Unauthorized";
-import LoadingOverlay from "../components/LoadingOverlay";
-
-
 
 const Dashboard = ({ profileImage, setProfileImage }) => {
 
@@ -85,7 +81,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [studentCount, setStudentCount] = useState(0);
   const [yearLevelCounts, setYearLevelCounts] = useState([]);
-
+  const [data, setData] = useState(null);
 
   const [employeeID, setEmployeeID] = useState("");
   const [hasAccess, setHasAccess] = useState(null);
@@ -257,9 +253,6 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
       .catch(err => console.error("Applicant stats fetch error:", err));
   }, []);
 
-
-
-
   const stats = [
     {
       label: "Total Applicants",
@@ -346,7 +339,6 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
     fetchHolidays();
   }, [year]);
 
-
   const [monthlyApplicants, setMonthlyApplicants] = useState([]);
   const [months, setMonths] = useState("January");
 
@@ -375,9 +367,6 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
         console.error("Failed to fetch applicants per month", err)
       );
   }, []);
-
-
-
 
   const [personData, setPersonData] = useState(null);
   const [hovered, setHovered] = useState(false);
@@ -440,10 +429,17 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
 
   useEffect(() => {
     axios
-      .get(`${API_BASE_URL}/year_table/`)
-      .then((res) => setYears(res.data))
+      .get(`${API_BASE_URL}/get_school_year`)
+      .then((res) => {
+        const currentYear = new Date().getFullYear();
+        const filteredYears = res.data.filter(
+          (yearObj) => Number(yearObj.current_year) <= currentYear
+        );
+
+        setYears(filteredYears);
+      })
       .catch((err) => console.error(err));
-  }, [])
+  }, []);
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/ecat-summary`)
@@ -459,7 +455,31 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
       })
       .catch((err) => console.error(err));
   }, []);
+  
+useEffect(() => {
+  axios.get(`${API_BASE_URL}/get_enrollment_statistic`)
+    .then((res) => {
+      console.log("📌 Enrollment API Response:", res.data);
+      setData(res.data);
+    })
+    .catch((err) => console.error("❌ Enrollment Fetch Error:", err));
+}, []);
 
+ 
+
+
+  const enrollmentCOLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA336A", "#3366AA"];
+
+  if (!data) return <Typography>Loading...</Typography>;
+
+  const enrollmentData = [
+    { name: "Techvoc", value: data.Techvoc },
+    { name: "Graduate", value: data.Graduate },
+    { name: "Returnee", value: data.Returnee },
+    { name: "Shiftee", value: data.Shiftee },
+    { name: "Foreign Student", value: data.ForeignStudent },
+    { name: "Transferee", value: data.Transferee },
+  ];
 
   return (
     <Box
@@ -903,7 +923,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
               >
                 {years.map((yr) => (
                   <MenuItem key={yr.year_id} value={yr.year_id}>
-                    {yr.year_description}
+                    {yr.current_year}
                   </MenuItem>
                 ))}
               </Select>
@@ -922,82 +942,51 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  fontSize: 14,
-                  color: "#6c6c6c",
                 }}
               >
-                PIE GRAPH HERE
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={enrollmentData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={120}
+                      fill="#8884d8"
+                      label
+                    >
+                      {enrollmentData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={enrollmentCOLORS[index % enrollmentCOLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </Box>
 
               {/* Column Stats */}
               <Box sx={{ flex: 1, display: "flex", gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 125,
-                    height: 90,
-                    p: 2,
-                  backgroundColor: "#fef9e1",
-                    borderRadius: 2,
-                    textAlign: "center",
-                     border: "2px solid black"
-                  }}
-                >
-                  <Typography variant="h5" fontWeight="bold">
-                    521
-                  </Typography>
-                  <Typography fontSize={14}>Regular</Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    width: 125,
-                    height: 90,
-                    p: 2,
-                   backgroundColor: "#fef9e1",
-                    borderRadius: 2,
-                    textAlign: "center",
-                     border: "2px solid black"
-                  }}
-                >
-                  <Typography variant="h5" fontWeight="bold">
-                    62
-                  </Typography>
-                  <Typography fontSize={14}>Irregular</Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    width: 125,
-                    height: 90,
-                    p: 2,
-                     backgroundColor: "#fef9e1",
-                    borderRadius: 2,
-                    textAlign: "center",
-                    border: "2px solid black"
-                  }}
-                >
-                  <Typography variant="h5" fontWeight="bold">
-                    32
-                  </Typography>
-                  <Typography fontSize={14}>Transferee</Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    width: 125,
-                    height: 90,
-                    p: 2,
-                  backgroundColor: "#fef9e1",
-                    borderRadius: 2,
-                    textAlign: "center",
-                     border: "2px solid black"
-                  }}
-                >
-                  <Typography variant="h5" fontWeight="bold">
-                    7
-                  </Typography>
-                  <Typography fontSize={14}>Shiftee</Typography>
-                </Box>
+                {enrollmentData.map((entry, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      width: 125,
+                      height: 90,
+                      p: 2,
+                      backgroundColor: "#fef9e1",
+                      borderRadius: 2,
+                      textAlign: "center",
+                      border: "2px solid black"
+                    }}
+                  >
+                    <Typography variant="h5" fontWeight="bold">
+                      {entry.value}
+                    </Typography>
+                    <Typography fontSize={14}>{entry.name}</Typography>
+                  </Box>
+                ))}
               </Box>
             </Box>
           </Card>
@@ -1036,7 +1025,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
                   >
                     {years.map((yr) => (
                       <MenuItem key={yr.year_id} value={yr.year_id}>
-                        {yr.year_description}
+                        {yr.current_year}
                       </MenuItem>
                     ))}
                   </Select>

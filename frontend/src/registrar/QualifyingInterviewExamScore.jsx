@@ -121,10 +121,11 @@ const QualifyingExamScore = () => {
         { label: "Admission Process For College", to: "/applicant_list", icon: <SchoolIcon fontSize="large" /> },
         { label: "Applicant Form", to: "/registrar_dashboard1", icon: <AssignmentIcon fontSize="large" /> },
         { label: "Student Requirements", to: "/registrar_requirements", icon: <AssignmentTurnedInIcon fontSize="large" /> },
-
         { label: "Qualifying / Interview Exam Score", to: "/qualifying_interview_exam_scores", icon: <ScoreIcon fontSize="large" /> },
         { label: "Student Numbering", to: "/student_numbering_per_college", icon: <DashboardIcon fontSize="large" /> },
         { label: "Course Tagging", to: "/course_tagging", icon: <MenuBookIcon fontSize="large" /> },
+        { label: "Certificate of Registration", to: "/search_cor_for_college", icon: <MenuBookIcon fontSize="large" /> },
+
 
 
     ];
@@ -157,6 +158,7 @@ const QualifyingExamScore = () => {
     const [userRole, setUserRole] = useState("");
     const [adminData, setAdminData] = useState({ dprtmnt_id: "" });
     const [loading, setLoading] = useState(false);
+    const [loading2, setLoading2] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem("email");
@@ -259,7 +261,7 @@ const QualifyingExamScore = () => {
             } else {
                 console.log("An unexpected error occurred.");
             }
-            setLoading(false);
+            setLoading2(false);
         }
     };
 
@@ -285,26 +287,26 @@ const QualifyingExamScore = () => {
     });
     const [allApplicants, setAllApplicants] = useState([]);
 
-    // ⬇️ Add this inside ApplicantList component, before useEffect
-
-    // ✅ fetch applicants WITH exam scores
     const fetchApplicants = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/applicants-with-number`, {
-                params: { department_id: adminData.dprtmnt_id }
-            });
+            const res = await axios.get(`${API_BASE_URL}/api/applicants-with-number`);
 
-            // ignore rows that have already been emailed (action === 1)
             const data = Array.isArray(res.data) ? res.data : [];
-            const filtered = data.filter(p => Number(p.action) !== 1); // keep only action != 1
-            const withAssignedFlag = filtered.map(p => ({ ...p, assigned: false }));
+
+            // NEVER hide anyone based on action
+            const withAssignedFlag = data.map(p => ({
+                ...p,
+                assigned: false
+            }));
+
             setPersons(withAssignedFlag);
-            setPerson(withAssignedFlag);
+
         } catch (err) {
             console.error("Error fetching applicants:", err);
             setPersons([]);
         }
     };
+
 
     useEffect(() => {
         fetchApplicants();
@@ -1308,13 +1310,13 @@ Thank you, best regards
     };
 
     const confirmSendEmails = async () => {
-        setLoading(true)
+        setLoading2(true)
         const targets = selectedApplicant
             ? persons.filter(p => p.applicant_number === selectedApplicant)
             : persons.filter(p => p.interview_status === 'Accepted');
 
         if (targets.length === 0) {
-            setLoading(false);
+            setLoading2(false);
             setSnack({ open: true, message: "No applicants to send email to.", severity: "warning" });
             return;
         }
@@ -1367,7 +1369,7 @@ Thank you, best regards
 
         setConfirmOpen(false);
         setSelectedApplicant(null);
-        setLoading(false);
+        setLoading2(false);
     };
 
 
@@ -2504,7 +2506,8 @@ Thank you, best regards
                     {snack.message}
                 </Alert>
             </Snackbar>
-            <LoadingOverlay open={loading} message="Sending emails, please wait..." />
+            <LoadingOverlay open={loading2} message="Sending emails, please wait..." />
+
         </Box >
     );
 };

@@ -264,6 +264,61 @@ const GradingSheet = () => {
       return 0;
     })
 
+  const findPastClass = async () => {
+  try {
+    if (!userID || !selectedSchoolYear || !selectedSchoolSemester) {
+      setSnack({
+        open: true,
+        message: "Please select School Year and Semester first!",
+        severity: "warning",
+      });
+      return;
+    }
+
+    // 1️⃣ Fetch courses assigned to the professor
+    const courseRes = await axios.get(
+      `${API_BASE_URL}/course_assigned_to/${userID}/${selectedSchoolYear}/${selectedSchoolSemester}`
+    );
+    const courses = courseRes.data;
+    setCoursesAssignedTo(courses);
+
+    if (courses.length === 0) {
+      setSectionsHandle([]);
+      setStudents([]);
+      setSnack({ open: true, message: "No courses found for this period.", severity: "info" });
+      return;
+    }
+
+    // 2️⃣ Choose first course if none selected
+    const courseId = selectedCourse || courses[0].course_id;
+    setSelectedCourse(courseId);
+
+    // 3️⃣ Fetch sections for the selected course
+    const sectionRes = await axios.get(
+      `${API_BASE_URL}/handle_section_of/${userID}/${courseId}/${selectedActiveSchoolYear}`
+    );
+    const sections = sectionRes.data;
+    setSectionsHandle(sections);
+
+    if (sections.length === 0) {
+      setStudents([]);
+      setSnack({ open: true, message: "No sections found for this course.", severity: "info" });
+      return;
+    }
+
+    // 4️⃣ Choose first section if none selected
+    const sectionId = selectedSectionID || sections[0].department_section_id;
+    setSelectedSectionID(sectionId);
+
+    // 5️⃣ Fetch students for this section
+    handleFetchStudents(sectionId);
+
+  } catch (err) {
+    console.error("Error fetching past class data:", err);
+    setSnack({ open: true, message: "Failed to fetch data.", severity: "error" });
+  }
+};
+
   const gradeStats = filteredStudents.reduce(
     (acc, student) => {
       switch (student.en_remarks) {
@@ -295,6 +350,16 @@ const GradingSheet = () => {
     "INC",
     "DRP",
   ];
+
+  const hasGrades = students?.some(s => {
+    const mid = Number(s.midterm);
+    const fin = Number(s.finals);
+
+    return (
+      !isNaN(mid) && mid !== 0 &&
+      !isNaN(fin) && fin !== 0
+    );
+  });
 
   const exportToExcel = () => {
     if (!students || students.length === 0) {
@@ -811,6 +876,96 @@ const GradingSheet = () => {
     setStudents(sorted);
   };
 
+  const handleSaveAll = async () => {
+    if (students.length === 0) {
+      setSnack({
+        open: true,
+        message: "No students to save!",
+        severity: "warning",
+      });
+      return;
+    }
+
+    setLoading(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      // Use Promise.all to send requests in parallel
+      // We use 'students' to ensure ALL grades in the section are saved, not just filtered ones
+      const promises = students.map(async (student) => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/add_grades`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              midterm: student.midterm,
+              finals: student.finals,
+              final_grade: student.final_grade,
+              en_remarks: student.en_remarks,
+              student_number: student.student_number,
+              subject_id: selectedCourse,
+            })
+          });
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+        }
+      });
+
+      await Promise.all(promises);
+
+      // Audit Log
+      try {
+          const page_name = "Grading Sheet";
+          const fullName = `${profData.lname}, ${profData.fname} ${profData.mname}`;
+          const type = "submit"
+
+          await axios.post(`${API_BASE_URL}/insert-logs/faculty/${profData.prof_id}`, {
+            message: `User #${profData.prof_id} - ${fullName} executed Save All in ${page_name}. Success: ${successCount}, Failed: ${failCount}`, type: type,
+          });
+
+        } catch (err) {
+          console.error("Error inserting audit log");
+        }
+
+      if (failCount === 0) {
+        setSnack({
+          open: true,
+          message: "All grades saved successfully!",
+          severity: "success",
+        });
+      } else if (successCount === 0) {
+         setSnack({
+          open: true,
+          message: "Failed to save grades.",
+          severity: "error",
+        });
+      } else {
+        setSnack({
+          open: true,
+          message: `Saved ${successCount} students. Failed ${failCount}.`,
+          severity: "warning",
+        });
+      }
+
+    } catch (error) {
+      console.error("Error saving all grades:", error);
+      setSnack({
+        open: true,
+        message: "An error occurred while saving grades.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const divToPrintRef = useRef();
 
   const printDiv = () => {
@@ -1031,48 +1186,48 @@ const GradingSheet = () => {
                       Prev
                     </Button>
 
-                    {/* Page Dropdown */}
-                    <FormControl size="small" sx={{ minWidth: 80 }}>
-                      <Select
-                        value={currentPage}
-                        onChange={(e) => setCurrentPage(Number(e.target.value))}
-                        displayEmpty
-                        sx={{
-                          fontSize: '12px',
-                          height: 36,
-                          color: 'white',
-                          border: '1px solid white',
-                          backgroundColor: 'transparent',
-                          '.MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'white',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'white',
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'white',
-                          },
-                          '& svg': {
-                            color: 'white', // dropdown arrow icon color
-                          }
-                        }}
-                        MenuProps={{
-                          PaperProps: {
-                            sx: {
-                              maxHeight: 200,
-                              backgroundColor: '#fff', // dropdown background
+                    {totalPages > 0 && (
+                      <FormControl size="small" sx={{ minWidth: 80 }}>
+                        <Select
+                          value={currentPage}
+                          onChange={(e) => setCurrentPage(Number(e.target.value))}
+                          displayEmpty
+                          sx={{
+                            fontSize: '12px',
+                            height: 36,
+                            color: 'white',
+                            border: '1px solid white',
+                            backgroundColor: 'transparent',
+                            '.MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'white',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'white',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'white',
+                            },
+                            '& svg': {
+                              color: 'white', // dropdown arrow icon color
                             }
-                          }
-                        }}
-                      >
-                        {Array.from({ length: totalPages }, (_, i) => (
-                          <MenuItem key={i + 1} value={i + 1}>
-                            Page {i + 1}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
+                          }}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                maxHeight: 200,
+                                backgroundColor: '#fff', // dropdown background
+                              }
+                            }
+                          }}
+                        >
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <MenuItem key={i + 1} value={i + 1}>
+                              Page {i + 1}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
                     <Typography fontSize="11px" color="white">
                       {totalPages} page{totalPages > 1 ? 's' : ''}
                     </Typography>
@@ -1126,8 +1281,117 @@ const GradingSheet = () => {
                     >
                       Last
                     </Button>
+                    
                     <Button
                       onClick={handleSort}
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        minWidth: 100,
+                        color: "white",
+                        borderColor: "white",
+                        backgroundColor: "transparent",
+                        '&:hover': {
+                          borderColor: 'white',
+                          backgroundColor: 'rgba(65, 64, 64, 0.1)',
+                        },
+                      }}
+                    >
+                      Sort: {sortOrder === "asc" ? "A–Z" : "Z–A"}
+                    </Button>
+                    
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <Select
+                        value={selectedSchoolYear}
+                        onChange={(e) => setSelectedSchoolYear(e.target.value)}
+                        displayEmpty
+                        sx={{
+                          fontSize: "12px",
+                          height: 36,
+                          color: "white",
+                          border: "1px solid white",
+                          backgroundColor: "transparent",
+                          ".MuiOutlinedInput-notchedOutline": {
+                            borderColor: "white",
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "white",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "white",
+                          },
+                          "& svg": { color: "white" }
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              maxHeight: 200,
+                              backgroundColor: "#fff",
+                            },
+                          },
+                        }}
+                      >
+                        {/* Placeholder */}
+                        <MenuItem value="" disabled>
+                          Select School Year
+                        </MenuItem>
+
+                        {/* Loop through school years */}
+                        {schoolYears.map((yearObj) => (
+                          <MenuItem 
+                            key={yearObj.year_id}
+                            value={yearObj.year_id}
+                          >
+                            {yearObj.current_year} - {yearObj.next_year}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <Select
+                        value={selectedSchoolSemester}
+                        onChange={(e) => setSelectedSchoolSemester(e.target.value)}
+                        displayEmpty
+                        sx={{
+                          fontSize: "12px",
+                          height: 36,
+                          color: "white",
+                          border: "1px solid white",
+                          backgroundColor: "transparent",
+                          ".MuiOutlinedInput-notchedOutline": { borderColor: "white" },
+                          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "white" },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "white" },
+                          "& svg": { color: "white" }
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: { 
+                              maxHeight: 200, 
+                              backgroundColor: "#fff"
+                            },
+                          },
+                        }}
+                      >
+                        {/* Placeholder */}
+                        <MenuItem value="" disabled>
+                          Select Semester
+                        </MenuItem>
+
+                        {/* Loop through semester list */}
+                        {schoolSemester.map((sem) => (
+                          <MenuItem 
+                            key={sem.semester_id} 
+                            value={sem.semester_id}
+                          >
+                            {sem.semester_description}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <Button
+                      onClick={findPastClass}
                       variant="outlined"
                       size="small"
                       sx={{
@@ -1141,7 +1405,7 @@ const GradingSheet = () => {
                         },
                       }}
                     >
-                      Sort: {sortOrder === "asc" ? "A–Z" : "Z–A"}
+                      FIND LAST GRADE
                     </Button>
                   </Box>
                 </Box>
@@ -1261,9 +1525,22 @@ const GradingSheet = () => {
               </Box>
             </Box>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-              <Typography style={{width: "230px", fontSize: "13px"}}>
-                Export GradeSheet:
-              </Typography>
+               <button
+                onClick={handleSaveAll}
+                style={{
+                  width: "230px",
+                  padding: "10px",
+                  background: "maroon",
+                  color: "white",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  border: "none"
+                }}
+              >
+                Save All
+              </button>
               <button
                 onClick={exportToExcel}
                 style={{
@@ -1278,7 +1555,7 @@ const GradingSheet = () => {
                   border: "none"
                 }}
               >
-                Export XLSX
+                {hasGrades ? "Export File" : "Download Template"}
               </button>
             </Box>
           </Box>
