@@ -221,7 +221,7 @@ const StudentNumbering = () => {
                 setAuthError("❌ Invalid password.");
             }
         } catch (err) {
-            setAuthError("Server error. Try again.");
+            setAuthError("Invalid Password please try Again");
         }
     };
 
@@ -455,7 +455,7 @@ const StudentNumbering = () => {
                 }
             });
         } catch (err) {
-            setError("Server error. Try again.");
+          setAuthError("Invalid Password please try Again");
         }
     };
 

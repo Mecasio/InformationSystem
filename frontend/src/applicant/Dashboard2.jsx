@@ -861,7 +861,7 @@ const Dashboard2 = (props) => {
                         value={person.father_middle_name || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.father_middle_name} helperText={errors.father_middle_name ? "This field is required." : ""}
+
                       />
                     </Box>
                     <Box sx={{ flex: 1 }}>
@@ -886,9 +886,7 @@ const Dashboard2 = (props) => {
                           <MenuItem value="IV">IV</MenuItem>
                           <MenuItem value="V">V</MenuItem>
                         </Select>
-                        {errors.father_ext && (
-                          <FormHelperText>This field is required.</FormHelperText>
-                        )}
+
                       </FormControl>
                     </Box>
 
@@ -903,7 +901,7 @@ const Dashboard2 = (props) => {
                         value={person.father_nickname || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.father_nickname} helperText={errors.father_nickname ? "This field is required." : ""}
+
                       />
                     </Box>
                   </Box>
@@ -1011,7 +1009,18 @@ const Dashboard2 = (props) => {
                       </Box>
 
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle2" mb={1}>Father School Address</Typography>
+                        <Typography
+                          variant="subtitle2"
+                          mb={1.8}
+                          sx={{
+                            fontSize: "10px",
+                            whiteSpace: "nowrap",   // 👉 never wraps
+                            overflow: "hidden",
+                            textOverflow: "ellipsis" // 👉 adds "..."
+                          }}
+                        >
+                          School Full Address (St/ Brgy / City)
+                        </Typography>
                         <TextField
                           fullWidth
                           size="small"
@@ -1103,19 +1112,21 @@ const Dashboard2 = (props) => {
                     {/* Father Income */}
                     <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Father Income</Typography>
+
                       <TextField
                         fullWidth
                         size="small"
                         required
+                        type="number"
                         name="father_income"
                         placeholder="Enter Father Income"
-                        value={person.father_income || ""}
+                        value={person.father_income ?? ""}
                         onChange={(e) => {
-                          const onlyNumbers = e.target.value.replace(/\D/g, ""); // numbers only
+                          const num = e.target.value === "" ? null : Number(e.target.value);
                           handleChange({
                             target: {
                               name: "father_income",
-                              value: onlyNumbers,
+                              value: num,
                             },
                           });
                         }}
@@ -1124,6 +1135,7 @@ const Dashboard2 = (props) => {
                         helperText={errors.father_income ? "This field is required." : ""}
                       />
                     </Box>
+
                     {/* Father Email */}
 
                   </Box>
@@ -1153,8 +1165,7 @@ const Dashboard2 = (props) => {
                         });
                         handleUpdate(person);
                       }}
-                      error={errors.father_email}
-                      helperText={errors.father_email ? "Please enter a valid email address." : ""}
+
                     />
                   </Box>
 
@@ -1241,8 +1252,7 @@ const Dashboard2 = (props) => {
                         value={person.mother_middle_name || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.mother_middle_name}
-                        helperText={errors.mother_middle_name ? "This field is required." : ""}
+
                       />
                     </Box>
 
@@ -1285,8 +1295,7 @@ const Dashboard2 = (props) => {
                         value={person.mother_nickname || ""}
                         onChange={handleChange}
                         onBlur={() => handleUpdate(person)}
-                        error={errors.mother_nickname}
-                        helperText={errors.mother_nickname ? "This field is required." : ""}
+
                       />
                     </Box>
                   </Box>
@@ -1331,7 +1340,7 @@ const Dashboard2 = (props) => {
 
                   {/* Mother Educational Details (conditionally rendered) */}
                   {person.mother_education !== 1 && (
-                    <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'nowrap' }}>
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle2" mb={1}>Educational Attainment</Typography>
                         <TextField
@@ -1393,7 +1402,19 @@ const Dashboard2 = (props) => {
                       </Box>
 
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle2" mb={1}>Mother School Address</Typography>
+                        <Typography
+                          variant="subtitle2"
+                          mb={1.8}
+                          sx={{
+                            fontSize: "10px",
+                            whiteSpace: "nowrap",   // 👉 never wraps
+                            overflow: "hidden",
+                            textOverflow: "ellipsis" // 👉 adds "..."
+                          }}
+                        >
+                          School Full Address (St/ Brgy / City)
+                        </Typography>
+
                         <TextField
                           fullWidth
                           size="small"
@@ -1407,6 +1428,7 @@ const Dashboard2 = (props) => {
                         />
                       </Box>
                     </Box>
+
                   )}
 
                   <Typography sx={{ fontSize: '20px', color: '#6D2323', fontWeight: 'bold', mt: 3 }}>
@@ -1484,19 +1506,21 @@ const Dashboard2 = (props) => {
                     {/* Mother Income */}
                     <Box flex={1}>
                       <Typography variant="subtitle2" mb={0.5}>Mother Income</Typography>
+
                       <TextField
                         fullWidth
                         size="small"
                         required
+                        type="number"
                         name="mother_income"
                         placeholder="Enter Mother Income"
-                        value={person.mother_income || ""}
+                        value={person.mother_income ?? ""}
                         onChange={(e) => {
-                          const onlyNumbers = e.target.value.replace(/\D/g, ""); // numbers only
+                          const num = e.target.value === "" ? null : Number(e.target.value);
                           handleChange({
                             target: {
                               name: "mother_income",
-                              value: onlyNumbers,
+                              value: num,
                             },
                           });
                         }}
@@ -1505,6 +1529,7 @@ const Dashboard2 = (props) => {
                         helperText={errors.mother_income ? "This field is required." : ""}
                       />
                     </Box>
+
                     {/* Mother Email */}
 
                   </Box>
@@ -1535,8 +1560,7 @@ const Dashboard2 = (props) => {
 
                         handleUpdate(person);
                       }}
-                      error={errors.mother_email}
-                      helperText={errors.mother_email ? "Please enter a valid email address." : ""}
+
                     />
                   </Box>
 
@@ -1634,8 +1658,8 @@ const Dashboard2 = (props) => {
                   value={person.guardian_middle_name || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-           
-  
+
+
                 />
               </Box>
 

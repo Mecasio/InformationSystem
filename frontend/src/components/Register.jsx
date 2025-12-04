@@ -122,10 +122,14 @@ const Register = () => {
 
   };
 
-
+  useEffect(() => {
+    if (showOtpModal && otpInputRef.current) {
+      otpInputRef.current.focus(); // Automatically focuses input
+    }
+  }, [showOtpModal]);
 
   const startResendTimer = () => {
-    setResendTimer(60);
+    setResendTimer(120);
     const interval = setInterval(() => {
       setResendTimer((prev) => {
         if (prev <= 1) {
@@ -471,14 +475,13 @@ const Register = () => {
               </small>
             </h2>
 
-
             <TextField
               fullWidth
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               placeholder="Enter OTP"
               inputRef={otpInputRef}
-              onKeyDown={handleKeyDownOtp}
+              onKeyDown={handleKeyDownOtp} // Submit on Enter
               inputProps={{
                 maxLength: 6,
                 style: { textAlign: "center", fontSize: "18px" },
@@ -519,6 +522,7 @@ const Register = () => {
             </button>
           </Box>
         </Modal>
+
 
 
         {/* Snackbar Notification */}

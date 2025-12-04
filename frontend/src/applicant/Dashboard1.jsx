@@ -1029,16 +1029,30 @@ const Dashboard1 = (props) => {
             <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>Personal Information:</Typography>
             <hr style={{ border: "1px solid #ccc", width: "100%" }} />
             <br />
-
             <div className="flex items-center mb-4 gap-4">
               <label className="w-40 font-medium">Campus:</label>
-              <FormControl fullWidth size="small" required error={!!errors.campus} className="mb-4">
+
+              <FormControl
+                fullWidth
+                size="small"
+                required
+                error={!!errors.campus}
+                className="mb-4"
+              >
                 <Select
                   id="campus-select"
                   name="campus"
-                  value={person.campus == null ? "" : String(person.campus)}
+                  value={
+                    person.campus === null ||
+                      person.campus === "" ||
+                      person.campus === undefined ||
+                      person.campus === 0
+                      ? ""
+                      : String(person.campus)
+                  }
                   onChange={(e) => {
                     const val = e.target.value;
+
                     handleChange({
                       target: {
                         name: "campus",
@@ -1066,8 +1080,8 @@ const Dashboard1 = (props) => {
                   <FormHelperText>This field is required.</FormHelperText>
                 )}
               </FormControl>
-
             </div>
+
 
 
 

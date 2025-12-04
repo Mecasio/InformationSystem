@@ -330,42 +330,42 @@ const [saveDialogOpen, setSaveDialogOpen] = useState(false);
             >
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                    <TableCell sx={{ fontWeight: 700 }}>Scale</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Qualitative Description</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Operational Definition</TableCell>
+                  <TableRow sx={{  backgroundColor: settings?.header_color || "#1976d2", color: "white", border: "2px solid black" }}>
+                    <TableCell sx={{ fontWeight: 700 , color: "white",  border: "2px solid black"}}>Scale</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "white",  border: "2px solid black"}}>Qualitative Description</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "white",  border: "2px solid black"}}>Operational Definition</TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-                  <TableRow>
+                  <TableRow sx={{border: "2px solid black"}}>
                     <TableCell sx={{ fontWeight: 600 }}>5</TableCell>
-                    <TableCell>Always manifested</TableCell>
-                    <TableCell>Evident in nearly all relevant situations (91–100%).</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Always manifested</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Evident in nearly all relevant situations (91–100%).</TableCell>
                   </TableRow>
 
-                  <TableRow>
+                  <TableRow sx={{border: "2px solid black"}}>
                     <TableCell sx={{ fontWeight: 600 }}>4</TableCell>
-                    <TableCell>Often manifested</TableCell>
-                    <TableCell>Evident most of the time (61–90%).</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Often manifested</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Evident most of the time (61–90%).</TableCell>
                   </TableRow>
 
-                  <TableRow>
+                  <TableRow sx={{border: "2px solid black"}}>
                     <TableCell sx={{ fontWeight: 600 }}>3</TableCell>
-                    <TableCell>Sometimes manifested</TableCell>
-                    <TableCell>Evident about half the time (31–60%).</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Sometimes manifested</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Evident about half the time (31–60%).</TableCell>
                   </TableRow>
 
-                  <TableRow>
+                  <TableRow sx={{border: "2px solid black"}}>
                     <TableCell sx={{ fontWeight: 600 }}>2</TableCell>
-                    <TableCell>Seldom manifested</TableCell>
-                    <TableCell>Rarely evident (11–30%).</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Seldom manifested</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Rarely evident (11–30%).</TableCell>
                   </TableRow>
 
-                  <TableRow>
+                  <TableRow sx={{border: "2px solid black"}}>
                     <TableCell sx={{ fontWeight: 600 }}>1</TableCell>
-                    <TableCell>Never manifested</TableCell>
-                    <TableCell>Almost never evident (0–10%).</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Never manifested</TableCell>
+                    <TableCell sx={{border: "2px solid black"}}>Almost never evident (0–10%).</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

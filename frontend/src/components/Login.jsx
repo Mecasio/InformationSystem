@@ -197,8 +197,8 @@ const Login = ({ setIsAuthenticated }) => {
 
                 }}
               >
-                <option value="user">Student / Faculty / Registrar</option>
-                <option value="applicant">Applicant</option>
+                <option sx={{ border: "2px solid black" }} value="user">Student / Faculty / Registrar</option>
+                <option sx={{ border: "2px solid black" }} value="applicant">Applicant</option>
               </select>
 
               <PersonIcon

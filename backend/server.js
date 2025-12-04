@@ -488,6 +488,7 @@ app.post(
 //----------------------------End Settings----------------------------//
 
 /*---------------------------------START---------------------------------------*/
+  const ipAddress = getDbHost();
 // ----------------- REGISTER -----------------
 app.post("/register", async (req, res) => {
   const { email, password, campus, otp } = req.body;
@@ -594,8 +595,8 @@ app.post("/register", async (req, res) => {
     );
 
     // QR Codes
-    const qrData = `http://localhost:5173/examination_profile/${applicant_number}`;
-    const qrData2 = `http://localhost:5173/applicant_profile/${applicant_number}`;
+    const qrData = `${ipAddress}/examination_profile/${applicant_number}`;
+    const qrData2 = `${ipAddress}/applicant_profile/${applicant_number}`;
     const qrFilename = `${applicant_number}_qrcode.png`;
     const qrFilename2 = `${applicant_number}_qrcode2.png`;
     const qrPath = path.join(__dirname, "uploads", qrFilename);
@@ -3499,11 +3500,13 @@ app.put("/api/interview_applicants/assign-custom", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 app.get("/api/applicants-with-number", async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT 
         p.person_id,
+        p.emailAddress,
         p.campus,
         p.first_name,
         p.middle_name,
@@ -3515,7 +3518,7 @@ app.get("/api/applicants-with-number", async (req, res) => {
         p.generalAverage1,
         p.created_at,
         ia.status AS interview_status,
-
+        ia.action,
         -- Exam scores
         e.English AS english,
         e.Science AS science,
@@ -4815,7 +4818,7 @@ app.post("/login", async (req, res) => {
         accessList,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn: "1h" }
     );
 
     // ======================================
@@ -5042,7 +5045,7 @@ app.post("/login_applicant", async (req, res) => {
       );
 
       // Generate QR code
-      const qrData = `http://localhost:5173/examination_profile/${applicantNumber}`;
+      const qrData = `${ipAddress}/examination_profile/${applicantNumber}`;
       qrFilename = `${applicantNumber}_qrcode.png`;
       const qrPath = path.join(__dirname, "uploads", qrFilename);
 
@@ -5066,7 +5069,7 @@ app.post("/login_applicant", async (req, res) => {
     const token = webtoken.sign(
       { person_id: user.person_id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn: "1h" }
     );
 
     res.json({
@@ -6441,7 +6444,7 @@ Your temporary password is: ${tempPassword}
 You may change your password and keep it secure.
 
 👉 Click the link below to log in:
-http://localhost:5173/login
+${ipAddress}/login
 `.trim(),
       };
 
@@ -6588,8 +6591,6 @@ app.get("/api/interview/applicants-with-number", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch interview applicants" });
   }
 });
-
-// ================== INTERVIEW APPLICANTS API ==================
 
 // ================== INTERVIEW APPLICANTS API ==================
 
@@ -6989,22 +6990,22 @@ io.on("connection", (socket) => {
       // 🔹 Fetch applicants linked to the interview schedule
       const [rows] = await db.query(
         `SELECT 
-          ia.schedule_id,
-          s.day_description,
-          s.building_description,
-          s.room_description,
-          s.start_time,
-          s.end_time,
-          an.applicant_number,
-          p.person_id,
-          p.first_name,
-          p.last_name,
-          p.emailAddress
-        FROM interview_applicants ia
-        JOIN interview_exam_schedule s ON ia.schedule_id = s.schedule_id
-        JOIN applicant_numbering_table an ON ia.applicant_id = an.applicant_number
-        JOIN person_table p ON an.person_id = p.person_id
-        WHERE ia.schedule_id = ? AND an.applicant_number IN (?)`,
+  ia.schedule_id,
+  s.day_description,
+  s.building_description,
+  s.room_description,
+  s.start_time,
+  s.end_time,
+  an.applicant_number,
+  p.person_id,
+  p.first_name,
+  p.last_name,
+  p.emailAddress
+FROM interview_applicants ia
+JOIN interview_exam_schedule s ON ia.schedule_id = s.schedule_id
+JOIN applicant_numbering_table an ON ia.applicant_id = an.applicant_number
+JOIN person_table p ON an.person_id = p.person_id
+WHERE ia.schedule_id = ? AND an.applicant_number IN (?)`,
         [schedule_id, applicant_numbers]
       );
 
@@ -7556,7 +7557,7 @@ Please log in to your Applicant Form Dashboard, click on your Exam Permit, and p
 This printed permit must be presented to your proctor on the exam day to verify your eligibility.
 
 ⚠️ Important Reminders:
-- Arrive at least 30 minutes before your scheduled exam.  
+- Arrive at least 1 hour before your scheduled exam.  
 - Bring your printed exam permit, a valid ID, your own pen, and all required documents.  
 - Wear a plain white t-shirt on the exam day.  
 
@@ -10318,7 +10319,7 @@ app.post("/student-tagging", async (req, res) => {
         extension: student.extension,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn: "1h" }
     );
 
     console.log("Search response:", {

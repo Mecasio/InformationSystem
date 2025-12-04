@@ -1139,7 +1139,7 @@ th, td {
                                 />
                             </FormControl>
 
-                            <div style={{ position: "relative", zIndex: 999999 }}>
+                            <div style={{ position: "relative" }}>
                                 <button
                                     onClick={() => {
                                         window.location.href = `${API_BASE_URL}/ecat_scores_template`;

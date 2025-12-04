@@ -90,6 +90,8 @@ const ApplicantDashboard = (props) => {
     profile_img: "",
   });
   const [proctor, setProctor] = useState(null);
+  const [applicantNumber, setApplicantNumber] = useState(null);
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem("email");
@@ -311,6 +313,7 @@ const ApplicantDashboard = (props) => {
     year: "numeric",
   });
 
+  /* ---------------- Step 2: Entrance Exam ---------------- */
   const [examScores, setExamScores] = useState({
     english: null,
     science: null,
@@ -323,6 +326,7 @@ const ApplicantDashboard = (props) => {
 
   const fetchEntranceExamScores = async (applicantNumber) => {
     if (!applicantNumber) return;
+
     try {
       const res = await axios.get(`${API_BASE_URL}/api/applicants-with-number`);
       const applicant = res.data.find(a => a.applicant_number === applicantNumber);
@@ -338,7 +342,7 @@ const ApplicantDashboard = (props) => {
           ? Number(applicant.final_rating)
           : (english + science + filipino + math + abstract) / 5;
 
-        const status = applicant.exam_status || null;   // 👈 FIXED
+        const status = applicant.exam_status || null;
 
         setExamScores({
           english,
@@ -364,8 +368,6 @@ const ApplicantDashboard = (props) => {
       console.error("❌ Failed to fetch entrance exam scores:", err);
     }
   };
-
-
 
 
   const hasScores = examScores.english !== null &&
@@ -411,6 +413,13 @@ const ApplicantDashboard = (props) => {
       setInterviewSchedule(null);
     }
   };
+
+  useEffect(() => {
+    if (applicantNumber) {
+      fetchEntranceExamScores(applicantNumber);
+    }
+  }, [applicantNumber]);
+
 
   const [collegeApproval, setCollegeApproval] = useState(null);
 
@@ -473,25 +482,39 @@ const ApplicantDashboard = (props) => {
   };
 
   const getCurrentStep = () => {
-    // ✅ Step 6 – Final status reached
+    // STEP 6 – Final status reached
     if (person?.final_status === "Accepted" || person?.final_status === "Rejected") return 5;
 
-    // ✅ Step 5 – Medical submitted
+    // STEP 5 – Medical submitted
     if (medicalUploads.length > 0) return 4;
 
-    // ✅ Step 4 – College approval received
+    // STEP 4 – College approval received
     if (collegeApproval === "Accepted" || collegeApproval === "Rejected") return 3;
 
-    // ✅ Step 3 – Interview scheduled or scored
-    if (interviewSchedule || hasInterviewScores) return 2;
+    // STEP 3 – Interview step: requires schedule AND scores with actual values
+    if (
+      interviewSchedule &&
+      interviewSchedule.day_description &&
+      interviewSchedule.start_time &&
+      interviewSchedule.end_time &&
+      hasInterviewScores &&
+      typeof qualifyingInterviewScore === "number"
+    ) return 2;
 
-    // ✅ Step 2 – Exam scheduled or scored
-    if (hasSchedule || hasScores) return 1;
+    // STEP 2 – Exam step: requires schedule AND scores AND status
+    if (
+      hasSchedule &&
+      hasSchedule.day_description &&
+      hasSchedule.start_time &&
+      hasSchedule.end_time &&
+      hasScores &&
+      examScores?.status
+    ) return 1;
 
-    // ✅ Step 1 – Documents verified
+    // STEP 1 – Documents verified
     if (person?.document_status === "Documents Verified & ECAT") return 0;
 
-    // ✅ Default – Documents submitted (registration done but no verification yet)
+    // Default
     return 0;
   };
 
@@ -973,7 +996,7 @@ const ApplicantDashboard = (props) => {
                       >
                         <Typography
                           variant="subtitle2"
-                          sx={{ color: "maroon", fontWeight: "bold" }}
+                          sx={{ color: mainButtonColor, fontWeight: "bold" }}
                         >
                           {a.title}
                         </Typography>
@@ -1271,7 +1294,7 @@ const ApplicantDashboard = (props) => {
                 right: "calc(50% + 30px)",
               },
               "& .MuiStepConnector-line": {
-                borderColor: "#6D2323",   // maroon line
+                backgroundColor: mainButtonColor,
                 borderTopWidth: 3,
                 borderRadius: 8,
 
@@ -1279,7 +1302,8 @@ const ApplicantDashboard = (props) => {
             }}
           >
             {steps.map((label, index) => (
-              <Step key={index} completed={index <= activeStep}>
+              <Step key={index} completed={index < activeStep}>
+
                 <StepLabel
                   StepIconComponent={(stepProps) => {
                     const icons = [
@@ -1300,20 +1324,19 @@ const ApplicantDashboard = (props) => {
                           width: 60,
                           height: 60,
                           borderRadius: "50%",
-                          backgroundColor: isActive ? mainButtonColor : isCompleted ? mainButtonColor : "#E8C999",
-
+                          backgroundColor: isActive || isCompleted ? mainButtonColor : "#E8C999",
                           border: `2px solid ${borderColor}`,
                           display: "flex",
-
                           alignItems: "center",
                           justifyContent: "center",
                           margin: "0 auto",
                         }}
                       >
                         {React.cloneElement(icons[index], {
-                          sx: { color: isActive || isCompleted ? "white" : "#6D2323", fontSize: 30 },
+                          sx: { color: isActive || isCompleted ? "white" : mainButtonColor, fontSize: 30 },
                         })}
                       </Box>
+
                     );
                   }}
                 >
@@ -1390,11 +1413,15 @@ const ApplicantDashboard = (props) => {
                   )}
 
 
-                  {/* Step 2: Entrance Exam */}
+
                   {index === 1 && (
                     <>
-                      {!hasSchedule && !hasScores && "⏳ Status: Pending"}
+                      {/* Pending Status */}
+                      {!hasSchedule && !hasScores && (
+                        <span>⏳ Status: Pending</span>
+                      )}
 
+                      {/* Scheduled Exam Info */}
                       {hasSchedule && (
                         <>
                           📅 Date: {formatDate(proctor?.day_description)} <br />
@@ -1403,30 +1430,26 @@ const ApplicantDashboard = (props) => {
                           ⏰ Time: {formatTime(proctor?.start_time)} – {formatTime(proctor?.end_time)}
                         </>
                       )}
-                      <br />
-                      <Divider
-                        sx={{
-                          backgroundColor: "gray",
-                          height: "0.5px",
-                          my: 2,
-                          borderRadius: 1,
-                        }}
-                      />
 
+                      <br />
+                      <Divider sx={{ backgroundColor: "gray", height: "0.5px", my: 2, borderRadius: 1 }} />
+
+                      {/* Exam Status */}
                       {hasScores && (
                         <>
-                        
                           🎯 <b>Entrance Examination Status:
-                            {examScores.status === "PASSED" ?
-                              <span style={{ color: "green" }}> PASSED </span> :
+                            {examScores.status === "PASSED" ? (
+                              <span style={{ color: "green" }}> PASSED </span>
+                            ) : examScores.status === "FAILED" ? (
                               <span style={{ color: "red" }}> FAILED </span>
-                            }
+                            ) : (
+                              <span> Pending </span>
+                            )}
                           </b>
                         </>
                       )}
                     </>
                   )}
-
                   {/* Step 3: Interview */}
                   {index === 2 && (
                     <>

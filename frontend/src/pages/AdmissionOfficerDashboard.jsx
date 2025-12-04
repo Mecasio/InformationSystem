@@ -18,7 +18,7 @@ import {
   Avatar,
 } from "@mui/material";
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Legend, PieChart, Pie } from "recharts";
 import { Tooltip } from "recharts";
 import MuiTooltip from "@mui/material/Tooltip";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
@@ -159,6 +159,31 @@ const AdmissionOfficerDashboard = ({ profileImage, setProfileImage }) => {
     program: "",
     created_at: ""
   });
+
+  const [pieData, setPieData] = useState([]);
+
+    useEffect(() => {
+      axios
+        .get(`${API_BASE_URL}/year_table/`)
+        .then((res) => setYears(res.data))
+        .catch((err) => console.error(err));
+    }, [])
+  
+    useEffect(() => {
+      axios.get(`${API_BASE_URL}/api/ecat-summary`)
+        .then((res) => {
+          console.log("count", res.data);
+          const d = res.data[0];
+          setPieData([
+            { name: "Applied", value: 236 },
+            { name: "Scheduled", value: 16 },
+            { name: "Pending", value: 220 },
+            { name: "Finished", value: 215 },
+          ]);
+        })
+        .catch((err) => console.error(err));
+    }, []);
+  
   const [selectedApplicantStatus, setSelectedApplicantStatus] = useState("");
 
   const [applicants, setApplicants] = useState([]);
@@ -659,14 +684,14 @@ const AdmissionOfficerDashboard = ({ profileImage, setProfileImage }) => {
 
   const [scheduledCount, setScheduledCount] = useState(0);
 
-useEffect(() => {
-  axios.get(`http://localhost:5000/api/get-scheduled-applicants`)
-    .then(res => {
-      console.log("Scheduled applicants response:", res.data);
-      setScheduledCount(res.data.total); // Use the total
-    })
-    .catch(err => console.error("Axios error:", err));
-}, []);
+  useEffect(() => {
+    axios.get(`http://localhost:5000/api/get-scheduled-applicants`)
+      .then(res => {
+        console.log("Scheduled applicants response:", res.data);
+        setScheduledCount(res.data.total); // Use the total
+      })
+      .catch(err => console.error("Axios error:", err));
+  }, []);
 
 
   const [completedExam, setCompletedExam] = React.useState(0);
@@ -819,7 +844,7 @@ useEffect(() => {
           <Card
             sx={{
               width: 400,
-              height: 280,
+              height: 400,
               marginTop: 2.5,
               marginLeft: 1.1,
               border: `2px solid ${borderColor}`,
@@ -839,80 +864,53 @@ useEffect(() => {
               ECAT Monitoring Panel
             </Typography>
 
-            <Grid container spacing={1} sx={{ px: 1 }}>
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    p: 1,
-                    background: "#f5f7fa",
-                    border: "2px solid black",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography fontWeight={600}>Registered Applicants:</Typography>
-                  <Typography>{totalApplicants}</Typography>
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    p: 1,
-                    background: "#f5f7fa",
-                    border: "2px solid black",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography fontWeight={600}>Scheduled Applicants:</Typography>
-      <Typography>{scheduledCount}</Typography>
-
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    p: 1,
-                    border: "2px solid black",
-                    background: "#f5f7fa",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography fontWeight={600}>Pending Schedule:</Typography>
-                  <Typography>{pendingScheduleApplicants.length}</Typography>
-
-                </Box>
-
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    p: 1,
-                    background: "#f5f7fa",
-                    border: "2px solid black",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Typography fontWeight={600}>Completed Exam:</Typography>
-                  <Typography>{completedExam}</Typography>
-                </Box>
-
-              </Grid>
-            </Grid>
+            <Box
+              sx={{
+                flexGrow: 1,
+                background: "#f1f3f4",
+                border: "2px solid black",
+                borderRadius: 3,
+                border: "1px dashed #bfc4cc",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                fontSize: 14,
+                color: "#6c6c6c",
+                height: 300,
+              }}
+            >
+              {pieData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={110}
+                      label
+                    >
+                      {pieData.map((_, i) => (
+                        <Cell
+                          key={i}
+                          fill={["#0088FE", "#00C49F", "#FFBB28", "#FF8042"][i]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <Typography>Loading chart...</Typography>
+              )}
+            </Box>
           </Card>
           <Card
             sx={{
               width: 400,
-              height: 350,
+              height: 230,
               marginTop: 2.5,
               marginLeft: 1.1,
               border: `2px solid ${borderColor}`,
@@ -939,14 +937,14 @@ useEffect(() => {
                 display: "flex",
                 flexDirection: "column",
                 gap: 2,
-                px: 4,
-                mt: 2,
+                px: 2,
+                
               }}
             >
               <Button
                 variant="contained"
                 fullWidth
-                sx={{ textTransform: "none", py: 1.5, fontSize: "18px", height: "60px", border: `2px solid ${borderColor}`, background: mainButtonColor }}
+                sx={{ textTransform: "none", py: 1.5, fontSize: "18px", height: "50px", border: `2px solid ${borderColor}`, background: mainButtonColor }}
                 onClick={() => {
                   window.location.href = "/applicant_list_admin";
                 }}
@@ -954,20 +952,11 @@ useEffect(() => {
                 Applicant List
               </Button>
 
+           
               <Button
                 variant="contained"
                 fullWidth
-                sx={{ textTransform: "none", py: 1.5, fontSize: "18px", height: "60px", border: `2px solid ${borderColor}`, background: mainButtonColor }}
-                onClick={() => {
-                  window.location.href = "/announcement_for_admission";
-                }}
-              >
-                Announcement
-              </Button>
-              <Button
-                variant="contained"
-                fullWidth
-                sx={{ textTransform: "none", py: 1.5, fontSize: "18px", height: "60px", background: mainButtonColor, border: `2px solid ${borderColor}`, }}
+                sx={{ textTransform: "none", py: 1.5, fontSize: "18px", height: "50px", background: mainButtonColor, border: `2px solid ${borderColor}`, }}
                 onClick={() => {
                   window.location.href = "/room_registration";
                 }}

@@ -985,7 +985,7 @@ const SuperAdminStudentDashboard1 = () => {
             >
 
                 {/* LEFT SIDE — Download Template */}
-                <div style={{ position: "relative", zIndex: 999999 }}>
+                <div style={{ position: "relative"}}>
                     <button
                         onClick={() => {
                             window.location.href = `${API_BASE_URL}/student_data`;

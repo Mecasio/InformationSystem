@@ -661,7 +661,7 @@ const StudentDashboard1 = () => {
 
     const isFormValid = () => {
         const requiredFields = [
-            "campus", "academicProgram", "classifiedAs", "applyingAs", "program", "program2", "program3",
+            "campus", "academicProgram", "classifiedAs", "applyingAs", "program", 
             "yearLevel", "profile_img", "last_name", "first_name", "middle_name", "nickname",
             "height", "weight", "gender", "birthOfDate", "age", "birthPlace",
             "languageDialectSpoken", "citizenship", "religion", "civilStatus", "tribeEthnicGroup",

@@ -594,23 +594,45 @@ const ApplicantProfilePermit = ({ personId }) => {
                             <td
                                 colSpan={40}
                                 style={{
-                                    textAlign: "justify",
                                     color: "black",
-                                    padding: "8px",
-                                    lineHeight: "1.5",
-                                    textAlign: "Center",
-
+                                    padding: "12px",
+                                    lineHeight: "1.6",
+                                    textAlign: "left",
                                     fontSize: "14px",
                                     fontFamily: "Arial, Helvetica, sans-serif",
-
-                                    fontWeight: "200px"
                                 }}
                             >
-                                <strong>
-                                    <div>NOTE: Please bring this examination permit on the examination day together with</div>
-                                    <div>Two short bond paper, pencil w/ erasers & ballpen. Please come on decent attire</div>
-                                    <div>(no sleeveless or shorts) at least 1 hour before the examination</div>
-                                </strong>
+                                <strong>IMPORTANT REMINDERS FOR APPLICANTS:</strong>
+
+                                <ul style={{ marginTop: "8px" }}>
+                                    <strong>Step 1:</strong> Check your Examination Date, Time, and Room Number indicated on your permit.
+                                    <br />
+
+
+                                    <strong>Step 2:</strong> Bring all required items on the exam day:
+                                    <ul>
+                                        <li>Official Examination Permit with VERIFIED watermark on it</li>
+                                        <li>No. 2 Pencil (any brand)</li>
+                                        <li>2 Short bond papers</li>
+                                    </ul>
+
+
+
+                                    <strong>Step 3:</strong> Wear the proper attire:
+                                    <ul>
+                                        <li>Plain white T-shirt or plain white polo shirt <strong>(no prints, no logos, no designs)</strong></li>
+                                        <li>Pants (No shorts, No ripped jeans are not Allowed)</li>
+                                        <li>Closed shoes (no crocs, sandals, slippers)</li>
+                                    </ul>
+
+
+                                    <strong>Step 4:</strong>Keep the two paper sheets attached to your exam permit. You will need them for the document check and enrollment process.
+                                    <br />
+                                    <strong>Step 5:</strong>Please Arrive at least 1 hour before your examination time. Late applicants will NOT be allowed to enter once the exam room door closes.
+                                    <br />
+                                    <br />
+                                    <div style={{ textAlign: "center", marginLeft: "-50px" }}><strong>GOODLUCK FUTURE EARISTIANS!</strong></div>
+                                </ul>
                             </td>
                         </tr>
                     </tbody>

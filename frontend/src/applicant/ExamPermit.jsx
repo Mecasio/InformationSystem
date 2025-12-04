@@ -309,7 +309,7 @@ const ExamPermit = ({ personId }) => {
                             {/* Add spacing here */}
                             <div style={{ marginTop: "30px" }}>
                                 <b style={{ fontSize: "24px", letterSpacing: '1px', fontWeight: "bold" }}>
-                                    EXAMINATION PERMIT
+                                    APPLICANT PROFILE
                                 </b>
                             </div>
                         </td>
@@ -718,7 +718,8 @@ const ExamPermit = ({ personId }) => {
 
                             <ul style={{ marginTop: "8px" }}>
                                 <strong>Step 1:</strong> Check your Examination Date, Time, and Room Number indicated on your permit.
-<br/>
+                                <br />
+
 
                                 <strong>Step 2:</strong> Bring all required items on the exam day:
                                 <ul>
@@ -740,14 +741,12 @@ const ExamPermit = ({ personId }) => {
                                 <strong>Step 4:</strong>Keep the two paper sheets attached to your exam permit. You will need them for the document check and enrollment process.
                                 <br />
                                 <strong>Step 5:</strong>Please Arrive at least 1 hour before your examination time. Late applicants will NOT be allowed to enter once the exam room door closes.
-
                                 <br />
                                 <br />
                                 <div style={{ textAlign: "center", marginLeft: "-50px" }}><strong>GOODLUCK FUTURE EARISTIANS!</strong></div>
                             </ul>
                         </td>
                     </tr>
-
 
 
                 </tbody>

@@ -787,15 +787,22 @@ const Dashboard3 = (props) => {
                   size="small"
                   required
                   name="generalAverage"
+                  type="number"           // <-- allow number input
+                  inputProps={{
+                    step: "0.01",         // <-- allow decimal numbers
+                    min: 0,               // optional: restrict negative values
+                    max: 100              // optional: restrict max value
+                  }}
                   value={person.generalAverage || ""}
                   placeholder="Enter your General Average"
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.generalAverage}
                   helperText={errors.generalAverage ? "This field is required." : ""}
                 />
               </Box>
+
+
 
               <Box sx={{ flex: "1 1 33%" }}>
                 <Typography variant="subtitle1" mb={1}>
@@ -806,15 +813,21 @@ const Dashboard3 = (props) => {
                   size="small"
                   required
                   name="yearGraduated"
+                  type="number" // restrict to numbers
+                  inputProps={{
+                    min: 1900,          // optional: earliest acceptable year
+                    max: new Date().getFullYear(), // optional: current year
+                    step: 1             // only allow whole numbers
+                  }}
                   placeholder="Enter your Year Graduated"
                   value={person.yearGraduated || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.yearGraduated}
                   helperText={errors.yearGraduated ? "This field is required." : ""}
                 />
               </Box>
+
             </Box>
 
 
@@ -968,15 +981,21 @@ const Dashboard3 = (props) => {
                   size="small"
                   required
                   name="generalAverage1"
+                  type="number" // allow only numeric input
+                  inputProps={{
+                    step: "0.01", // allow decimals
+                    min: 0,       // optional: minimum value
+                    max: 100      // optional: maximum value
+                  }}
                   placeholder="Enter your General Average"
                   value={person.generalAverage1 || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.generalAverage1}
                   helperText={errors.generalAverage1 ? "This field is required." : ""}
                 />
               </Box>
+
 
               {/* Year Graduated 1 */}
               <Box sx={{ flex: "1 1 33%" }}>
@@ -988,15 +1007,21 @@ const Dashboard3 = (props) => {
                   size="small"
                   required
                   name="yearGraduated1"
+                  type="number" // restrict to numbers
+                  inputProps={{
+                    min: 1900, // optional: earliest year
+                    max: new Date().getFullYear(), // optional: current year
+                    step: 1 // only allow whole numbers
+                  }}
                   placeholder="Enter your Year Graduated"
                   value={person.yearGraduated1 || ""}
                   onChange={handleChange}
                   onBlur={() => handleUpdate(person)}
-
                   error={errors.yearGraduated1}
                   helperText={errors.yearGraduated1 ? "This field is required." : ""}
                 />
               </Box>
+
             </Box>
 
             <Typography style={{ fontSize: "20px", color: "#6D2323", fontWeight: "bold" }}>

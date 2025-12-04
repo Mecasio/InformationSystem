@@ -638,20 +638,7 @@ const settings = useContext(SettingsContext);
             </tbody>
           </table>
         </Box>
-        <Card sx={{ flex: 1, border: `2px solid ${borderColor}`, }}>
-          <CardContent>
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ fontWeight: "bold", }}
-            >
-              Event
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              No upcoming events.
-            </Typography>
-          </CardContent>
-        </Card>
+       
       </Box>  
     </Box>
   );
