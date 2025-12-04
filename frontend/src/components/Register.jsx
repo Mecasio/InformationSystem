@@ -17,7 +17,7 @@ import {
   Visibility,
   VisibilityOff
 } from "@mui/icons-material";
-// import ReCAPTCHA from "react-google-recaptcha";
+import ReCAPTCHA from "react-google-recaptcha";
 import { SettingsContext } from "../App"; // ✅ Access settings from context
 import API_BASE_URL from "../apiConfig";
 const Register = () => {
@@ -39,7 +39,7 @@ const Register = () => {
     }
   }, [settings]);
 
-  // const [capVal, setCapVal] = useState(null);
+  const [capVal, setCapVal] = useState(null);
   const [usersData, setUserData] = useState({
     email: '',
     password: '',
@@ -387,20 +387,20 @@ const Register = () => {
 
 
               {/* CAPTCHA */}
-              {/* <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
                 <ReCAPTCHA
                   sitekey="6Lfem44rAAAAAEeAexdQxvN0Lpm1V4KPu1bBxaGy"
                   onChange={(val) => setCapVal(val)}
                 />
-              </Box> */}
+              </Box>
 
               {/* Register Button — disabled until CAPTCHA is solved */}
               <div
-                onClick={!isSubmitting ? handleRegister : null}
+                onClick={!isSubmitting && capVal ? handleRegister : null}
                 style={{
-                  pointerEvents: !isSubmitting ? "auto" : "none",
-                  opacity: !isSubmitting ? 1 : 0.5,
-                  cursor: !isSubmitting ? "pointer" : "not-allowed",
+                  pointerEvents: !isSubmitting && capVal ? "auto" : "none",
+                  opacity: !isSubmitting && capVal ? 1 : 0.5,
+                  cursor: !isSubmitting && capVal ? "pointer" : "not-allowed",
                   marginTop: "20px",
                   backgroundColor: mainButtonColor,
                   height: "50px",
@@ -416,6 +416,7 @@ const Register = () => {
               >
                 {isSubmitting ? "Registering..." : "Register"}
               </div>
+
 
 
               <div className="LinkContainer RegistrationLink" style={{ margin: '0.1rem 0rem' }}>
