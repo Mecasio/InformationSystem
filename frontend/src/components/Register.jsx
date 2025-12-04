@@ -456,13 +456,14 @@ const Register = () => {
                 position: "absolute",
                 top: "8px",
                 right: "8px",
-                backgroundColor: "#6D2323",
+                backgroundColor: mainButtonColor,
                 color: "white",
                 border: "none",
                 borderRadius: "50%",
                 width: "32px",
                 height: "32px",
                 cursor: "pointer",
+                border: "2px solid black"
               }}
             >
               ✕
