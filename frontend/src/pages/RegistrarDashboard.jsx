@@ -254,12 +254,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
   }, []);
 
   const stats = [
-    {
-      label: "Total Applicants",
-      value: enrolledCount,
-      icon: <GroupIcon fontSize="large" />,
-      color: "#F6D167", // soft yellow
-    },
+  
     {
       label: "Enrolled Students",
       value: acceptedCount,
@@ -612,7 +607,7 @@ const Dashboard = ({ profileImage, setProfileImage }) => {
       {/* ✅ Stats Section (4 in 1 row) */}
       <Grid container spacing={2} justifyContent="center">
         {stats.map((stat, i) => (
-          <Grid item xs={12} sm={6} md={3} key={i}>
+          <Grid item xs={12} sm={6} md={4} key={i}>
             <Card
               sx={{
                 display: "flex",

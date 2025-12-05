@@ -374,6 +374,8 @@ const ApplicantScoring = () => {
         fetchApplicants();
     }, []);
 
+    
+
     useEffect(() => {
         const delayDebounce = setTimeout(async () => {
             if (searchQuery.trim() === "") return; // Don't search empty

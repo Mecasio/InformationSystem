@@ -1099,16 +1099,6 @@ const FacultyMasterList = () => {
                   border: `2px solid ${borderColor}`,
                 }}
               >
-                Class Schedule
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: "white",
-                  textAlign: "center",
-                  fontSize: "12px",
-                  border: `2px solid ${borderColor}`,
-                }}
-              >
                 Room
               </TableCell>
             </TableRow>
@@ -1172,18 +1162,6 @@ const FacultyMasterList = () => {
                     }}
                   >
                     {student.status === 1 ? "Regular" : "Irregular"}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      textAlign: "center",
-                      border: `2px solid ${borderColor}`,
-                    }}
-                  >
-                    {student.schedules.map((sch, i) => (
-                      <div key={i}>
-                        {sch.day} {sch.start} - {sch.end}
-                      </div>
-                    ))}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -1343,16 +1321,11 @@ const FacultyMasterList = () => {
                   <div style={{ display: "flex", justifyContent: "end" }}>Schedule:</div>
                 </td>
                 <td colSpan={2} style={{ paddingRight: "2px", paddingLeft: "2px", borderBottom: "none", paddingBottom: "1px", paddingTop: "6px" }}>
-                  {groupedList.length > 0 ? (
-                    groupedList.map((student, index) => (
-                      <div key={index}>
-                        {student.schedules.map((sch, i) => (
-                          <div key={i}>
-                            {sch.day} {sch.start} - {sch.end}
-                          </div>
-                        ))}
-                      </div>
-                    ))
+                  {groupedList.length > 0 && groupedList[0].schedules.length > 0 ? (
+                    <div>
+                      {groupedList[0].schedules[0].day}{" "}
+                      {groupedList[0].schedules[0].start} - {groupedList[0].schedules[0].end}
+                    </div>
                   ) : (
                     <div>TBA</div>
                   )}
@@ -1422,7 +1395,7 @@ const FacultyMasterList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>
+                  <td colSpan={7} style={{ border: "1px solid black", padding: "6px", textAlign: "center" }}>
                     No class details available
                   </td>
                 </tr>
