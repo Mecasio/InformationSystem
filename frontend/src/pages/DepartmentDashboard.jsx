@@ -105,7 +105,8 @@ const DepartmentManagement = () => {
         { title: "DEPARTMENT SECTION PANEL", link: "/department_section_panel", icon: Apartment, page_id: 20 },
         { title: "DEPARTMENT PANEL", link: "/department_registration", icon: Assignment, page_id: 21 },
         { title: "DEPARTMENT ROOM PANEL", link: "/department_room", icon: MeetingRoom, page_id: 22 },
-     { title: "DEPARTMENT CURRICULUM PANEL", link: "/department_curriculum_panel", icon: MenuBook, page_id: 107 }, // ✅ updated icon
+        { title: "DEPARTMENT CURRICULUM PANEL", link: "/department_curriculum_panel", icon: MenuBook, page_id: 107 },
+        { title: "COLLEGE SCHEDULE PLOTTING FORM", link: "/college_schedule_plotting", icon: EventNote, page_id: 108 }, // ✅ updated icon
       ],
     },
   ];

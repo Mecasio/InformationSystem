@@ -11,10 +11,10 @@ createRoot(document.getElementById("root")).render(
   </StrictMode>
 );
 
-// ⭐ Hide startup loader immediately after React loads
-const loader = document.getElementById("startup-loader");
-if (loader) {
-  loader.style.opacity = "0";
-  loader.style.transition = "opacity 0.5s ease";
-  setTimeout(() => loader.remove(), 500);
-}
+// // ⭐ Hide startup loader immediately after React loads
+// const loader = document.getElementById("startup-loader");
+// if (loader) {
+//   loader.style.opacity = "0";
+//   loader.style.transition = "opacity 0.5s ease";
+//   setTimeout(() => loader.remove(), 500);
+// }

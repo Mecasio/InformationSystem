@@ -17,7 +17,7 @@ const http = require("http").createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:5173", "http://192.168.86.123:5173"],
+    origin: ["http://localhost:5173", "http://192.168.0.180:5173"],
     methods: ["GET", "POST"]
   }
 });
@@ -26,7 +26,7 @@ const io = new Server(http, {
 
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://192.168.86.123:5173"],  // ✅ Explicitly allow Vite dev server
+  origin: ["http://localhost:5173", "http://192.168.0.180:5173"],  // ✅ Explicitly allow Vite dev server
   credentials: true                  // ✅ Allow credentials (cookies, auth)
 }));
 
@@ -588,8 +588,8 @@ app.post("/register", async (req, res) => {
     );
 
     // QR Codes
-    const qrData = `192.168.86.123:5173/examination_profile/${applicant_number}`;
-    const qrData2 = `192.168.86.123:5173/applicant_profile/${applicant_number}`;
+    const qrData = `192.168.0.180:5173/examination_profile/${applicant_number}`;
+    const qrData2 = `192.168.0.180:5173/applicant_profile/${applicant_number}`;
     const qrFilename = `${applicant_number}_qrcode.png`;
     const qrFilename2 = `${applicant_number}_qrcode2.png`;
     const qrPath = path.join(__dirname, "uploads", qrFilename);
@@ -649,6 +649,8 @@ const ROLE_PAGE_ACCESS = {
   enrollment: [102, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60, 92, 108, 109],
   clinic: [101, 92, 96, 73, 24, 25, 26, 27, 28, 29, 30, 31, 19, 32],
   registrar: [80, 104, 38, 73, 39, 40, 41, 42, 56, 13, 50, 62, 96, 92, 59, 105, 15, 101],
+  head: [102, 94, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60, 92, 108],
+  dean: [102, 94, 96, 73, 6, 10, 12, 17, 36, 37, 43, 44, 45, 46, 47, 49, 60, 92, 108],
   superadmin: "ALL"
 };
 
@@ -5038,7 +5040,7 @@ app.post("/login_applicant", async (req, res) => {
       );
 
       // Generate QR code
-      const qrData = `192.168.86.123:5173/examination_profile/${applicantNumber}`;
+      const qrData = `192.168.0.180:5173/examination_profile/${applicantNumber}`;
       qrFilename = `${applicantNumber}_qrcode.png`;
       const qrPath = path.join(__dirname, "uploads", qrFilename);
 
@@ -6438,7 +6440,7 @@ Your temporary password is: ${tempPassword}
 You may change your password and keep it secure.
 
 👉 Click the link below to log in:
-192.168.86.123:5173/login
+192.168.0.180:5173/login
 `.trim(),
       };
 
@@ -16950,7 +16952,38 @@ app.get("/get_enrollment_statistic", async (req, res) => {
   }
 });
 
+app.get("/get_college_professor_schedule", async (req, res) => {
+  try {
+    const sql = `
+      SELECT pt.employee_id, pt.fname, pt.mname, pt.lname, ct.course_code, pgt.program_id, pgt.program_code, sct.description AS section_description, rdt.description AS day, tt.school_time_start, tt.school_time_end, rt.room_id, rt.room_description, tt.ishonorarium, yt.year_id, yt.year_description AS current_year, yt.year_description + 1 AS next_year, st.semester_id, st.semester_description FROM time_table tt
+      LEFT JOIN prof_table pt ON tt.professor_id = pt.prof_id
+      LEFT JOIN course_table ct ON tt.course_id = ct.course_id
+      LEFT JOIN dprtmnt_section_table dst ON tt.department_section_id = dst.id
+      LEFT JOIN section_table sct ON dst.section_id = sct.id
+      LEFT JOIN curriculum_table cct ON dst.curriculum_id = cct.curriculum_id
+      LEFT JOIN program_table pgt ON cct.program_id = pgt.program_id
+      LEFT JOIN room_day_table rdt ON tt.room_day = rdt.id
+      LEFT JOIN dprtmnt_room_table drt ON tt.department_room_id = drt.dprtmnt_room_id
+      LEFT JOIN dprtmnt_table dt ON drt.dprtmnt_id = dt.dprtmnt_id
+      LEFT JOIN room_table rt ON drt.room_id = rt.room_id
+      INNER JOIN active_school_year_table sy ON tt.school_year_id = sy.id
+      LEFT JOIN year_table yt ON sy.year_id = yt.year_id
+      LEFT JOIN semester_table st ON sy.semester_id = st.semester_id
+      WHERE dt.dprtmnt_id = 5
+    `
 
+    const [rows] = await db3.execute(sql);
+
+    if(rows.length === 0) {
+      return res.status(404).json({error: "No schedule found"});
+    }
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 //----------------------------prereq end
 
 const PORT = process.env.WEB_PORT || 5000;

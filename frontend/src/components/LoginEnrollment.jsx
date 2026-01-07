@@ -51,22 +51,20 @@ function getUserDashboard(role, accessList = []) {
 const LoginEnrollment = ({ setIsAuthenticated }) => {
   const settings = useContext(SettingsContext);
 
-  // REMOVE startup loader when LoginEnrollment mounts
-  useEffect(() => {
-    const loader = document.getElementById("startup-loader");
-    if (loader) {
-      loader.style.opacity = "0";
-      loader.style.transition = "opacity 0.4s ease";
-      setTimeout(() => loader.remove(), 400);
-    }
-  }, []);
-
+  // // REMOVE startup loader when LoginEnrollment mounts
+  // useEffect(() => {
+  //   const loader = document.getElementById("startup-loader");
+  //   if (loader) {
+  //     loader.style.opacity = "0";
+  //     loader.style.transition = "opacity 0.4s ease";
+  //     setTimeout(() => loader.remove(), 400);
+  //   }
+  // }, []);
 
   const [titleColor, setTitleColor] = useState("#000000");
   const [subtitleColor, setSubtitleColor] = useState("#555555");
   const [borderColor, setBorderColor] = useState("#000000");
   const [mainButtonColor, setMainButtonColor] = useState("#1976d2");
-
 
   useEffect(() => {
     if (settings) {
@@ -88,8 +86,6 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
   const [resendTimer, setResendTimer] = useState(60);
   const [lockout, setLockout] = useState(false);
   const [lockoutTimer, setLockoutTimer] = useState(0);
-
-
   const [loading, setLoading] = useState(false);
   const [loading2, setLoading2] = useState(false);
   const [loading3, setLoading3] = useState(false);
@@ -298,8 +294,6 @@ const LoginEnrollment = ({ setIsAuthenticated }) => {
       }, 100); // small delay ensures focus after modal is mounted
     }
   }, [showOtpModal]);
-
-
 
   return (
     <>

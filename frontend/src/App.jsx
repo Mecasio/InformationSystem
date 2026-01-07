@@ -204,9 +204,7 @@ import UserPageAccess from './superadmin/UserPageAccess';
 import Settings from './superadmin/Settings';
 import SuperAdminRoomRegistration from './superadmin/SuperAdminRoomRegistration';
 import API_BASE_URL from "./apiConfig";
-
-
-
+import CollegeScheduleChecker from "./registrar/CollegeScheduleChecker";
 
 // ✅ Create a Context so all components can access settings
 export const SettingsContext = createContext(null);
@@ -216,7 +214,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [settings, setSettings] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
-  console.log(import.meta.env.VITE_API_BASE_URL_LOCAL)
   // ✅ Fetch settings from backend
   const fetchSettings = async () => {
     try {
@@ -286,8 +283,6 @@ function App() {
                   sx={{
                     zIndex: (theme) => theme.zIndex.drawer + 1,
                     bgcolor: settings?.header_color || "#1976d2",
-
-
                   }}
                 >
                   <Toolbar>
@@ -386,7 +381,7 @@ function App() {
                     <Route path="/search_cor" element={<ProtectedRoute><SearchCertificateOfRegistration /></ProtectedRoute>} />
                     <Route path="/cor" element={<ProtectedRoute><CertificateOfRegistration /></ProtectedRoute>} />
                     <Route path="/select_college" element={<ProtectedRoute><ScheduleFilterer /></ProtectedRoute>} />
-
+                    <Route path="/college_schedule_plotting" element={<ProtectedRoute><CollegeScheduleChecker /></ProtectedRoute>} />
                     <Route path="/assign_entrance_exam" element={<ProtectedRoute><AssignEntranceExam /></ProtectedRoute>} />
                     <Route path="/assign_schedule_applicant" element={<ProtectedRoute><AssignScheduleToApplicants /></ProtectedRoute>} />
                     <Route path="/admission_schedule_room_list" element={<ProtectedRoute><AdmissionScheduleTile /></ProtectedRoute>} />
