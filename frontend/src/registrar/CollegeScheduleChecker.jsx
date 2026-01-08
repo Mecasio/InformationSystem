@@ -282,6 +282,20 @@ const CollegeScheduleChecker = () => {
     }
   };
 
+  const fetchAllCollegeSchedule = async () => {
+    try{
+      const res = await axios.get(`${API_BASE_URL}/get_college_professor_schedule/${adminData.dprtmnt_id}`)
+      setSchedules(res.data);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        setMessage(
+          "Schedule not found. Please assign a schedule."
+        );
+      } else {
+        setMessage("Failed to fetch schedule. Please try again later.");
+      }
+    }
+  }
   const formatTimeTo12Hour = (time24) => {
     const [hours, minutes] = time24.split(":");
     const h = parseInt(hours);
@@ -290,6 +304,7 @@ const CollegeScheduleChecker = () => {
     return `${hour12}:${minutes} ${suffix}`;
   };
 
+
   useEffect(() => {
     if (!adminData.dprtmnt_id) return;
 
@@ -297,6 +312,7 @@ const CollegeScheduleChecker = () => {
     fetchProfList();
     fetchSectionList();
     fetchProgramList();
+    fetchAllCollegeSchedule();
   }, [adminData.dprtmnt_id]);
 
   useEffect(() => {
@@ -307,37 +323,29 @@ const CollegeScheduleChecker = () => {
 
   useEffect(() => {
     axios
-      .get(`${API_BASE_URL}/get_college_professor_schedule`)
-      .then((res) => setSchedules(res.data))
+      .get(`${API_BASE_URL}/get_school_year/`)
+      .then((res) => setSchoolYears(res.data))
+      .catch((err) => console.error(err));
+  }, [])
+  
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/get_school_semester/`)
+      .then((res) => setSchoolSemester(res.data))
+      .catch((err) => console.error(err));
+  }, [])
+  
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/active_school_year`)
+      .then((res) => {
+        if (res.data.length > 0) {
+          setSelectedAcademicSchoolYear(res.data[0].year_id);
+          setSelectedAcademicSchoolSemester(res.data[0].semester_id);
+        }
+      })
       .catch((err) => console.error(err));
   }, []);
-
-  useEffect(() => {
-          axios
-              .get(`${API_BASE_URL}/get_school_year/`)
-              .then((res) => setSchoolYears(res.data))
-              .catch((err) => console.error(err));
-      }, [])
-  
-      useEffect(() => {
-          axios
-              .get(`${API_BASE_URL}/get_school_semester/`)
-              .then((res) => setSchoolSemester(res.data))
-              .catch((err) => console.error(err));
-      }, [])
-  
-      useEffect(() => {
-          axios
-              .get(`${API_BASE_URL}/active_school_year`)
-              .then((res) => {
-                  if (res.data.length > 0) {
-                      setSelectedAcademicSchoolYear(res.data[0].year_id);
-                      setSelectedAcademicSchoolSemester(res.data[0].semester_id);
-                  }
-              })
-              .catch((err) => console.error(err));
-  
-      }, []);
   
       const handleSchoolYearChange = (event) => {
           setSelectedAcademicSchoolYear(event.target.value);
@@ -1236,7 +1244,7 @@ const CollegeScheduleChecker = () => {
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", marginTop: "1rem", gap: "0.4rem"}}>
             <Button
-              className="hover:bg-[#000000] text-white px-6 py-2 rounded"
+              className="hover:bg-[#000000] text-white px-6 py-2 rounded w-[200px]"
               variant="contained"
               onClick={() => {
                 const newMode = !isDesignationMode;

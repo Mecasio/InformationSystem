@@ -16952,7 +16952,8 @@ app.get("/get_enrollment_statistic", async (req, res) => {
   }
 });
 
-app.get("/get_college_professor_schedule", async (req, res) => {
+app.get("/get_college_professor_schedule/:dprtmnt_id", async (req, res) => {
+  const {dprtmnt_id} = req.params;
   try {
     const sql = `
       SELECT pt.employee_id, pt.fname, pt.mname, pt.lname, ct.course_code, pgt.program_id, pgt.program_code, sct.description AS section_description, rdt.description AS day, tt.school_time_start, tt.school_time_end, rt.room_id, rt.room_description, tt.ishonorarium, yt.year_id, yt.year_description AS current_year, yt.year_description + 1 AS next_year, st.semester_id, st.semester_description FROM time_table tt
@@ -16969,10 +16970,10 @@ app.get("/get_college_professor_schedule", async (req, res) => {
       INNER JOIN active_school_year_table sy ON tt.school_year_id = sy.id
       LEFT JOIN year_table yt ON sy.year_id = yt.year_id
       LEFT JOIN semester_table st ON sy.semester_id = st.semester_id
-      WHERE dt.dprtmnt_id = 5
+      WHERE dt.dprtmnt_id = ?
     `
 
-    const [rows] = await db3.execute(sql);
+    const [rows] = await db3.execute(sql, [dprtmnt_id]);
 
     if(rows.length === 0) {
       return res.status(404).json({error: "No schedule found"});
