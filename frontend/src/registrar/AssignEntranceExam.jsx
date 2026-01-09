@@ -180,7 +180,9 @@ const AssignEntranceExam = () => {
       setLoading(false);
     }
   };
-
+  const currentYear = new Date().getFullYear();
+  const minDate = `${currentYear}-01-01`;
+  const maxDate = `${currentYear}-12-31`;
 
   const handleSaveSchedule = async (e) => {
     e.preventDefault();
@@ -253,7 +255,7 @@ const AssignEntranceExam = () => {
 
   // Put this at the very bottom before the return 
   if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Loading..." />;
+    return <LoadingOverlay open={loading} message="Loading..." />;
   }
 
   if (!hasAccess) {
@@ -388,8 +390,24 @@ const AssignEntranceExam = () => {
                   name="examDate"
                   required
                   value={day || ""}
-                  onChange={(e) => setDay(e.target.value)}
+                  inputProps={{
+                    min: minDate,
+                    max: maxDate,
+                  }}
+                  onChange={(e) => {
+                    const selectedDate = e.target.value;
+
+                    // ❌ Reject dates outside current year
+                    if (selectedDate < minDate || selectedDate > maxDate) {
+                      return;
+                    }
+
+                    setDay(selectedDate);
+                  }}
+                  onKeyDown={(e) => e.preventDefault()} // ❌ blocks manual typing
                 />
+
+
               </Grid>
 
               {/* Building */}

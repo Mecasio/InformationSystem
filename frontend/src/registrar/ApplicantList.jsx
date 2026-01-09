@@ -1787,10 +1787,10 @@ th {
                                 {/* Docs Button */}
                                 <TableCell
                                     sx={{
-                                        border: `2px solid ${borderColor}`,
+                                        border: `2px solid black`,
                                         textAlign: "center",
                                         verticalAlign: "middle",
-                                        backgroundColor: "white",
+                                    
 
                                         p: 0,
                                     }}
@@ -1820,7 +1820,7 @@ th {
                                                             person.missing_documents.length > 0
                                                             ? "#FFD580"
                                                             : "#D6F0FF",
-                                                borderColor: "maroon",
+                                                border: "3px solid black",
                                                 color:
                                                     person.submitted_documents === 1 &&
                                                         person.registrar_status === 1 &&

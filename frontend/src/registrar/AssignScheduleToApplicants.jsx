@@ -766,7 +766,7 @@ const AssignScheduleToApplicants = () => {
 
   // Put this at the very bottom before the return 
   if (loading || hasAccess === null) {
-   return <LoadingOverlay open={loading} message="Loading..." />;
+    return <LoadingOverlay open={loading} message="Loading..." />;
   }
 
   if (!hasAccess) {
@@ -921,17 +921,23 @@ const AssignScheduleToApplicants = () => {
                 }}
               >
                 <MenuItem value="">-- Select Schedule --</MenuItem>
-                {[...schedules]
-                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
+                {[...schedules]
+                  // ✅ REMOVE FULL ROOMS HERE
+                  .filter(s => Number(s.current_occupancy) < Number(s.room_quota))
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
                   .map((s) => (
-                    <MenuItem key={s.schedule_id} value={s.schedule_id}>
-                      {s.proctor} - {s.day_description} | {s.building_description} | {s.room_description} |
+                    <MenuItem
+                      key={s.schedule_id}
+                      value={s.schedule_id}
+                    >
+                      {s.proctor} - {s.day_description} | {s.building_description} | {s.room_description} |{" "}
                       {new Date(`1970-01-01T${s.start_time}`).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
                         hour12: true,
-                      })} -{" "}
+                      })}{" "}
+                      -{" "}
                       {new Date(`1970-01-01T${s.end_time}`).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
@@ -939,8 +945,8 @@ const AssignScheduleToApplicants = () => {
                       })}
                     </MenuItem>
                   ))}
-
               </TextField>
+
             </Grid>
 
             {/* Proctor */}
@@ -1512,8 +1518,8 @@ const AssignScheduleToApplicants = () => {
                       {!isAssigned ? (
                         // ✅ Not assigned → Assign only
                         <Button
-                                variant="contained"
-                            color="primary"
+                          variant="contained"
+                          color="primary"
                           onClick={() => handleAssignSingle(id)} // new helper for 1 applicant
                         >
                           Assign

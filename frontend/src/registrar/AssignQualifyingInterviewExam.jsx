@@ -90,6 +90,9 @@ const AssignInterviewExam = () => {
     const [roomNo, setRoomNo] = useState("");
     const [roomName, setRoomName] = useState("");
     const [buildingName, setBuildingName] = useState("");
+    const currentYear = new Date().getFullYear();
+    const minDate = `${currentYear}-01-01`;
+    const maxDate = `${currentYear}-12-31`;
 
 
 
@@ -226,7 +229,7 @@ const AssignInterviewExam = () => {
 
     // Put this at the very bottom before the return 
     if (loading || hasAccess === null) {
-       return <LoadingOverlay open={loading} message="Loading..." />;
+        return <LoadingOverlay open={loading} message="Loading..." />;
     }
 
     if (!hasAccess) {
@@ -361,7 +364,12 @@ const AssignInterviewExam = () => {
                                     required
                                     value={day || ""}
                                     onChange={(e) => setDay(e.target.value)}
+                                    inputProps={{
+                                        min: minDate,
+                                        max: maxDate,
+                                    }}
                                 />
+
                             </Grid>
 
                             {/* Building */}

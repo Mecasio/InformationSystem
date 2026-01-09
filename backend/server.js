@@ -22,8 +22,6 @@ const io = new Server(http, {
   }
 });
 
-
-
 app.use(express.json());
 app.use(cors({
   origin: ["http://localhost:5173", "http://192.168.0.180:5173"],  // ✅ Explicitly allow Vite dev server
@@ -6555,7 +6553,6 @@ app.get("/interview_schedules_with_count", async (req, res) => {
   }
 });
 
-
 // ================== INTERVIEW APPLICANTS API ==================
 
 // 1. Get interview applicants with applicant_number + person info
@@ -6736,13 +6733,24 @@ app.get("/interview_schedules_with_count", async (req, res) => {
         s.end_time,
         s.interviewer,
         s.room_quota,
-        COALESCE(COUNT(ia.applicant_id), 0) AS current_occupancy   -- ✅ no undefined
+        COUNT(ia.applicant_id) AS current_occupancy,
+        (s.room_quota - COUNT(ia.applicant_id)) AS remaining_slots
       FROM interview_exam_schedule s
       LEFT JOIN interview_applicants ia 
         ON s.schedule_id = ia.schedule_id
-      GROUP BY s.schedule_id
+      GROUP BY 
+        s.schedule_id,
+        s.day_description,
+        s.building_description,
+        s.room_description,
+        s.start_time,
+        s.end_time,
+        s.interviewer,
+        s.room_quota
+      HAVING remaining_slots > 0        -- ✅ AUTO REMOVE FULL
       ORDER BY s.created_at DESC
     `);
+
     res.json(rows);
   } catch (err) {
     console.error("❌ Error fetching interview schedules with count:", err);
@@ -7696,20 +7704,24 @@ app.get("/exam_schedules_with_count", async (req, res) => {
         s.end_time,
         s.proctor,
         s.room_quota,
-        s.created_at,   -- add this line
-        COUNT(ea.applicant_id) AS current_occupancy
+        COUNT(ea.applicant_id) AS current_occupancy,
+        (s.room_quota - COUNT(ea.applicant_id)) AS remaining_slots
       FROM entrance_exam_schedule s
-      LEFT JOIN exam_applicants ea
-        ON s.schedule_id = ea.schedule_id
+      LEFT JOIN exam_applicants ea 
+        ON ea.schedule_id = s.schedule_id
       GROUP BY s.schedule_id
-      ORDER BY s.created_at DESC   -- sort by newest timestamp
+      ORDER BY s.day_description, s.start_time
     `);
+
     res.json(rows);
   } catch (err) {
-    console.error("Error fetching schedules with count:", err);
-    res.status(500).json({ error: "Database error" });
+    console.error("❌ Error fetching schedules with count:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
+
+
+
 
 
 
