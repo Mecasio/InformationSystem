@@ -110,7 +110,7 @@ const AccountDashboard = () => {
       label: "SETTINGS",
       items: [
         { title: "SETTINGS", path: "/registrar_reset_password", icon: Settings, page_id: 73 },
-
+       
       ],
     },
     {
@@ -119,6 +119,7 @@ const AccountDashboard = () => {
         { title: "ADD FACULTY ACCOUNTS", path: "/register_prof", icon: PersonAdd, page_id: 70 },
         { title: "ADD REGISTRAR ACCOUNT", path: "/register_registrar", icon: PersonAdd, page_id: 71 },
         { title: "ADD STUDENT ACCOUNT", path: "/register_student", icon: PersonAdd, page_id: 72 },
+        { title: "PROFESSOR EDUCATION ", path: "/superadmin_professor_education", icon: PersonAdd, page_id: 109 },
       ],
     },
 
@@ -154,7 +155,7 @@ const AccountDashboard = () => {
 
 
   if (loading || hasAccess === null)
-   return <LoadingOverlay open={loading} message="Loading..." />;
+    return <LoadingOverlay open={loading} message="Loading..." />;
 
   if (!hasAccess) return <Unauthorized />;
 

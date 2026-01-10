@@ -16999,6 +16999,116 @@ app.get("/get_college_professor_schedule/:dprtmnt_id", async (req, res) => {
 });
 //----------------------------prereq end
 
+app.get("/person_prof_list", async (req, res) => {
+  try {
+    const [rows] = await db3.query(`
+      SELECT 
+        p.person_id,
+        pr.fname,
+        pr.mname,
+        pr.lname,
+        p.bachelor,
+        p.master,
+        p.doctor
+      FROM person_prof_table p
+      JOIN prof_table pr 
+        ON pr.person_id = p.person_id
+      ORDER BY pr.lname, pr.fname
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching joined person_prof:", err);
+    res.status(500).json({ message: "Failed to fetch records" });
+  }
+});
+
+app.post("/person_prof", async (req, res) => {
+  const { person_id, bachelor, master, doctor } = req.body;
+
+  try {
+    const [existing] = await db3.query(
+      "SELECT 1 FROM person_prof_table WHERE person_id = ?",
+      [person_id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ message: "Record already exists" });
+    }
+
+    await db3.query(
+      `INSERT INTO person_prof_table
+       (person_id, bachelor, master, doctor)
+       VALUES (?, ?, ?, ?)`,
+      [person_id, bachelor || null, master || null, doctor || null]
+    );
+
+    res.json({ message: "Education record added" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to add record" });
+  }
+});
+
+app.put("/person_prof/:person_id", async (req, res) => {
+  const { person_id } = req.params;
+  const { bachelor, master, doctor } = req.body;
+
+  try {
+    await db3.query(
+      `UPDATE person_prof_table
+       SET bachelor = ?, master = ?, doctor = ?
+       WHERE person_id = ?`,
+      [
+        bachelor || null,
+        master || null,
+        doctor || null,
+        person_id,
+      ]
+    );
+
+    res.json({ message: "Education record updated" });
+  } catch (err) {
+    console.error("Error updating person_prof:", err);
+    res.status(500).json({ message: "Failed to update record" });
+  }
+});
+
+app.delete("/person_prof/:person_id", async (req, res) => {
+  const { person_id } = req.params;
+
+  try {
+    await db3.query(
+      "DELETE FROM person_prof_table WHERE person_id = ?",
+      [person_id]
+    );
+    res.json({ message: "Education record deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete record" });
+  }
+});
+
+// 🔽 Dropdown: list of professors
+app.get("/prof_dropdown", async (req, res) => {
+  try {
+    const [rows] = await db3.query(`
+      SELECT 
+        person_id,
+        fname,
+        mname,
+        lname
+      FROM prof_table
+      ORDER BY lname, fname
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching prof dropdown:", err);
+    res.status(500).json({ message: "Failed to load professors" });
+  }
+});
+
 const PORT = process.env.WEB_PORT || 5000;
 const HOST = getDbHost();
 http.listen(PORT, '0.0.0.0', () => {

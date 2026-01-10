@@ -17,7 +17,6 @@ import MenuIcon from "@mui/icons-material/Menu";
 import axios from "axios";
 import "./App.css";
 
-
 // COMPONENTS FOLDER
 import Unauthorized from './components/Unauthorized';
 import Register from './components/Register';
@@ -52,7 +51,6 @@ import FacultyMasterList from './faculty/FacultyMasterlist';
 import ProgramEvaluation from './registrar/ProgramEvaluation';
 import FacultyResetPassword from './faculty/FacultyResetPassword';
 import FacultyEvaluation from './faculty/FacultyEvaluation';
-
 
 // REGISTRAR FOLDER
 import SearchCertificateOfRegistration from './registrar/SearchCertificateOfRegistration';
@@ -194,6 +192,7 @@ import SuperAdminApplicantResetPassword from './superadmin/SuperAdminApplicantRe
 import SuperAdminStudentResetPassword from './superadmin/SuperAdminStudentResetPassword';
 import SuperAdminFacultyResetPassword from './superadmin/SuperAdminFacultyResetPassword';
 import SuperAdminRegistrarPassword from './superadmin/SuperAdminRegistrarResetPassword';
+import SuperAdminProfessorEducation from './superadmin/SuperAdminProfessorEducation';
 import Notifications from './superadmin/Notifications';
 import RegistrarResetPassword from './superadmin/RegistrarResetPassword';
 import RegisterProf from './superadmin/RegisterProf';
@@ -336,7 +335,7 @@ function App() {
                     <Route path="/superadmin_student_reset_password" element={<ProtectedRoute><SuperAdminStudentResetPassword /></ProtectedRoute>} />
                     <Route path="/superadmin_faculty_reset_password" element={<ProtectedRoute><SuperAdminFacultyResetPassword /></ProtectedRoute>} />
                     <Route path="/superadmin_registrar_reset_password" element={<ProtectedRoute><SuperAdminRegistrarPassword /></ProtectedRoute>} />
-
+                    <Route path="/superadmin_professor_education" element={<ProtectedRoute><SuperAdminProfessorEducation /></ProtectedRoute>} />
 
                     <Route path="/registrar_dashboard" element={<ProtectedRoute><RegistrarDashboard profileImage={profileImage} setProfileImage={setProfileImage} /></ProtectedRoute>} />
                     <Route path="/faculty_dashboard" element={<ProtectedRoute allowedRoles={['faculty']}><FacultyDashboard profileImage={profileImage} setProfileImage={setProfileImage} /></ProtectedRoute>} />
